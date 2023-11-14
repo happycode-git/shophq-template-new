@@ -1,0 +1,131 @@
+Anything and everything can be found in the EVERYTHING/BAGEL folders.
+Things.js
+
+To simulate,
+npm start
+i - for iphone
+a - dor android
+
+INSTALLS - 
+npm install firebase
+sudo npm install -g firebase-tools
+npm install @react-navigation/native
+npx expo install react-native-screens react-native-safe-area-context
+npm install react-native-screens react-native-safe-area-context
+npm install @react-navigation/native-stack
+npm i react-native-vector-icons
+npx expo install expo-notifications
+npm i @react-native-async-storage/async-storage
+npx expo install expo-image-picker
+npx expo install expo-camera
+
+PLUGINS -
+ImagePicker -----
+"expo": {
+    "plugins": [
+        [
+        "expo-image-picker",
+        {
+            "photosPermission": "The app accesses your photos to let you share them with your friends."
+        }
+        ]
+    ]
+}
+-----
+Camera -----
+"expo": {
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
+        }
+      ]
+    ]
+  }
+-----
+
+VARIABLES -
+height, width
+randomString(length)
+
+LAYOUT -
+SafeArea -> { statusBar, loading, children, styles }
+SplitView -> { children, leftSize, rightSize, styles }
+Spacer -> { height }
+Loading -> { }
+
+CONTROLS -
+ButtonOne -> { children, backgroundColor, radius, onPress, styles }
+LinkOne -> { children, underlineColor, onPress, styles }
+TextFieldOne -> { placeholder, textSize, onTyping, value, styles }
+    const [thing, setThing] = useState("");
+    function onTypeThing(text) {
+        setThing(text);
+    }
+TextAreaOne -> { placeholder, textSize, radius, onTyping, isPassword, autoCap, isNum, value, styles, }
+    const [thing, setThing] = useState("");
+    function onTypeThing(text) {
+        setThing(text);
+    }
+CameraPicker -> { setToggle, setLoading, setImage }
+
+FUNCTIONS -> 
+function_PickImage(setLoading, setImage)
+
+STYLES - 
+layout ->
+    padding,
+    margin,
+    horizontal, 
+    vertical, 
+    separate_horizontal, 
+    separate_vertical, 
+    relative, 
+    absolute,
+    bottom,
+    full_height, 
+    full_width, 
+    fit_height,
+    fit_width,
+    center_horizontal,
+    align_top,
+    align_bottom,
+    image_cover,
+    image_contain,
+    image_fill
+
+format ->
+    center_text, 
+    right_text, 
+    left_text, 
+    bold
+
+sizes ->
+    xsmall_text, 
+    small_text, 
+    medium_text, 
+    large_text, 
+    xlarge_text, 
+    xxlarge_text 
+
+colors -> 
+    white, 
+    black,
+    blue
+
+backgrounds ->
+    white, 
+    black
+
+FIREBASE -
+auth_IsUserSignedIn(setLoading, navigation, ifLoggedIn, ifNotLoggedIn)
+auth_SignIn(setLoading, email, password)
+auth_SignOut(setLoading, navigation, redirect)
+auth_SignOut(setLoading, navigation, redirect)
+
+firebase_GetDocument(setLoading, table, documentID, setter)
+firebase_GetAllDocuments(setLoading, table, setter)
+firebase_GetAllDocumentsListener(setLoading, table, setter)
+firebase_UpdateDocument(setLoading, table, documentID, args)
+firebase_DeleteDocument(setLoading, table, documentID)
