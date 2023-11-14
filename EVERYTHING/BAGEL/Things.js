@@ -16,6 +16,9 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraType } from "expo-camera";
 import { Ionicons } from "react-native-vector-icons";
+import * as Location from "expo-location";
+import MapView, { Marker } from "react-native-maps";
+import CheckBox from 'expo-checkbox'
 import { initializeApp, setLogLevel } from "firebase/app";
 import {
   initializeAuth,
@@ -138,6 +141,24 @@ export function ButtonOne({
         {children}
       </View>
     </TouchableOpacity>
+  );
+}
+export function IconButtonOne({ name, size, padding, background, color }) {
+  return (
+    <View
+      style={[
+        {
+          padding: padding !== undefined ? padding : 10,
+          backgroundColor:
+            background !== undefined ? background : "rgba(0,0,0,0.2)",
+          color: color !== undefined ? color : "black",
+          borderRadius: 100,
+          alignSelf: "flex-start",
+        },
+      ]}
+    >
+      <Ionicons name={name} size={size} />
+    </View>
   );
 }
 export function LinkOne({ children, underlineColor, onPress, styles }) {
@@ -266,6 +287,67 @@ export function TextAreaOne({
           </Text>
         </TouchableOpacity>
       )}
+    </View>
+  );
+}
+export function DropdownOne({ options, radius, value, setter }) {
+  const [toggle, setToggle] = useState(false);
+  return (
+    <View>
+      <View>
+        <TouchableOpacity
+          onPress={() => {
+            setToggle(!toggle);
+          }}
+        >
+          <View
+            style={[
+              {
+                backgroundColor: "#dae0e3",
+                padding: 14,
+                borderRadius: radius !== undefined ? radius : 10,
+              },
+              layout.separate_horizontal,
+              layout.relative,
+            ]}
+          >
+            <Text style={[sizes.medium_text]}>{value}</Text>
+            <Ionicons name="chevron-down-outline" size={25} />
+          </View>
+        </TouchableOpacity>
+        {toggle && (
+          <View>
+            {options.map((option, i) => {
+              return (
+                <TouchableOpacity
+                  key={i}
+                  style={[{ padding: 14 }]}
+                  onPress={() => {
+                    setter(option);
+                    setToggle(false);
+                  }}
+                >
+                  <Text style={[sizes.medium_text]}>{option}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+export function CheckboxOne({ value, setter, text }) {
+  function onCheck() {
+    setter(!value);
+  }
+  return (
+    <View style={[layout.horizontal]}>
+      <CheckBox
+        value={value}
+        onValueChange={onCheck}
+      />
+      <Text style={[sizes.medium_text]}>{text}</Text>
     </View>
   );
 }
@@ -462,7 +544,7 @@ export function AsyncImage({ path, width, height, radius }) {
           style={{
             width: width !== undefined ? width : 100,
             height: height !== undefined ? height : 100,
-            borderRadius: radius !== undefined ? radius : 10
+            borderRadius: radius !== undefined ? radius : 10,
           }}
           resizeMode="cover"
           onLoadStart={() => setImageLoaded(false)} // Set imageLoaded to false when loading starts
@@ -471,26 +553,75 @@ export function AsyncImage({ path, width, height, radius }) {
       )}
       {!imageLoaded && (
         <View
-        style={[
-          {
-            width: width !== undefined ? width : 100,
-            height: height !== undefined ? height : 100,
-            backgroundColor: "rgba(0,0,0,0.2)",
-            borderRadius: radius !== undefined ? radius : 10,
-          },
-          layout.separate_vertical,
-          layout.absolute
-        ]}
-      >
-        <View></View>
-        <ActivityIndicator />
-        <View></View>
-      </View>
+          style={[
+            {
+              width: width !== undefined ? width : 100,
+              height: height !== undefined ? height : 100,
+              backgroundColor: "rgba(0,0,0,0.2)",
+              borderRadius: radius !== undefined ? radius : 10,
+            },
+            layout.separate_vertical,
+            layout.absolute,
+          ]}
+        >
+          <View></View>
+          <ActivityIndicator />
+          <View></View>
+        </View>
       )}
     </View>
   );
 }
+export function Map({ coords, delta, height, radius }) {
+  // Default location for the app's headquarters
+  const defaultLocation = {
+    latitude: 37.7749, // Default latitude
+    longitude: -122.4194, // Default longitude
+  };
 
+  useEffect(() => {
+    console.log("----------");
+    console.log(coords.latitude);
+  }, []);
+
+  return (
+    <View style={[{ flex: 1 }]}>
+      <MapView
+        style={[
+          {
+            width: "100%",
+            height: height !== undefined ? height : 125,
+            borderRadius: radius !== undefined ? radius : 10,
+          },
+        ]}
+        region={{
+          latitude:
+            coords.latitude !== undefined
+              ? coords.latitude
+              : defaultLocation.longitude,
+          longitude:
+            coords.longitude !== undefined
+              ? coords.longitude
+              : defaultLocation.longitude,
+          latitudeDelta: delta !== undefined ? delta : 0.005,
+          longitudeDelta: delta !== undefined ? delta : 0.005,
+        }}
+      >
+        <Marker
+          coordinate={{
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          }}
+        >
+          <Image
+            source={require("../../assets/marker.png")}
+            style={[{ width: 40, height: 40 }]}
+          />
+        </Marker>
+      </MapView>
+    </View>
+  );
+}
 // FUNCTIONS
 export async function function_PickImage(setLoading, setImage) {
   // No permissions request is necessary for launching the image library
@@ -506,6 +637,27 @@ export async function function_PickImage(setLoading, setImage) {
   if (!result.canceled) {
     setLoading(false);
     setImage(result.assets[0].uri);
+  }
+}
+export async function function_GetLocation(setLoading, setLocation) {
+  try {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "Permission to access location was denied."
+      );
+      return;
+    }
+
+    let userLocation = await Location.getCurrentPositionAsync({});
+    setLocation(userLocation);
+    setLoading(false);
+    console.log(status);
+    console.log(userLocation.coords);
+  } catch (error) {
+    console.error("Error getting location:", error);
+    setLoading(false);
   }
 }
 
@@ -527,27 +679,21 @@ export const format = StyleSheet.create({
 export const sizes = StyleSheet.create({
   xsmall_text: {
     fontSize: 12,
-    width: "100%",
   },
   small_text: {
     fontSize: 16,
-    width: "100%",
   },
   medium_text: {
     fontSize: 20,
-    width: "100%",
   },
   large_text: {
     fontSize: 25,
-    width: "100%",
   },
   xlarge_text: {
     fontSize: 30,
-    width: "100%",
   },
   xxlarge_text: {
     fontSize: 35,
-    width: "100%",
   },
 });
 export const colors = StyleSheet.create({
@@ -571,6 +717,7 @@ export const layout = StyleSheet.create({
   horizontal: {
     flexDirection: "row",
     gap: 14,
+    alignItems: "center"
   },
   vertical: {
     flexDirection: "column",
@@ -579,6 +726,7 @@ export const layout = StyleSheet.create({
   separate_horizontal: {
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center"
   },
   separate_vertical: {
     flexDirection: "column",

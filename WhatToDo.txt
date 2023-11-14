@@ -18,6 +18,9 @@ npx expo install expo-notifications
 npm i @react-native-async-storage/async-storage
 npx expo install expo-image-picker
 npx expo install expo-camera
+npx expo install expo-location
+npx expo install react-native-maps
+npx expo install expo-checkbox
 
 PLUGINS -
 ImagePicker -----
@@ -44,6 +47,18 @@ Camera -----
     ]
   }
 -----
+Location -----
+"expo": {
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
+        }
+      ]
+    ]
+  }
+-----
 
 VARIABLES -
 height, width
@@ -57,6 +72,7 @@ Loading -> { }
 
 CONTROLS -
 ButtonOne -> { children, backgroundColor, radius, onPress, styles }
+IconButtonOne -> { name, size, padding, background, color }
 LinkOne -> { children, underlineColor, onPress, styles }
 TextFieldOne -> { placeholder, textSize, onTyping, value, styles }
     const [thing, setThing] = useState("");
@@ -68,10 +84,15 @@ TextAreaOne -> { placeholder, textSize, radius, onTyping, isPassword, autoCap, i
     function onTypeThing(text) {
         setThing(text);
     }
+DropdownOne -> { options, radius, value, setter }
+CheckboxOne -> { value, setter, text }
 CameraPicker -> { setToggle, setLoading, setImage }
+AsyncImage -> { path, width, height, radius }
+Map -> { coords, delta, height, radius }
 
 FUNCTIONS -> 
 function_PickImage(setLoading, setImage)
+function_GetLocation(setLoading, setLocation)
 
 STYLES - 
 layout ->

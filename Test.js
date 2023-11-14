@@ -3,7 +3,11 @@ import {
   AsyncImage,
   ButtonOne,
   CameraPicker,
+  CheckboxOne,
+  DropdownOne,
+  IconButtonOne,
   LinkOne,
+  Map,
   SafeArea,
   Spacer,
   SplitView,
@@ -19,6 +23,7 @@ import {
   firebase_GetDocument,
   firebase_UpdateDocument,
   format,
+  function_GetLocation,
   function_PickImage,
   layout,
   sizes,
@@ -28,22 +33,16 @@ import { useEffect, useState } from "react";
 
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
-  const [image, setImage] = useState(null);
-  const [things, setThings] = useState([]);
-  const [toggle, setToggle] = useState(false);
+  const [toggle, setToggle] = useState(false)
 
-  useEffect(() => {
-    setLoading(true);
-    firebase_GetAllDocumentsListener(setLoading, "Test", setThings);
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
       <Spacer />
 
-      <AsyncImage path="Images/thing.jpg" />
-      <AsyncImage path="Images/thing.jpg" />
+      <CheckboxOne value={toggle} setter={setToggle} text={"Ting of a ting"} />
     </SafeArea>
   );
 }
