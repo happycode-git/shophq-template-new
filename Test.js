@@ -5,10 +5,14 @@ import {
   CameraPicker,
   CheckboxOne,
   DropdownOne,
+  Icon,
   IconButtonOne,
+  IconButtonTwo,
   LinkOne,
+  LocalNotification,
   Map,
   SafeArea,
+  SegmentedPicker,
   Spacer,
   SplitView,
   TextAreaOne,
@@ -33,7 +37,8 @@ import { useEffect, useState } from "react";
 
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
-  const [toggle, setToggle] = useState(false)
+  const [toggle, setToggle] = useState(true);
+  const [thing, setThing] = useState("Option 1");
 
   useEffect(() => {}, []);
 
@@ -41,8 +46,14 @@ function Test({ navigation }) {
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
       <Spacer />
-
-      <CheckboxOne value={toggle} setter={setToggle} text={"Ting of a ting"} />
+      {toggle && <LocalNotification
+        icon="alert-circle-outline"
+        title="Test"
+        message="This is test message of a notification"
+        seconds={4}
+        toggle={setToggle}
+        color={"red"}
+      />}
     </SafeArea>
   );
 }

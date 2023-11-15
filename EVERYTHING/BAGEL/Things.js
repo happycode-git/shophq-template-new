@@ -12,13 +12,15 @@ import {
   Alert,
   ActivityIndicator,
   Image,
+  Pressable,
+  Platform,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraType } from "expo-camera";
 import { Ionicons } from "react-native-vector-icons";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
-import CheckBox from 'expo-checkbox'
+import CheckBox from "expo-checkbox";
 import { initializeApp, setLogLevel } from "firebase/app";
 import {
   initializeAuth,
@@ -143,9 +145,16 @@ export function ButtonOne({
     </TouchableOpacity>
   );
 }
-export function IconButtonOne({ name, size, padding, background, color }) {
+export function IconButtonOne({
+  name,
+  size,
+  padding,
+  background,
+  color,
+  onPress,
+}) {
   return (
-    <View
+    <TouchableOpacity
       style={[
         {
           padding: padding !== undefined ? padding : 10,
@@ -156,9 +165,34 @@ export function IconButtonOne({ name, size, padding, background, color }) {
           alignSelf: "flex-start",
         },
       ]}
+      onPress={onPress}
     >
       <Ionicons name={name} size={size} />
-    </View>
+    </TouchableOpacity>
+  );
+}
+export function IconButtonTwo({ name, size, color, onPress }) {
+  return (
+    <TouchableOpacity
+      style={[
+        {
+          padding: 10,
+          color: color !== undefined ? color : "black",
+        },
+      ]}
+      onPress={onPress}
+    >
+      <Ionicons name={name} size={size} />
+    </TouchableOpacity>
+  );
+}
+export function Icon({ name, size, color }) {
+  return (
+    <Ionicons
+      name={name}
+      size={size}
+      style={[{ color: color !== undefined ? color : "black" }]}
+    />
   );
 }
 export function LinkOne({ children, underlineColor, onPress, styles }) {
@@ -343,11 +377,41 @@ export function CheckboxOne({ value, setter, text }) {
   }
   return (
     <View style={[layout.horizontal]}>
-      <CheckBox
-        value={value}
-        onValueChange={onCheck}
-      />
+      <CheckBox value={value} onValueChange={onCheck} />
       <Text style={[sizes.medium_text]}>{text}</Text>
+    </View>
+  );
+}
+export function SegmentedPicker({ options, value, setter }) {
+  return (
+    <View style={[layout.horizontal]}>
+      {options.map((option, i) => {
+        return (
+          <TouchableOpacity
+            key={i}
+            style={[
+              {
+                paddingVertical: 12,
+                paddingHorizontal: 16,
+                borderRadius: 50,
+                backgroundColor: value === option ? "black" : "rgba(0,0,0,0.2)",
+              },
+            ]}
+            onPress={() => {
+              setter(option);
+            }}
+          >
+            <Text
+              style={[
+                { color: value === option ? "white" : "black" },
+                sizes.medium_text,
+              ]}
+            >
+              {option}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
@@ -622,6 +686,52 @@ export function Map({ coords, delta, height, radius }) {
     </View>
   );
 }
+export function LocalNotification({
+  icon,
+  title,
+  message,
+  color,
+  toggle,
+  seconds,
+}) {
+  useEffect(() => {
+    console.log("NOTIFICATION")
+    setTimeout(() => {
+      toggle(false);
+      console.log("NOTIFICATION ENDED")
+    }, (seconds * 1000));
+  }, []);
+
+  return (
+    <TouchableOpacity
+      style={[layout.absolute, {top: Platform.OS === "ios" ? 60 : 35, right: 0, left: 0} ]}
+      onPress={() => {
+        toggle(false);
+      }}
+    >
+      <View
+        style={[
+          backgrounds.white,
+          layout.padding,
+          layout.margin,
+          format.radius,
+          layout.horizontal,
+          { 
+            shadowOffset: { width: 2, height: 2 },
+            shadowOpacity: 0,
+            
+          },
+        ]}
+      >
+        <Icon name={icon} size={35} color={color} />
+        <View>
+          <Text style={[format.bold, sizes.small_text]}>{title}</Text>
+          <Text style={[sizes.small_text]}>{message}</Text>
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+}
 // FUNCTIONS
 export async function function_PickImage(setLoading, setImage) {
   // No permissions request is necessary for launching the image library
@@ -675,6 +785,12 @@ export const format = StyleSheet.create({
   bold: {
     fontWeight: "bold",
   },
+  radius: {
+    borderRadius: 10,
+  },
+  radius_full: {
+    borderRadius: 100,
+  },
 });
 export const sizes = StyleSheet.create({
   xsmall_text: {
@@ -716,8 +832,8 @@ export const layout = StyleSheet.create({
   },
   horizontal: {
     flexDirection: "row",
-    gap: 14,
-    alignItems: "center"
+    gap: 8,
+    alignItems: "center",
   },
   vertical: {
     flexDirection: "column",
@@ -726,7 +842,7 @@ export const layout = StyleSheet.create({
   separate_horizontal: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
   },
   separate_vertical: {
     flexDirection: "column",
@@ -746,7 +862,7 @@ export const layout = StyleSheet.create({
     height: height,
   },
   full_width: {
-    width: width,
+    flex: 1,
   },
   fit_height: {
     alignItems: "flex-start",
