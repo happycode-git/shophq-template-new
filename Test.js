@@ -45,6 +45,7 @@ function Test({ navigation }) {
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
       <Spacer />
+      
     </SafeArea>
   );
 }

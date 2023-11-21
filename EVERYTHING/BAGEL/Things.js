@@ -31,6 +31,7 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signOut,
+  createUserWithEmailAndPassword,
 } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -943,10 +944,11 @@ export const layout = StyleSheet.create({
     bottom: 0,
   },
   full_height: {
-    height: height,
+    flex: 1,
   },
   full_width: {
     flex: 1,
+    flexDirection: "row",
   },
   fit_height: {
     alignItems: "flex-start",
@@ -1019,6 +1021,7 @@ export function auth_IsUserSignedIn(
       const uid = user.uid;
       myID = uid;
       firebase_UpdateToken(myToken);
+      firebase_GetMe(uid);
       setLoading(false);
       navigation.navigate(ifLoggedIn);
     } else {
@@ -1035,6 +1038,7 @@ export function auth_SignIn(setLoading, email, password) {
       const user = userCredential.user;
       const userID = user.uid;
       firebase_UpdateToken(myToken);
+      firebase_GetMe(userID);
       console.log(userID);
       setLoading(false);
       // ...
@@ -1058,6 +1062,47 @@ export function auth_SignOut(setLoading, navigation, redirect) {
       setLoading(false);
       Alert.alert("Error", "There was an issue. Check your connection.");
     });
+}
+export function auth_CreateUser(setLoading, email, password, args, navigation, redirect) {
+  createUserWithEmailAndPassword(auth, email, password)
+    .then((userCredential) => {
+      // Signed up
+      const user = userCredential.user;
+      const uid = user.uid;
+      myID = uid;
+      firebase_UpdateToken(myToken);
+      firebase_CreateUser(args, uid)
+      .then(() => {
+        setLoading(false)
+        navigation.navigate(redirect)
+      })
+      // ...
+    })
+    .catch((error) => {
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      Alert.alert("Try Again", errorMessage);
+      setLoading(false);
+      // ..
+    });
+}
+export async function firebase_CreateUser(args, uid) {
+  await setDoc(doc(db, "Users", uid), args);
+}
+export async function firebase_GetMe(uid) {
+  const docRef = doc(db, "Users", uid);
+  const docSnap = await getDoc(docRef);
+
+  if (docSnap.exists()) {
+    const user = {
+      id: docSnap.id,
+      ...docSnap.data(),
+    };
+    me = user;
+  } else {
+    // docSnap.data() will be undefined in this case
+    console.log("No such document!");
+  }
 }
 export async function firebase_GetDocument(
   setLoading,
@@ -1112,6 +1157,9 @@ export async function firebase_GetAllDocumentsListener(
     setter(things);
     setLoading(false);
   });
+}
+export async function firebase_CreateDocument(args, table, documentID) {
+  await setDoc(doc(db, table, documentID), args);
 }
 export async function firebase_UpdateDocument(
   setLoading,

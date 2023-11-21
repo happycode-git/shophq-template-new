@@ -63,6 +63,12 @@ const [state, setState] = useState("Initial Value")
 setState("New Value")
 -----
 
+------ ASYNC
+.then(() => {
+  // Do stuff once the function is finished. This only applies to async functions.
+})
+------
+
 PLUGINS -
 ImagePicker -----
 "expo": {
@@ -194,16 +200,26 @@ colors ->
 
 backgrounds ->
     white, 
-    black
+    black,
+    shadow
 
 FIREBASE -
+// Get from Firebase Console
+// https://console.firebase.google.com/u/0/
+const firebaseConfig = {}
+
 auth_IsUserSignedIn(setLoading, navigation, ifLoggedIn, ifNotLoggedIn)
 auth_SignIn(setLoading, email, password)
 auth_SignOut(setLoading, navigation, redirect)
 auth_SignOut(setLoading, navigation, redirect)
+auth_CreateUser(setLoading, email, password, args, navigation, redirect)
 
+firebase_CreateUser(args, uid)
 firebase_GetDocument(setLoading, table, documentID, setter)
 firebase_GetAllDocuments(setLoading, table, setter)
 firebase_GetAllDocumentsListener(setLoading, table, setter)
+firebase_CreateDocument(args, table, documentID)
 firebase_UpdateDocument(setLoading, table, documentID, args)
 firebase_DeleteDocument(setLoading, table, documentID)
+firebase_UpdateToken(token)
+storage_UploadImage(setLoading, image, path)
