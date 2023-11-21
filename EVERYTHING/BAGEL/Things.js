@@ -21,6 +21,9 @@ import { Ionicons } from "react-native-vector-icons";
 import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import CheckBox from "expo-checkbox";
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import Constants from "expo-constants";
 import { initializeApp, setLogLevel } from "firebase/app";
 import {
   initializeAuth,
@@ -64,6 +67,10 @@ export function randomString(length) {
   }
   return result;
 }
+export const c_projectID = "e4044789-90d5-4a16-829a-79b8868a1a43";
+export var me = {};
+export var myID = "test";
+export var myToken = "";
 
 // COMPONENTS
 export function SafeArea({ statusBar, loading, children, styles }) {
@@ -95,6 +102,28 @@ export function SplitView({ children, leftSize, rightSize, styles }) {
     >
       <View style={[{ flex: leftSize }]}>{left}</View>
       <View style={[{ flex: rightSize }]}>{right}</View>
+    </View>
+  );
+}
+export function Grid({ columns, children, styles }) {
+  const childrenArray = React.Children.toArray(children);
+  const rows = Math.ceil(childrenArray.length / columns);
+
+  return (
+    <View
+      style={[{ flex: 1, flexDirection: "column", flexWrap: "wrap" }, styles]}
+    >
+      {Array.from({ length: rows }).map((_, rowIndex) => (
+        <View key={rowIndex} style={{ flexDirection: "row" }}>
+          {childrenArray
+            .slice(rowIndex * columns, (rowIndex + 1) * columns)
+            .map((child, colIndex) => (
+              <View key={colIndex} style={[{ flex: 1 / columns }]}>
+                {child}
+              </View>
+            ))}
+        </View>
+      ))}
     </View>
   );
 }
@@ -152,6 +181,7 @@ export function IconButtonOne({
   background,
   color,
   onPress,
+  styles,
 }) {
   return (
     <TouchableOpacity
@@ -171,7 +201,7 @@ export function IconButtonOne({
     </TouchableOpacity>
   );
 }
-export function IconButtonTwo({ name, size, color, onPress }) {
+export function IconButtonTwo({ name, size, color, onPress, styles }) {
   return (
     <TouchableOpacity
       style={[
@@ -179,6 +209,7 @@ export function IconButtonTwo({ name, size, color, onPress }) {
           padding: 10,
           color: color !== undefined ? color : "black",
         },
+        styles,
       ]}
       onPress={onPress}
     >
@@ -186,12 +217,12 @@ export function IconButtonTwo({ name, size, color, onPress }) {
     </TouchableOpacity>
   );
 }
-export function Icon({ name, size, color }) {
+export function Icon({ name, size, color, styles }) {
   return (
     <Ionicons
       name={name}
       size={size}
-      style={[{ color: color !== undefined ? color : "black" }]}
+      style={[{ color: color !== undefined ? color : "black" }, styles]}
     />
   );
 }
@@ -691,22 +722,25 @@ export function LocalNotification({
   title,
   message,
   color,
-  toggle,
+  setToggle,
   seconds,
 }) {
   useEffect(() => {
-    console.log("NOTIFICATION")
+    console.log("NOTIFICATION");
     setTimeout(() => {
-      toggle(false);
-      console.log("NOTIFICATION ENDED")
-    }, (seconds * 1000));
+      setToggle(false);
+      console.log("NOTIFICATION ENDED");
+    }, seconds * 1000);
   }, []);
 
   return (
     <TouchableOpacity
-      style={[layout.absolute, {top: Platform.OS === "ios" ? 60 : 35, right: 0, left: 0} ]}
+      style={[
+        layout.absolute,
+        { top: Platform.OS === "ios" ? 60 : 35, right: 0, left: 0 },
+      ]}
       onPress={() => {
-        toggle(false);
+        setToggle(false);
       }}
     >
       <View
@@ -716,14 +750,20 @@ export function LocalNotification({
           layout.margin,
           format.radius,
           layout.horizontal,
-          { 
+          {
+            elevation: 5, // Android shadow
+            shadowColor: "rgba(0,0,0,0.3)",
             shadowOffset: { width: 2, height: 2 },
-            shadowOpacity: 0,
-            
+            shadowOpacity: 0.3,
+            shadowRadius: 5,
           },
         ]}
       >
-        <Icon name={icon} size={35} color={color} />
+        <Icon
+          name={icon !== undefined ? icon : "close-outline"}
+          size={35}
+          color={color}
+        />
         <View>
           <Text style={[format.bold, sizes.small_text]}>{title}</Text>
           <Text style={[sizes.small_text]}>{message}</Text>
@@ -769,6 +809,50 @@ export async function function_GetLocation(setLoading, setLocation) {
     console.error("Error getting location:", error);
     setLoading(false);
   }
+}
+export async function function_NotificationsSetup() {
+  const { status } = await Notifications.getPermissionsAsync();
+  let finalStatus = status;
+
+  if (finalStatus !== "granted") {
+    const { status } = await Notifications.requestPermissionsAsync();
+    finalStatus = status;
+  }
+
+  if (finalStatus !== "granted") {
+    Alert.alert(
+      "Permission Required",
+      "Push notifications need the appropriate permissions."
+    );
+    return;
+  }
+
+  const pushTokenData = await Notifications.getExpoPushTokenAsync({
+    projectId: c_projectID,
+  });
+  console.log(pushTokenData);
+  firebase_UpdateToken(pushTokenData.data);
+  myToken = pushTokenData.data;
+
+  if (Platform.OS === "android") {
+    Notifications.setNotificationChannelAsync("default", {
+      name: "default",
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+  }
+}
+export function sendPushNotification(token, title, body) {
+  fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      to: token,
+      title: title,
+      body: body,
+    }),
+  });
 }
 
 // STYLES
@@ -896,6 +980,13 @@ export const backgrounds = StyleSheet.create({
   white: {
     backgroundColor: "white",
   },
+  shadow: {
+    elevation: 4, // Android shadow
+    shadowColor: "rgba(0,0,0,0.3)",
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
 });
 
 // AUTH
@@ -926,6 +1017,8 @@ export function auth_IsUserSignedIn(
   onAuthStateChanged(auth, (user) => {
     if (user) {
       const uid = user.uid;
+      myID = uid;
+      firebase_UpdateToken(myToken);
       setLoading(false);
       navigation.navigate(ifLoggedIn);
     } else {
@@ -941,6 +1034,7 @@ export function auth_SignIn(setLoading, email, password) {
       // Signed in
       const user = userCredential.user;
       const userID = user.uid;
+      firebase_UpdateToken(myToken);
       console.log(userID);
       setLoading(false);
       // ...
@@ -1032,6 +1126,14 @@ export async function firebase_UpdateDocument(
 export async function firebase_DeleteDocument(setLoading, table, documentID) {
   await deleteDoc(doc(db, table, documentID));
   setLoading(false);
+}
+export async function firebase_UpdateToken(token) {
+  const washingtonRef = doc(db, "Users", myID);
+
+  // Set the "capital" field of the city 'DC'
+  await updateDoc(washingtonRef, {
+    Token: token,
+  });
 }
 export async function storage_UploadImage(setLoading, image, path) {
   setLoading(true);

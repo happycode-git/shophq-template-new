@@ -1,10 +1,11 @@
-import { Image, Text, View } from "react-native";
+import { Alert, Image, Text, View } from "react-native";
 import {
   AsyncImage,
   ButtonOne,
   CameraPicker,
   CheckboxOne,
   DropdownOne,
+  Grid,
   Icon,
   IconButtonOne,
   IconButtonTwo,
@@ -20,6 +21,7 @@ import {
   auth_IsUserSignedIn,
   auth_SignIn,
   auth_SignOut,
+  backgrounds,
   colors,
   firebase_DeleteDocument,
   firebase_GetAllDocuments,
@@ -38,22 +40,11 @@ import { useEffect, useState } from "react";
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [toggle, setToggle] = useState(true);
-  const [thing, setThing] = useState("Option 1");
-
-  useEffect(() => {}, []);
 
   return (
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
       <Spacer />
-      {toggle && <LocalNotification
-        icon="alert-circle-outline"
-        title="Test"
-        message="This is test message of a notification"
-        seconds={4}
-        toggle={setToggle}
-        color={"red"}
-      />}
     </SafeArea>
   );
 }

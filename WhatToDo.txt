@@ -6,6 +6,13 @@ npm start
 i - for iphone
 a - dor android
 
+INITIAL -
+npm install
+npm install -g expo-cli
+
+START -
+npm start
+
 INSTALLS - 
 npm install firebase
 sudo npm install -g firebase-tools
@@ -14,13 +21,47 @@ npx expo install react-native-screens react-native-safe-area-context
 npm install react-native-screens react-native-safe-area-context
 npm install @react-navigation/native-stack
 npm i react-native-vector-icons
-npx expo install expo-notifications
+npx expo install expo-notifications expo-device expo-constants
 npm i @react-native-async-storage/async-storage
 npx expo install expo-image-picker
 npx expo install expo-camera
 npx expo install expo-location
 npx expo install react-native-maps
 npx expo install expo-checkbox
+
+SYNTAX -
+------ JSX
+<Text>
+  Put stuff here
+</Text>
+
+<View style={[insert styles here]}>
+  Other components here
+</View>
+
+<Image source={require("./EVERYTHING/PHOTOS/icon.png")} />
+
+------ STYLES
+layout.separate_horizontal
+format.center_text
+colors.white
+sizes.small_text
+backgrounds.black
+
+------ FUNCTIONS
+function functionName() {
+  // Do something here
+  console.log("You just ran a function!")
+}
+functionName()
+
+------ VARIABLES
+const variableName = "variable value";
+
+------ STATE
+const [state, setState] = useState("Initial Value")
+setState("New Value")
+-----
 
 PLUGINS -
 ImagePicker -----
@@ -63,18 +104,26 @@ Location -----
 VARIABLES -
 height, width
 randomString(length)
+c_projectID
+me, myID, myToken
 
 LAYOUT -
 SafeArea -> { statusBar, loading, children, styles }
 SplitView -> { children, leftSize, rightSize, styles }
+Grid -> { columns, children, styles }
 Spacer -> { height }
 Loading -> { }
 
 CONTROLS -
+Example:
+<ButtonOne backgroundColor={"#ff0000"} radius={15} onPress={functionName} styles={[layout.padding]}>
+  <Text style={[format.center_text, sizes.medium_text, colors.white]}>Press Me</Text>
+</ButtonOne>
+
 ButtonOne -> { children, backgroundColor, radius, onPress, styles }
-IconButtonOne -> { name, size, padding, background, color, onPress }
-IconButtonTwo -> {name, size, color, onPress}
-Icon -> { name, size, color }
+IconButtonOne -> { name, size, padding, background, color, onPress, styles }
+IconButtonTwo -> {name, size, color, onPress, styles}
+Icon -> { name, size, color, styles }
 LinkOne -> { children, underlineColor, onPress, styles }
 TextFieldOne -> { placeholder, textSize, onTyping, value, styles }
     const [thing, setThing] = useState("");
@@ -92,10 +141,13 @@ SegmentedPicker => { options, value, setter }
 CameraPicker -> { setToggle, setLoading, setImage }
 AsyncImage -> { path, width, height, radius }
 Map -> { coords, delta, height, radius }
+LocalNotification -> { icon, title, message, color, setToggle, seconds }
 
 FUNCTIONS -> 
 function_PickImage(setLoading, setImage)
 function_GetLocation(setLoading, setLocation)
+function_NotificationsSetup()
+sendPushNotificationHandler(token, title, body)
 
 STYLES - 
 layout ->
