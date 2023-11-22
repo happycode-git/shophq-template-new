@@ -1,6 +1,6 @@
 // #region IMPORTS
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   TouchableOpacity,
   View,
@@ -12,9 +12,10 @@ import {
   Alert,
   ActivityIndicator,
   Image,
-  Pressable,
   Platform,
+  Button,
 } from "react-native";
+import Slider from "@react-native-community/slider";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraType } from "expo-camera";
 import { Ionicons } from "react-native-vector-icons";
@@ -22,9 +23,8 @@ import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import CheckBox from "expo-checkbox";
 import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
-import Constants from "expo-constants";
-import { initializeApp, setLogLevel } from "firebase/app";
+import { Audio, Video, ResizeMode } from "expo-av";
+import { initializeApp } from "firebase/app";
 import {
   initializeAuth,
   getReactNativePersistence,
@@ -38,7 +38,6 @@ import {
   getDownloadURL,
   getStorage,
   ref,
-  uploadBytes,
   uploadBytesResumable,
 } from "firebase/storage";
 import {
@@ -207,7 +206,6 @@ export function IconButtonTwo({ name, size, color, onPress, styles }) {
     <TouchableOpacity
       style={[
         {
-          padding: 10,
           color: color !== undefined ? color : "black",
         },
         styles,
@@ -727,7 +725,7 @@ export function LocalNotification({
   seconds,
 }) {
   useEffect(() => {
-    console.log("NOTIFICATION");
+    console.log("NOTIFICATION START");
     setTimeout(() => {
       setToggle(false);
       console.log("NOTIFICATION ENDED");
@@ -771,6 +769,220 @@ export function LocalNotification({
         </View>
       </View>
     </TouchableOpacity>
+  );
+}
+export function PlayAudio({ audioName, audioPath }) {
+  const [sound, setSound] = useState();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const path = audioPath || require("../../assets/AUDIO/sample.mp3");
+  function formatTime(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  }
+  async function playPauseSound() {
+    if (sound) {
+      if (isPlaying) {
+        console.log("Pausing Sound");
+        await sound.pauseAsync();
+      } else {
+        console.log("Resuming Sound");
+        await sound.playAsync();
+      }
+      setIsPlaying(!isPlaying);
+    } else {
+      console.log("Loading Sound");
+      const { sound, status } = await Audio.Sound.createAsync(path, {
+        shouldPlay: true,
+      });
+
+      setSound(sound);
+      setIsPlaying(true);
+      console.log("Playing Sound");
+
+      // Update the duration of the audio
+      setDuration(status.durationMillis);
+
+      // Set up a periodic callback to update the position of the slider
+      sound.setOnPlaybackStatusUpdate((status) => {
+        setPosition(status.positionMillis);
+
+        // Check if audio has finished playing
+        if (status.didJustFinish) {
+          // Reset position to the beginning
+          sound.setPositionAsync(0);
+          setPosition(0);
+          setIsPlaying(false);
+        }
+      });
+    }
+  }
+  async function stopSound() {
+    if (sound) {
+      console.log("Stopping Sound");
+      await sound.stopAsync();
+      // Reset position to the beginning
+      sound.setPositionAsync(0);
+      setPosition(0);
+      setIsPlaying(false);
+    }
+  }
+  useEffect(() => {
+    return () => {
+      if (sound) {
+        console.log("Unloading Sound");
+        sound.unloadAsync();
+      }
+    };
+  }, [sound]);
+  const onSliderValueChange = (value) => {
+    if (sound) {
+      sound.setPositionAsync(value);
+      setPosition(value);
+    }
+  };
+
+  return (
+    <View
+      style={[
+        layout.padding,
+        backgrounds.shadow,
+        backgrounds.white,
+        format.radius,
+      ]}
+    >
+      <View style={[layout.horizontal]}>
+        <IconButtonTwo
+          name={isPlaying ? "pause" : "play"}
+          onPress={playPauseSound}
+          size={30}
+        />
+        <IconButtonTwo name="stop" onPress={stopSound} size={30} />
+        <Text style={[sizes.medium_text]}>{audioName}</Text>
+      </View>
+      <View style={[layout.horizontal]}>
+        <Slider
+          style={{ width: "75%", height: 10 }}
+          minimumValue={0}
+          maximumValue={duration}
+          value={position}
+          onValueChange={onSliderValueChange}
+          minimumTrackTintColor="black"
+        />
+        <Text>{`${formatTime(position)} / ${formatTime(duration)}`}</Text>
+      </View>
+    </View>
+  );
+}
+export function VideoPlayer({ videoPath, radius }) {
+  const video = useRef(null);
+  const [status, setStatus] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [position, setPosition] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  const handleLoadStart = () => {
+    setIsLoading(true);
+  };
+
+  const handleLoad = async (loadStatus) => {
+    setIsLoading(false);
+    setStatus(loadStatus);
+    setDuration(loadStatus.durationMillis);
+  };
+
+  const seekBackward = async () => {
+    if (video.current) {
+      const newPosition = Math.max(0, status.positionMillis - 10000); // Go back 10 seconds
+      await video.current.setPositionAsync(newPosition);
+    }
+  };
+
+  const seekForward = async () => {
+    if (video.current) {
+      const newPosition = Math.min(
+        status.durationMillis,
+        status.positionMillis + 10000
+      ); // Go forward 10 seconds
+      await video.current.setPositionAsync(newPosition);
+    }
+  };
+
+  const onSliderValueChange = (value) => {
+    if (video.current) {
+      setPosition(value);
+    }
+  };
+
+  const onSlidingComplete = async (value) => {
+    if (video.current) {
+      await video.current.setPositionAsync(value);
+    }
+  };
+
+  function formatTime(milliseconds) {
+    const totalSeconds = Math.floor(milliseconds / 1000);
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  }
+
+  useEffect(() => {
+    console.log("Video Path:", videoPath);
+
+    const loadVideo = async () => {
+      try {
+        if (typeof videoPath === 'string') {
+          // If videoPath is a string, assume it's a URI
+          await video.current.loadAsync({ uri: videoPath }, {}, false);
+        } else {
+          // If videoPath is not a string, assume it's a local require statement
+          await video.current.loadAsync(videoPath, {}, false);
+        }
+      } catch (error) {
+        console.error('Error loading video:', error);
+      }
+    };
+
+    loadVideo();
+  }, [videoPath]);
+
+  return (
+    <View>
+      <Video
+        style={{ height: "auto", aspectRatio: 16 / 9, borderRadius: radius !== undefined ? radius : 10 }}
+        ref={video}
+        useNativeControls
+        resizeMode={ResizeMode.CONTAIN}
+        isLooping
+        onPlaybackStatusUpdate={(newStatus) => {
+          setStatus(newStatus);
+          setPosition(newStatus.positionMillis);
+        }}
+        onLoadStart={handleLoadStart}
+        onLoad={handleLoad}
+      />
+      {isLoading && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: "rgba(0,0,0,0.3)",
+            borderRadius: 10
+          }}
+        >
+          <ActivityIndicator size="large" color="white" />
+        </View>
+      )}
+    </View>
   );
 }
 // FUNCTIONS
@@ -1063,7 +1275,14 @@ export function auth_SignOut(setLoading, navigation, redirect) {
       Alert.alert("Error", "There was an issue. Check your connection.");
     });
 }
-export function auth_CreateUser(setLoading, email, password, args, navigation, redirect) {
+export function auth_CreateUser(
+  setLoading,
+  email,
+  password,
+  args,
+  navigation,
+  redirect
+) {
   createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       // Signed up
@@ -1071,11 +1290,10 @@ export function auth_CreateUser(setLoading, email, password, args, navigation, r
       const uid = user.uid;
       myID = uid;
       firebase_UpdateToken(myToken);
-      firebase_CreateUser(args, uid)
-      .then(() => {
-        setLoading(false)
-        navigation.navigate(redirect)
-      })
+      firebase_CreateUser(args, uid).then(() => {
+        setLoading(false);
+        navigation.navigate(redirect);
+      });
       // ...
     })
     .catch((error) => {
