@@ -771,7 +771,7 @@ export function LocalNotification({
     </TouchableOpacity>
   );
 }
-export function PlayAudio({ audioName, audioPath }) {
+export function AudioPlayer({ audioName, audioPath }) {
   const [sound, setSound] = useState();
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
@@ -985,6 +985,7 @@ export function VideoPlayer({ videoPath, radius }) {
     </View>
   );
 }
+
 // FUNCTIONS
 export async function function_PickImage(setLoading, setImage) {
   // No permissions request is necessary for launching the image library

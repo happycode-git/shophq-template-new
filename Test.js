@@ -1,6 +1,7 @@
 import { Alert, Image, Text, View } from "react-native";
 import {
   AsyncImage,
+  AudioPlayer,
   ButtonOne,
   CameraPicker,
   CheckboxOne,
@@ -13,6 +14,7 @@ import {
   LocalNotification,
   Map,
   PlayButton,
+  RecordingButton,
   SafeArea,
   SegmentedPicker,
   Spacer,
@@ -44,6 +46,7 @@ import { useEffect, useState } from "react";
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [toggle, setToggle] = useState(true);
+  const [sound, setSound] = useState("")
 
 
   useEffect(() => {
@@ -55,8 +58,6 @@ function Test({ navigation }) {
       {/* TESTING AREA */}
       <Spacer />
       
-      <VideoPlayer videoPath={require("./assets/VIDEOS/movie.mp4")} radius={10} />
-
     </SafeArea>
   );
 }

@@ -150,6 +150,8 @@ CameraPicker -> { setToggle, setLoading, setImage }
 AsyncImage -> { path, width, height, radius }
 Map -> { coords, delta, height, radius }
 LocalNotification -> { icon, title, message, color, setToggle, seconds }
+AudioPlayer -> { audioName, audioPath }
+VideoPlayer -> { videoPath, radius }
 
 FUNCTIONS -> 
 function_PickImage(setLoading, setImage)
