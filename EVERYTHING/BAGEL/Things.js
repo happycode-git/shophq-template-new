@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
   Image,
   Platform,
-  Button,
+  Linking,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import * as ImagePicker from "expo-image-picker";
@@ -48,8 +48,11 @@ import {
   getDocs,
   getFirestore,
   onSnapshot,
+  orderBy,
   query,
   updateDoc,
+  limit,
+  setDoc,
 } from "firebase/firestore";
 // #endregion
 
@@ -96,7 +99,7 @@ export function SplitView({ children, leftSize, rightSize, styles }) {
   return (
     <View
       style={[
-        { flex: 1, flexDirection: "row", alignItems: "flex-start" },
+        { flexDirection: "row", alignItems: "flex-start", gap: 10 },
         styles,
       ]}
     >
@@ -190,29 +193,33 @@ export function IconButtonOne({
           padding: padding !== undefined ? padding : 10,
           backgroundColor:
             background !== undefined ? background : "rgba(0,0,0,0.2)",
-          color: color !== undefined ? color : "black",
           borderRadius: 100,
           alignSelf: "flex-start",
-        },
-      ]}
-      onPress={onPress}
-    >
-      <Ionicons name={name} size={size} />
-    </TouchableOpacity>
-  );
-}
-export function IconButtonTwo({ name, size, color, onPress, styles }) {
-  return (
-    <TouchableOpacity
-      style={[
-        {
-          color: color !== undefined ? color : "black",
         },
         styles,
       ]}
       onPress={onPress}
     >
-      <Ionicons name={name} size={size} />
+      <Ionicons
+        name={name}
+        size={size}
+        style={[{ color: color !== undefined ? color : "black" }]}
+      />
+    </TouchableOpacity>
+  );
+}
+export function IconButtonTwo({ name, size, color, onPress, styles }) {
+  return (
+    <TouchableOpacity style={[styles]} onPress={onPress}>
+      <Ionicons
+        name={name}
+        size={size}
+        style={[
+          {
+            color: color !== undefined ? color : "black",
+          },
+        ]}
+      />
     </TouchableOpacity>
   );
 }
@@ -927,7 +934,7 @@ export function VideoPlayer({ videoPath, radius }) {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
   }
 
   useEffect(() => {
@@ -935,7 +942,7 @@ export function VideoPlayer({ videoPath, radius }) {
 
     const loadVideo = async () => {
       try {
-        if (typeof videoPath === 'string') {
+        if (typeof videoPath === "string") {
           // If videoPath is a string, assume it's a URI
           await video.current.loadAsync({ uri: videoPath }, {}, false);
         } else {
@@ -943,7 +950,7 @@ export function VideoPlayer({ videoPath, radius }) {
           await video.current.loadAsync(videoPath, {}, false);
         }
       } catch (error) {
-        console.error('Error loading video:', error);
+        console.error("Error loading video:", error);
       }
     };
 
@@ -953,7 +960,11 @@ export function VideoPlayer({ videoPath, radius }) {
   return (
     <View>
       <Video
-        style={{ height: "auto", aspectRatio: 16 / 9, borderRadius: radius !== undefined ? radius : 10 }}
+        style={{
+          height: "auto",
+          aspectRatio: 16 / 9,
+          borderRadius: radius !== undefined ? radius : 10,
+        }}
         ref={video}
         useNativeControls
         resizeMode={ResizeMode.CONTAIN}
@@ -968,15 +979,15 @@ export function VideoPlayer({ videoPath, radius }) {
       {isLoading && (
         <View
           style={{
-            position: 'absolute',
+            position: "absolute",
             top: 0,
             bottom: 0,
             left: 0,
             right: 0,
-            justifyContent: 'center',
-            alignItems: 'center',
+            justifyContent: "center",
+            alignItems: "center",
             backgroundColor: "rgba(0,0,0,0.3)",
-            borderRadius: 10
+            borderRadius: 10,
           }}
         >
           <ActivityIndicator size="large" color="white" />
@@ -1068,6 +1079,15 @@ export function sendPushNotification(token, title, body) {
     }),
   });
 }
+export function function_getDirections(lat, lon) {
+  const destination = `${lat},${lon}`;
+  console.log(destination)
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
+
+  Linking.openURL(url).catch((err) =>
+    console.error('Error opening Google Maps:', err)
+  );
+}
 
 // STYLES
 export const format = StyleSheet.create({
@@ -1125,13 +1145,43 @@ export const layout = StyleSheet.create({
   padding: {
     padding: 14,
   },
+  padding_small: {
+    padding: 6,
+  },
+  padding_vertical: {
+    paddingVertical: 14,
+  },
+  padding_vertical_small: {
+    paddingVertical: 6
+  },
+  padding_horizontal: {
+    paddingHorizontal: 14,
+  },
+  padding_horizontal_small: {
+    paddingHorizontal: 6,
+  },
   margin: {
     margin: 14,
+  },
+  margin_small: {
+    margin: 6,
+  },
+  margin_vertical: {
+    marginVertical: 14,
+  },
+  margin_vertical_small: {
+    marginVertical: 6,
+  },
+  margin_horizontal: {
+    marginHorizontal: 14,
+  },
+  margin_horizontal_small: {
+    marginHorizontal: 6,
   },
   horizontal: {
     flexDirection: "row",
     gap: 8,
-    alignItems: "center",
+    alignItems: "flex-start",
   },
   vertical: {
     flexDirection: "column",
@@ -1145,6 +1195,7 @@ export const layout = StyleSheet.create({
   separate_vertical: {
     flexDirection: "column",
     justifyContent: "space-between",
+    flex: 1,
   },
   relative: {
     position: "relative",
@@ -1244,16 +1295,18 @@ export function auth_IsUserSignedIn(
     }
   });
 }
-export function auth_SignIn(setLoading, email, password) {
+export function auth_SignIn(setLoading, email, password, navigation, redirect) {
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       // Signed in
       const user = userCredential.user;
       const userID = user.uid;
+      myID = userID;
       firebase_UpdateToken(myToken);
       firebase_GetMe(userID);
       console.log(userID);
       setLoading(false);
+      navigation.navigate(redirect);
       // ...
     })
     .catch((error) => {
@@ -1345,9 +1398,47 @@ export async function firebase_GetDocument(
     setLoading(false);
   }
 }
-export async function firebase_GetAllDocuments(setLoading, table, setter) {
-  const querySnapshot = await getDocs(collection(db, table));
+export async function firebase_GetAllDocuments(
+  setLoading,
+  table,
+  setter,
+  docLimit,
+  order,
+  orderField,
+  whereField,
+  whereCondition,
+  whereValue
+) {
+  console.log("GETTING DOCS");
+  const collectionRef = collection(db, table);
+  let queryRef = collectionRef;
+
+  if (docLimit > 0) {
+    if (whereField !== "" && whereField !== null && whereField !== undefined) {
+      queryRef = query(
+        queryRef,
+        where(whereField, whereCondition, whereValue),
+        orderBy(orderField, order),
+        limit(docLimit)
+      );
+    } else {
+      queryRef = query(queryRef, orderBy(orderField, order), limit(docLimit));
+    }
+  } else {
+    if (whereField !== "" && whereField !== null && whereField !== undefined) {
+      queryRef = query(
+        queryRef,
+        where(whereField, whereCondition, whereValue),
+        orderBy(orderField, order)
+      );
+    } else {
+      queryRef = query(queryRef, orderBy(orderField, order));
+    }
+  }
+
+  const querySnapshot = await getDocs(queryRef);
   const things = [];
+
   querySnapshot.forEach((doc) => {
     const thing = {
       id: doc.id,
@@ -1355,16 +1446,49 @@ export async function firebase_GetAllDocuments(setLoading, table, setter) {
     };
     things.push(thing);
   });
+
   setter(things);
   setLoading(false);
 }
-export async function firebase_GetAllDocumentsListener(
+export function firebase_GetAllDocumentsListener(
   setLoading,
   table,
-  setter
+  setter,
+  docLimit,
+  order,
+  orderField,
+  whereField,
+  whereCondition,
+  whereValue
 ) {
-  const q = query(collection(db, table));
-  const _ = onSnapshot(q, (querySnapshot) => {
+  console.log("GETTING DOCS");
+  const collectionRef = collection(db, table);
+  let queryRef = collectionRef;
+
+  if (docLimit > 0) {
+    if (whereField !== "" && whereField !== null && whereField !== undefined) {
+      queryRef = query(
+        queryRef,
+        where(whereField, whereCondition, whereValue),
+        orderBy(orderField, order),
+        limit(docLimit)
+      );
+    } else {
+      queryRef = query(queryRef, orderBy(orderField, order), limit(docLimit));
+    }
+  } else {
+    if (whereField !== "" && whereField !== null && whereField !== undefined) {
+      queryRef = query(
+        queryRef,
+        where(whereField, whereCondition, whereValue),
+        orderBy(orderField, order)
+      );
+    } else {
+      queryRef = query(queryRef, orderBy(orderField, order));
+    }
+  }
+
+  const _ = onSnapshot(queryRef, (querySnapshot) => {
     const things = [];
     querySnapshot.forEach((doc) => {
       const thing = {

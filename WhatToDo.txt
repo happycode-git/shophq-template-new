@@ -138,7 +138,7 @@ TextFieldOne -> { placeholder, textSize, onTyping, value, styles }
     function onTypeThing(text) {
         setThing(text);
     }
-TextAreaOne -> { placeholder, textSize, radius, onTyping, isPassword, autoCap, isNum, value, styles, }
+TextAreaOne -> { placeholder, textSize, radius, onTyping, isPassword, autoCap, isNum, value, styles }
     const [thing, setThing] = useState("");
     function onTypeThing(text) {
         setThing(text);
@@ -213,15 +213,14 @@ FIREBASE -
 const firebaseConfig = {}
 
 auth_IsUserSignedIn(setLoading, navigation, ifLoggedIn, ifNotLoggedIn)
-auth_SignIn(setLoading, email, password)
-auth_SignOut(setLoading, navigation, redirect)
+auth_SignIn(setLoading, email, password, navigation, redirect)
 auth_SignOut(setLoading, navigation, redirect)
 auth_CreateUser(setLoading, email, password, args, navigation, redirect)
 
 firebase_CreateUser(args, uid)
 firebase_GetDocument(setLoading, table, documentID, setter)
-firebase_GetAllDocuments(setLoading, table, setter)
-firebase_GetAllDocumentsListener(setLoading, table, setter)
+firebase_GetAllDocuments(setLoading, table, setter, limit, order, orderField, whereField, whereCondition, whereValue)
+firebase_GetAllDocumentsListener(setLoading, table, setter, limit, order, orderField, whereField, whereCondition, whereValue)
 firebase_CreateDocument(args, table, documentID)
 firebase_UpdateDocument(setLoading, table, documentID, args)
 firebase_DeleteDocument(setLoading, table, documentID)

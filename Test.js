@@ -45,9 +45,6 @@ import { useEffect, useState } from "react";
 
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
-  const [toggle, setToggle] = useState(true);
-  const [sound, setSound] = useState("")
-
 
   useEffect(() => {
     
@@ -56,7 +53,6 @@ function Test({ navigation }) {
   return (
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
-      <Spacer />
       
     </SafeArea>
   );
