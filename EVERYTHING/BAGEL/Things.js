@@ -14,6 +14,7 @@ import {
   Image,
   Platform,
   Linking,
+  Animated
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import * as ImagePicker from "expo-image-picker";
@@ -128,6 +129,20 @@ export function Grid({ columns, children, styles }) {
         </View>
       ))}
     </View>
+  );
+}
+export function FadeWrapper({ children, seconds }) {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const milliseconds = seconds * 1000
+    Animated.timing(fadeAnim, { toValue: 1, duration: milliseconds !== undefined ? milliseconds : 2000, useNativeDriver: true }).start();
+  }, [fadeAnim]);
+
+  return (
+    <Animated.View style={[{ opacity: fadeAnim }]}>
+      {children}
+    </Animated.View>
   );
 }
 export function Spacer({ height }) {
@@ -1081,11 +1096,11 @@ export function sendPushNotification(token, title, body) {
 }
 export function function_getDirections(lat, lon) {
   const destination = `${lat},${lon}`;
-  console.log(destination)
+  console.log(destination);
   const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
 
   Linking.openURL(url).catch((err) =>
-    console.error('Error opening Google Maps:', err)
+    console.error("Error opening Google Maps:", err)
   );
 }
 
@@ -1108,6 +1123,9 @@ export const format = StyleSheet.create({
   },
   radius_full: {
     borderRadius: 100,
+  },
+  all_caps: {
+    textTransform: "uppercase",
   },
 });
 export const sizes = StyleSheet.create({
@@ -1152,7 +1170,7 @@ export const layout = StyleSheet.create({
     paddingVertical: 14,
   },
   padding_vertical_small: {
-    paddingVertical: 6
+    paddingVertical: 6,
   },
   padding_horizontal: {
     paddingHorizontal: 14,

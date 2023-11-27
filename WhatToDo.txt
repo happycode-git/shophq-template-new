@@ -119,6 +119,7 @@ LAYOUT -
 SafeArea -> { statusBar, loading, children, styles }
 SplitView -> { children, leftSize, rightSize, styles }
 Grid -> { columns, children, styles }
+FadeWrapper -> { children, seconds }
 Spacer -> { height }
 Loading -> { }
 
@@ -187,7 +188,8 @@ format ->
     left_text, 
     bold,
     radius,
-    radius_full
+    radius_full,
+    all_caps
 
 sizes ->
     xsmall_text, 
