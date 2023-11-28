@@ -149,7 +149,7 @@ CheckboxOne -> { value, setter, text }
 SegmentedPicker => { options, value, setter }
 CameraPicker -> { setToggle, setLoading, setImage }
 AsyncImage -> { path, width, height, radius }
-Map -> { coords, delta, height, radius }
+Map -> { coords, delta, height, radius, scrollEnabled }
 LocalNotification -> { icon, title, message, color, setToggle, seconds }
 AudioPlayer -> { audioName, audioPath }
 VideoPlayer -> { videoPath, radius }

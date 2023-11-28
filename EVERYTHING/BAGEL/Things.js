@@ -688,7 +688,7 @@ export function AsyncImage({ path, width, height, radius }) {
     </View>
   );
 }
-export function Map({ coords, delta, height, radius }) {
+export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
   // Default location for the app's headquarters
   const defaultLocation = {
     latitude: 37.7749, // Default latitude
@@ -701,27 +701,20 @@ export function Map({ coords, delta, height, radius }) {
   }, []);
 
   return (
-    <View style={[{ flex: 1 }]}>
+    <View style={{ flex: 1 }}>
       <MapView
-        style={[
-          {
-            width: "100%",
-            height: height !== undefined ? height : 125,
-            borderRadius: radius !== undefined ? radius : 10,
-          },
-        ]}
+        style={{
+          width: '100%',
+          height: height !== undefined ? height : 125,
+          borderRadius: radius !== undefined ? radius : 10,
+        }}
         region={{
-          latitude:
-            coords.latitude !== undefined
-              ? coords.latitude
-              : defaultLocation.longitude,
-          longitude:
-            coords.longitude !== undefined
-              ? coords.longitude
-              : defaultLocation.longitude,
+          latitude: coords.latitude !== undefined ? coords.latitude : defaultLocation.latitude,
+          longitude: coords.longitude !== undefined ? coords.longitude : defaultLocation.longitude,
           latitudeDelta: delta !== undefined ? delta : 0.005,
           longitudeDelta: delta !== undefined ? delta : 0.005,
         }}
+        scrollEnabled={scrollEnabled}
       >
         <Marker
           coordinate={{
@@ -730,8 +723,8 @@ export function Map({ coords, delta, height, radius }) {
           }}
         >
           <Image
-            source={require("../../assets/marker.png")}
-            style={[{ width: 40, height: 40 }]}
+            source={require('../../assets/marker.png')}
+            style={{ width: 40, height: 40 }}
           />
         </Marker>
       </MapView>
