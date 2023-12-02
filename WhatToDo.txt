@@ -30,6 +30,7 @@ npx expo install react-native-maps
 npx expo install expo-checkbox
 npx expo install expo-av
 npx expo install expo-asset
+npx expo install @react-native-community/datetimepicker
 
 SYNTAX -
 ------ JSX
@@ -113,6 +114,7 @@ VARIABLES -
 height, width
 randomString(length)
 c_projectID
+c_googleMapsAPI
 me, myID, myToken
 
 LAYOUT -
@@ -146,19 +148,22 @@ TextAreaOne -> { placeholder, textSize, radius, onTyping, isPassword, autoCap, i
     }
 DropdownOne -> { options, radius, value, setter }
 CheckboxOne -> { value, setter, text }
-SegmentedPicker => { options, value, setter }
+SegmentedPicker => { options, value, setter, backgroundColor }
 CameraPicker -> { setToggle, setLoading, setImage }
 AsyncImage -> { path, width, height, radius }
 Map -> { coords, delta, height, radius, scrollEnabled }
 LocalNotification -> { icon, title, message, color, setToggle, seconds }
 AudioPlayer -> { audioName, audioPath }
 VideoPlayer -> { videoPath, radius }
+DateTime ->{ date, time, setDate, setTime }
 
 FUNCTIONS -> 
 function_PickImage(setLoading, setImage)
 function_GetLocation(setLoading, setLocation)
 function_NotificationsSetup()
 sendPushNotificationHandler(token, title, body)
+function_GetDirections(lat, lon)
+function_AddressToLatLon(address, setter)
 
 STYLES - 
 layout ->

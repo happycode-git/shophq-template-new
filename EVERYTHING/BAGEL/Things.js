@@ -25,6 +25,7 @@ import MapView, { Marker } from "react-native-maps";
 import CheckBox from "expo-checkbox";
 import * as Notifications from "expo-notifications";
 import { Audio, Video, ResizeMode } from "expo-av";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { initializeApp } from "firebase/app";
 import {
   initializeAuth,
@@ -72,6 +73,7 @@ export function randomString(length) {
   return result;
 }
 export const c_projectID = "e4044789-90d5-4a16-829a-79b8868a1a43";
+export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4"
 export var me = {};
 export var myID = "test";
 export var myToken = "";
@@ -434,7 +436,7 @@ export function CheckboxOne({ value, setter, text }) {
     </View>
   );
 }
-export function SegmentedPicker({ options, value, setter }) {
+export function SegmentedPicker({ options, value, setter, backgroundColor }) {
   return (
     <View style={[layout.horizontal]}>
       {options.map((option, i) => {
@@ -446,7 +448,7 @@ export function SegmentedPicker({ options, value, setter }) {
                 paddingVertical: 12,
                 paddingHorizontal: 16,
                 borderRadius: 50,
-                backgroundColor: value === option ? "black" : "rgba(0,0,0,0.2)",
+                backgroundColor: value === option ? (backgroundColor !== undefined ? backgroundColor : "black") : "rgba(0,0,0,0.2)",
               },
             ]}
             onPress={() => {
@@ -696,8 +698,6 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
   };
 
   useEffect(() => {
-    console.log("----------");
-    console.log(coords.latitude);
   }, []);
 
   return (
@@ -1004,6 +1004,46 @@ export function VideoPlayer({ videoPath, radius }) {
     </View>
   );
 }
+export function DateTime({ date, time, setDate, setTime }) {
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setDate(currentDate);
+  };
+
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || time;
+    setTime(currentTime);
+  };
+
+  return (
+    <View
+      style={[
+        layout.horizontal,
+        { backgroundColor: "rgba(0,0,0,0.4)" },
+        format.radius,
+        layout.padding_small,
+        {width: "100%"}
+      ]}
+    >
+      <DateTimePicker
+        testID="datePicker"
+        value={date}
+        mode="date"
+        is24Hour={true}
+        display="calendar"
+        onChange={onDateChange}
+      />
+      <DateTimePicker
+        testID="timePicker"
+        value={time}
+        mode="time"
+        is24Hour={true}
+        display="default"
+        onChange={onTimeChange}
+      />
+    </View>
+  );
+}
 
 // FUNCTIONS
 export async function function_PickImage(setLoading, setImage) {
@@ -1087,7 +1127,7 @@ export function sendPushNotification(token, title, body) {
     }),
   });
 }
-export function function_getDirections(lat, lon) {
+export function function_GetDirections(lat, lon) {
   const destination = `${lat},${lon}`;
   console.log(destination);
   const url = `https://www.google.com/maps/dir/?api=1&destination=${destination}`;
@@ -1095,6 +1135,28 @@ export function function_getDirections(lat, lon) {
   Linking.openURL(url).catch((err) =>
     console.error("Error opening Google Maps:", err)
   );
+}
+export async function function_AddressToLatLon(address, setter) {
+  const apiKey = c_googleMapsAPI; // Replace with your own API key
+  const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+    address
+  )}&key=${apiKey}`;
+
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+
+    if (data.results.length > 0) {
+      const location = data.results[0].geometry.location;
+      const { lat, lng } = location;
+      setter({ latitude: lat, longitude: lng });
+    } else {
+      throw new Error("No results found for the given address.");
+    }
+  } catch (error) {
+    console.error("Error geocoding address:", error.message);
+    throw error;
+  }
 }
 
 // STYLES
