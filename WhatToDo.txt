@@ -124,6 +124,7 @@ Grid -> { columns, children, styles }
 FadeWrapper -> { children, seconds }
 Spacer -> { height }
 Loading -> { }
+RoundedCorners -> { children, topRight, topLeft, bottomRight, bottomLeft, styles }
 
 CONTROLS -
 Example:
@@ -132,8 +133,10 @@ Example:
 </ButtonOne>
 
 ButtonOne -> { children, backgroundColor, radius, onPress, styles }
+ButtonTwo -> { children, borderWidth, borderColor, radius, onPress, styles }
 IconButtonOne -> { name, size, padding, background, color, onPress, styles }
 IconButtonTwo -> {name, size, color, onPress, styles}
+IconButtonThree -> { name, size, color, borderColor, radius, padding, onPress, styles }
 Icon -> { name, size, color, styles }
 LinkOne -> { children, underlineColor, onPress, styles }
 TextFieldOne -> { placeholder, textSize, onTyping, value, styles }

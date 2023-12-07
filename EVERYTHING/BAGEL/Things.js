@@ -14,7 +14,7 @@ import {
   Image,
   Platform,
   Linking,
-  Animated
+  Animated,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import * as ImagePicker from "expo-image-picker";
@@ -25,7 +25,7 @@ import MapView, { Marker } from "react-native-maps";
 import CheckBox from "expo-checkbox";
 import * as Notifications from "expo-notifications";
 import { Audio, Video, ResizeMode } from "expo-av";
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker from "@react-native-community/datetimepicker";
 import { initializeApp } from "firebase/app";
 import {
   initializeAuth,
@@ -73,7 +73,7 @@ export function randomString(length) {
   return result;
 }
 export const c_projectID = "e4044789-90d5-4a16-829a-79b8868a1a43";
-export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4"
+export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4";
 export var me = {};
 export var myID = "test";
 export var myToken = "";
@@ -137,14 +137,16 @@ export function FadeWrapper({ children, seconds }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const milliseconds = seconds * 1000
-    Animated.timing(fadeAnim, { toValue: 1, duration: milliseconds !== undefined ? milliseconds : 2000, useNativeDriver: true }).start();
+    const milliseconds = seconds * 1000;
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: milliseconds !== undefined ? milliseconds : 2000,
+      useNativeDriver: true,
+    }).start();
   }, [fadeAnim]);
 
   return (
-    <Animated.View style={[{ opacity: fadeAnim }]}>
-      {children}
-    </Animated.View>
+    <Animated.View style={[{ opacity: fadeAnim }]}>{children}</Animated.View>
   );
 }
 export function Spacer({ height }) {
@@ -169,6 +171,21 @@ export function Loading() {
     </View>
   );
 }
+export function RoundedCorners({
+  children,
+  topRight = 0,
+  topLeft = 0,
+  bottomRight = 0,
+  bottomLeft = 0,
+  styles,
+}) {
+  return <View style={[styles, {
+    borderTopRightRadius: topRight,
+    borderTopLeftRadius: topLeft,
+    borderBottomRightRadius: bottomRight,
+    borderBottomLeftRadius: bottomLeft
+  }]}>{children}</View>;
+}
 export function ButtonOne({
   children,
   backgroundColor,
@@ -183,6 +200,32 @@ export function ButtonOne({
           {
             backgroundColor:
               backgroundColor !== undefined ? backgroundColor : "black",
+            borderRadius: radius !== undefined ? radius : 6,
+            padding: 14,
+          },
+          styles,
+        ]}
+      >
+        {children}
+      </View>
+    </TouchableOpacity>
+  );
+}
+export function ButtonTwo({
+  children,
+  borderWidth,
+  borderColor,
+  radius,
+  onPress,
+  styles,
+}) {
+  return (
+    <TouchableOpacity onPress={onPress}>
+      <View
+        style={[
+          {
+            borderWidth: borderWidth !== undefined ? borderWidth : 1,
+            borderColor: borderColor !== undefined ? borderColor : "black",
             borderRadius: radius !== undefined ? radius : 6,
             padding: 14,
           },
@@ -236,6 +279,38 @@ export function IconButtonTwo({ name, size, color, onPress, styles }) {
             color: color !== undefined ? color : "black",
           },
         ]}
+      />
+    </TouchableOpacity>
+  );
+}
+export function IconButtonThree({
+  name,
+  size,
+  color,
+  borderColor,
+  radius,
+  padding,
+  onPress,
+  styles,
+}) {
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        styles,
+        {
+          borderWidth: 1,
+          borderColor: borderColor !== undefined ? borderColor : "black",
+          padding: padding !== undefined ? padding : 12,
+          borderRadius: radius !== undefined ? radius : 100,
+          alignSelf: "flex-start",
+        },
+      ]}
+    >
+      <Ionicons
+        name={name}
+        size={size}
+        style={{ color: color !== undefined ? color : "black" }}
       />
     </TouchableOpacity>
   );
@@ -448,7 +523,12 @@ export function SegmentedPicker({ options, value, setter, backgroundColor }) {
                 paddingVertical: 12,
                 paddingHorizontal: 16,
                 borderRadius: 50,
-                backgroundColor: value === option ? (backgroundColor !== undefined ? backgroundColor : "black") : "rgba(0,0,0,0.2)",
+                backgroundColor:
+                  value === option
+                    ? backgroundColor !== undefined
+                      ? backgroundColor
+                      : "black"
+                    : "rgba(0,0,0,0.2)",
               },
             ]}
             onPress={() => {
@@ -697,20 +777,25 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
     longitude: -122.4194, // Default longitude
   };
 
-  useEffect(() => {
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <View style={{ flex: 1 }}>
       <MapView
         style={{
-          width: '100%',
+          width: "100%",
           height: height !== undefined ? height : 125,
           borderRadius: radius !== undefined ? radius : 10,
         }}
         region={{
-          latitude: coords.latitude !== undefined ? coords.latitude : defaultLocation.latitude,
-          longitude: coords.longitude !== undefined ? coords.longitude : defaultLocation.longitude,
+          latitude:
+            coords.latitude !== undefined
+              ? coords.latitude
+              : defaultLocation.latitude,
+          longitude:
+            coords.longitude !== undefined
+              ? coords.longitude
+              : defaultLocation.longitude,
           latitudeDelta: delta !== undefined ? delta : 0.005,
           longitudeDelta: delta !== undefined ? delta : 0.005,
         }}
@@ -723,7 +808,7 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
           }}
         >
           <Image
-            source={require('../../assets/marker.png')}
+            source={require("../../assets/marker.png")}
             style={{ width: 40, height: 40 }}
           />
         </Marker>
@@ -1022,7 +1107,7 @@ export function DateTime({ date, time, setDate, setTime }) {
         { backgroundColor: "rgba(0,0,0,0.4)" },
         format.radius,
         layout.padding_small,
-        {width: "100%"}
+        { width: "100%" },
       ]}
     >
       <DateTimePicker

@@ -3,18 +3,22 @@ import {
   AsyncImage,
   AudioPlayer,
   ButtonOne,
+  ButtonTwo,
   CameraPicker,
   CheckboxOne,
   DropdownOne,
   Grid,
   Icon,
   IconButtonOne,
+  IconButtonThree,
   IconButtonTwo,
   LinkOne,
+  Loading,
   LocalNotification,
   Map,
   PlayButton,
   RecordingButton,
+  RoundedCorners,
   SafeArea,
   SegmentedPicker,
   Spacer,
@@ -53,7 +57,11 @@ function Test({ navigation }) {
   return (
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
-      
+      <RoundedCorners topLeft={30} styles={[backgrounds.black]}>
+        <View style={{padding: 40}}>
+        <Text>Hello!</Text>
+        </View>
+      </RoundedCorners>
     </SafeArea>
   );
 }
