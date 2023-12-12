@@ -15,6 +15,7 @@ import {
   Platform,
   Linking,
   Animated,
+  Easing,
 } from "react-native";
 import Slider from "@react-native-community/slider";
 import * as ImagePicker from "expo-image-picker";
@@ -179,17 +180,58 @@ export function RoundedCorners({
   bottomLeft = 0,
   styles,
 }) {
-  return <View style={[styles, {
-    borderTopRightRadius: topRight,
-    borderTopLeftRadius: topLeft,
-    borderBottomRightRadius: bottomRight,
-    borderBottomLeftRadius: bottomLeft
-  }]}>{children}</View>;
+  return (
+    <View
+      style={[
+        styles,
+        {
+          borderTopRightRadius: topRight,
+          borderTopLeftRadius: topLeft,
+          borderBottomRightRadius: bottomRight,
+          borderBottomLeftRadius: bottomLeft,
+        },
+      ]}
+    >
+      {children}
+    </View>
+  );
+}
+export function PulsingView({ children, speed = 1 }) {
+  const scaleValue = useRef(new Animated.Value(1)).current;
+
+  const pulseAnimation = () => {
+    Animated.sequence([
+      Animated.timing(scaleValue, {
+        toValue: 1.2,
+        duration: 300 / speed, // Adjust duration based on speed
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleValue, {
+        toValue: 1,
+        duration: 300 / speed, // Adjust duration based on speed
+        easing: Easing.inOut(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => pulseAnimation());
+  };
+
+  useEffect(() => {
+    pulseAnimation();
+  }, [speed]);
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleValue }] }}>
+      {children}
+    </Animated.View>
+  );
 }
 export function ButtonOne({
   children,
   backgroundColor,
   radius,
+  padding,
+  width,
   onPress,
   styles,
 }) {
@@ -201,7 +243,8 @@ export function ButtonOne({
             backgroundColor:
               backgroundColor !== undefined ? backgroundColor : "black",
             borderRadius: radius !== undefined ? radius : 6,
-            padding: 14,
+            padding: padding !== undefined ? padding : 14,
+            width: width !== undefined ? width : "100%",
           },
           styles,
         ]}
@@ -216,6 +259,7 @@ export function ButtonTwo({
   borderWidth,
   borderColor,
   radius,
+  padding,
   onPress,
   styles,
 }) {
@@ -227,7 +271,7 @@ export function ButtonTwo({
             borderWidth: borderWidth !== undefined ? borderWidth : 1,
             borderColor: borderColor !== undefined ? borderColor : "black",
             borderRadius: radius !== undefined ? radius : 6,
-            padding: 14,
+            padding: padding !== undefined ? padding : 14,
           },
           styles,
         ]}
@@ -1436,7 +1480,8 @@ export function auth_IsUserSignedIn(
   setLoading,
   navigation,
   ifLoggedIn,
-  ifNotLoggedIn
+  ifNotLoggedIn,
+  params
 ) {
   onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -1445,15 +1490,30 @@ export function auth_IsUserSignedIn(
       firebase_UpdateToken(myToken);
       firebase_GetMe(uid);
       setLoading(false);
-      navigation.navigate(ifLoggedIn);
+      if (params !== null) {
+        navigation.navigate(ifLoggedIn, params);
+      } else {
+        navigation.navigate(ifLoggedIn);
+      }
     } else {
       setLoading(false);
       console.log("USER IS NOT LOGGED IN");
-      navigation.navigate(ifNotLoggedIn);
+      if (params !== null) {
+        navigation.navigate(ifNotLoggedIn, params);
+      } else {
+        navigation.navigate(ifNotLoggedIn);
+      }
     }
   });
 }
-export function auth_SignIn(setLoading, email, password, navigation, redirect) {
+export function auth_SignIn(
+  setLoading,
+  email,
+  password,
+  navigation,
+  params,
+  redirect
+) {
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       // Signed in
@@ -1464,7 +1524,11 @@ export function auth_SignIn(setLoading, email, password, navigation, redirect) {
       firebase_GetMe(userID);
       console.log(userID);
       setLoading(false);
-      navigation.navigate(redirect);
+      if (params !== null) {
+        navigation.navigate(redirect, params);
+      } else {
+        navigation.navigate(redirect);
+      }
       // ...
     })
     .catch((error) => {
@@ -1493,6 +1557,7 @@ export function auth_CreateUser(
   password,
   args,
   navigation,
+  params,
   redirect
 ) {
   createUserWithEmailAndPassword(auth, email, password)
@@ -1504,7 +1569,11 @@ export function auth_CreateUser(
       firebase_UpdateToken(myToken);
       firebase_CreateUser(args, uid).then(() => {
         setLoading(false);
-        navigation.navigate(redirect);
+        if (params !== null) {
+          navigation.navigate(redirect, params);
+        } else {
+          navigation.navigate(redirect);
+        }
       });
       // ...
     })
@@ -1513,6 +1582,19 @@ export function auth_CreateUser(
       const errorMessage = error.message;
       Alert.alert("Try Again", errorMessage);
       setLoading(false);
+      // ..
+    });
+}
+export function auth_ResetPassword(email) {
+  sendPasswordResetEmail(auth, email)
+    .then(() => {
+      // Password reset email sent!
+      // ..
+      Alert.alert("Email Sent","Please check your email for a reset password link.")
+    })
+    .catch((error) => {
+      const errorMessage = error.message;
+      Alert.alert("Error", errorMessage);
       // ..
     });
 }
