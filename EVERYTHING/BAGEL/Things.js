@@ -91,7 +91,13 @@ export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var appName = "Happy Code Dev";
 
 // COMPONENTS
-export function SafeArea({ statusBar, loading, children, styles }) {
+export function SafeArea({
+  statusBar,
+  loading,
+  children,
+  backgroundColor,
+  styles,
+}) {
   return (
     <View
       style={[
@@ -99,6 +105,8 @@ export function SafeArea({ statusBar, loading, children, styles }) {
           flex: 1,
           paddingTop: Platform.OS === "ios" ? 50 : 35,
           paddingBottom: Platform.OS === "ios" ? 35 : 10,
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "white",
         },
         styles,
       ]}
@@ -1254,7 +1262,7 @@ export function PaymentView({ children, showPayButton, total, successFunc }) {
     if (error) {
       Alert.alert(`Error code: ${error.code}`, error.message);
     } else {
-      successFunc()
+      successFunc();
     }
   };
 
@@ -1268,7 +1276,7 @@ export function PaymentView({ children, showPayButton, total, successFunc }) {
       merchantIdentifier={`iicdev.com.${appName}`}
     >
       <View>{children}</View>
-      <View style={[layout.absolute, {bottom: 25, right: 0, left: 0}]}>
+      <View style={[layout.absolute, { bottom: 25, right: 0, left: 0 }]}>
         {showPayButton && stripeLoading && (
           <ButtonOne
             backgroundColor={"#117DFA"}

@@ -50,21 +50,17 @@ import { useEffect, useState } from "react";
 
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
-  const [showPayButton, setShowPayButton] = useState(true);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    
+  }, []);
 
   return (
-    <SafeArea styles={{ padding: 26 }} loading={loading}>
+    <SafeArea loading={loading}>
       {/* TESTING AREA */}
-      <PaymentView
-        showPayButton={showPayButton}
-        successFunc={() => {
-          console.log("PAY");
-        }}
-      >
-        <Text>Hello</Text>
-      </PaymentView>
+      <View>
+        
+      </View>
     </SafeArea>
   );
 }

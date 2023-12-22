@@ -120,6 +120,7 @@ me, myID, myToken
 
 LAYOUT -
 SafeArea -> { statusBar, loading, children, styles }
+SafeArea -> { statusBar, loading, children, backgroundColor, styles }
 SplitView -> { children, leftSize, rightSize, styles }
 Grid -> { columns, children, styles }
 FadeWrapper -> { children, seconds }
