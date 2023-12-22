@@ -31,6 +31,7 @@ npx expo install expo-checkbox
 npx expo install expo-av
 npx expo install expo-asset
 npx expo install @react-native-community/datetimepicker
+npm install stripe --save
 
 SYNTAX -
 ------ JSX
@@ -160,6 +161,7 @@ LocalNotification -> { icon, title, message, color, setToggle, seconds }
 AudioPlayer -> { audioName, audioPath }
 VideoPlayer -> { videoPath, radius }
 DateTime ->{ date, time, setDate, setTime }
+PaymentView -> { children, showPayButton, total, successFunc }
 
 FUNCTIONS -> 
 function_PickImage(setLoading, setImage)

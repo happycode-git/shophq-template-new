@@ -16,6 +16,7 @@ import {
   Loading,
   LocalNotification,
   Map,
+  PaymentView,
   PlayButton,
   RecordingButton,
   RoundedCorners,
@@ -49,19 +50,21 @@ import { useEffect, useState } from "react";
 
 function Test({ navigation }) {
   const [loading, setLoading] = useState(false);
+  const [showPayButton, setShowPayButton] = useState(true);
 
-  useEffect(() => {
-    
-  }, [])
-  
+  useEffect(() => {}, []);
+
   return (
     <SafeArea styles={{ padding: 26 }} loading={loading}>
       {/* TESTING AREA */}
-      <RoundedCorners topLeft={30} styles={[backgrounds.black]}>
-        <View style={{padding: 40}}>
-        <Text>Hello!</Text>
-        </View>
-      </RoundedCorners>
+      <PaymentView
+        showPayButton={showPayButton}
+        successFunc={() => {
+          console.log("PAY");
+        }}
+      >
+        <Text>Hello</Text>
+      </PaymentView>
     </SafeArea>
   );
 }

@@ -57,6 +57,11 @@ import {
   limit,
   setDoc,
 } from "firebase/firestore";
+import {
+  StripeProvider,
+  presentPaymentSheet,
+  usePaymentSheet,
+} from "@stripe/stripe-react-native";
 // #endregion
 
 // CONSTANTS
@@ -78,6 +83,12 @@ export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4";
 export var me = {};
 export var myID = "test";
 export var myToken = "";
+export var stripePublishableKey =
+  "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
+export var serverURL = "https://garnet-private-hisser.glitch.me";
+
+// APP INFO
+export var appName = "Happy Code Dev";
 
 // COMPONENTS
 export function SafeArea({ statusBar, loading, children, styles }) {
@@ -167,6 +178,12 @@ export function Loading() {
       ]}
     >
       <View style={[{ flex: 1 }]}></View>
+      <View style={[layout.center_horizontal, layout.padding]}>
+        <Image
+          source={require("../../assets/logo.png")}
+          style={[{ width: 80, height: 80 }, format.radius]}
+        />
+      </View>
       <ActivityIndicator />
       <View style={[{ flex: 1 }]}></View>
     </View>
@@ -497,50 +514,48 @@ export function TextAreaOne({
     </View>
   );
 }
-export function DropdownOne({ options, radius, value, setter }) {
+export function DropdownOne({ options, radius, value, setter, styles }) {
   const [toggle, setToggle] = useState(false);
   return (
-    <View>
-      <View>
-        <TouchableOpacity
-          onPress={() => {
-            setToggle(!toggle);
-          }}
+    <View style={styles}>
+      <TouchableOpacity
+        onPress={() => {
+          setToggle(!toggle);
+        }}
+      >
+        <View
+          style={[
+            {
+              backgroundColor: "#dae0e3",
+              padding: 14,
+              borderRadius: radius !== undefined ? radius : 10,
+            },
+            layout.separate_horizontal,
+            layout.relative,
+          ]}
         >
-          <View
-            style={[
-              {
-                backgroundColor: "#dae0e3",
-                padding: 14,
-                borderRadius: radius !== undefined ? radius : 10,
-              },
-              layout.separate_horizontal,
-              layout.relative,
-            ]}
-          >
-            <Text style={[sizes.medium_text]}>{value}</Text>
-            <Ionicons name="chevron-down-outline" size={25} />
-          </View>
-        </TouchableOpacity>
-        {toggle && (
-          <View>
-            {options.map((option, i) => {
-              return (
-                <TouchableOpacity
-                  key={i}
-                  style={[{ padding: 14 }]}
-                  onPress={() => {
-                    setter(option);
-                    setToggle(false);
-                  }}
-                >
-                  <Text style={[sizes.medium_text]}>{option}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-        )}
-      </View>
+          <Text style={[sizes.medium_text]}>{value}</Text>
+          <Ionicons name="chevron-down-outline" size={25} />
+        </View>
+      </TouchableOpacity>
+      {toggle && (
+        <View>
+          {options.map((option, i) => {
+            return (
+              <TouchableOpacity
+                key={i}
+                style={[{ padding: 14 }]}
+                onPress={() => {
+                  setter(option);
+                  setToggle(false);
+                }}
+              >
+                <Text style={[sizes.medium_text]}>{option}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
@@ -635,6 +650,7 @@ export function CameraPicker({ setToggle, setLoading, setImage }) {
           layout.absolute,
           layout.full_height,
           layout.full_width,
+          { top: 0, bottom: 0, left: 0, right: 0 },
           backgrounds.white,
           layout.separate_vertical,
         ]}
@@ -648,7 +664,7 @@ export function CameraPicker({ setToggle, setLoading, setImage }) {
             onPress={() => {
               requestPermission();
               console.log("GRANTED");
-              setToggle(true);
+              // setToggle(true);
             }}
           >
             <Text style={[format.center_text, sizes.medium_text, colors.blue]}>
@@ -666,13 +682,14 @@ export function CameraPicker({ setToggle, setLoading, setImage }) {
       style={[
         backgrounds.black,
         layout.absolute,
+        { top: 0, right: 0, left: 0, bottom: 0 },
         layout.full_height,
         layout.full_width,
         { paddingVertical: 55 },
       ]}
     >
       <Camera
-        style={[{ height: "100%" }]}
+        style={[{ height: "100%", width: "100%" }]}
         type={type}
         ref={(ref) => {
           cameraRef.current = ref;
@@ -681,45 +698,46 @@ export function CameraPicker({ setToggle, setLoading, setImage }) {
       >
         <View
           style={[
-            layout.padding,
-            layout.margin,
-            layout.fit_width,
-            { backgroundColor: "rgba(0,0,0,0.6)", borderRadius: 30 },
-          ]}
-        >
-          <TouchableOpacity
-            onPress={() => {
-              setToggle(false);
-            }}
-          >
-            <Text style={[colors.white]}>Close</Text>
-          </TouchableOpacity>
-        </View>
-        <View
-          style={[
             layout.separate_horizontal,
             layout.padding,
             layout.absolute,
-            layout.bottom,
+            { top: 0, right: 0, left: 0, bottom: 0 },
             layout.full_width,
             layout.fit_height,
             layout.align_bottom,
           ]}
         >
-          <TouchableOpacity
-            style={[
-              {
-                backgroundColor: "rgba(0,0,0,0.6)",
-                borderRadius: 30,
-                paddingVertical: 8,
-                paddingHorizontal: 14,
-              },
-              layout.fit_height,
-            ]}
-            onPress={toggleCameraType}
-          >
-            <Text style={[colors.white]}>Flip Camera</Text>
-          </TouchableOpacity>
+          <View style={[layout.separate_horizontal]}>
+            <TouchableOpacity
+              style={[
+                { paddingVertical: 8, paddingHorizontal: 14 },
+                layout.margin,
+                layout.fit_width,
+                { backgroundColor: "rgba(0,0,0,0.6)", borderRadius: 30 },
+              ]}
+              onPress={() => {
+                setToggle(false);
+              }}
+            >
+              <View>
+                <Text style={[colors.white]}>Close</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                {
+                  backgroundColor: "rgba(0,0,0,0.6)",
+                  borderRadius: 30,
+                  paddingVertical: 8,
+                  paddingHorizontal: 14,
+                },
+                layout.fit_height,
+              ]}
+              onPress={toggleCameraType}
+            >
+              <Text style={[colors.white]}>Flip Camera</Text>
+            </TouchableOpacity>
+          </View>
           <TouchableOpacity
             style={[
               {
@@ -1173,6 +1191,100 @@ export function DateTime({ date, time, setDate, setTime }) {
     </View>
   );
 }
+export function PaymentView({ children, showPayButton, total, successFunc }) {
+  const [pi, setPi] = useState("");
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
+  const newTotal = total !== undefined ? total : 1000;
+  //
+  const fetchPaymentSheetParams = async () => {
+    const customerID = me.CustomerID !== undefined ? me.CustomerID : null;
+    const response = await fetch(`${serverURL}/payment-sheet`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customerId: customerID,
+        total: newTotal, // Pass existing CustomerID if available
+      }),
+    });
+
+    const { paymentIntent, ephemeralKey, customer } = await response.json();
+    setPi(`${paymentIntent.split("_")[0]}_${paymentIntent.split("_")[1]}`);
+
+    return {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    };
+  };
+  const initializePaymentSheet = async () => {
+    const { paymentIntent, ephemeralKey, customer } =
+      await fetchPaymentSheetParams();
+
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: appName,
+      customerId: customer,
+      customerEphemeralKeySecret: ephemeralKey,
+      paymentIntentClientSecret: paymentIntent,
+      allowsDelayedPaymentMethods: true,
+      // applePay: {
+      //   merchantCountryCode: "usd",
+      // },
+      // googlePay: {
+      //   merchantCountryCode: "usd",
+      //   testEnv: true,
+      //   currencyCode: "usd",
+      // },
+    });
+    if (!error) {
+      if (me.CustomerID === undefined) {
+        console.log(ephemeralKey);
+        firebase_UpdateDocument(setStripeLoading, "Users", me.id, {
+          CustomerID: customer,
+        });
+      }
+      setStripeLoading(true);
+    }
+  };
+  const openPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      successFunc()
+    }
+  };
+
+  useEffect(() => {
+    initializePaymentSheet();
+  }, []);
+
+  return (
+    <StripeProvider
+      publishableKey={stripePublishableKey}
+      merchantIdentifier={`iicdev.com.${appName}`}
+    >
+      <View>{children}</View>
+      <View style={[layout.absolute, {bottom: 25, right: 0, left: 0}]}>
+        {showPayButton && stripeLoading && (
+          <ButtonOne
+            backgroundColor={"#117DFA"}
+            radius={0}
+            onPress={openPaymentSheet}
+          >
+            <View style={[layout.separate_horizontal]}>
+              <Text style={[colors.white, sizes.small_text]}>Pay Now</Text>
+              <Icon name={"arrow-forward-outline"} size={20} color={"white"} />
+            </View>
+          </ButtonOne>
+        )}
+      </View>
+    </StripeProvider>
+  );
+}
 
 // FUNCTIONS
 export async function function_PickImage(setLoading, setImage) {
@@ -1590,7 +1702,10 @@ export function auth_ResetPassword(email) {
     .then(() => {
       // Password reset email sent!
       // ..
-      Alert.alert("Email Sent","Please check your email for a reset password link.")
+      Alert.alert(
+        "Email Sent",
+        "Please check your email for a reset password link."
+      );
     })
     .catch((error) => {
       const errorMessage = error.message;
