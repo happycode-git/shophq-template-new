@@ -32,6 +32,15 @@ npx expo install expo-av
 npx expo install expo-asset
 npx expo install @react-native-community/datetimepicker
 npm install stripe --save
+npx expo install expo-blur
+npx expo install expo-mail-composer
+expo install expo-linear-gradient
+npx expo install expo-file-system
+npx expo install expo-document-Picker
+npm install react-native-file-viewer
+npm install react-native-draggable-flatlist
+npx expo install react-native-pager-view
+
 
 SYNTAX -
 ------ JSX
@@ -110,10 +119,21 @@ Location -----
     ]
   }
 -----
+Document Picker -----
+"expo": {
+    "plugins": [
+      [
+        "expo-document-picker",
+        {
+          "iCloudContainerEnvironment": "Production"
+        }
+      ]
+    ]
+  }
+-----
 
 VARIABLES -
 height, width
-randomString(length)
 c_projectID
 c_googleMapsAPI
 me, myID, myToken
@@ -127,7 +147,14 @@ FadeWrapper -> { children, seconds }
 Spacer -> { height }
 Loading -> { }
 RoundedCorners -> { children, topRight, topLeft, bottomRight, bottomLeft, styles }
-PulsingView -> { children, speed }
+PulsingView -> { children, speed } 
+BlurWrapper -> { intensity, tint, children, styles }
+SlideWrapper -> { mainContent, mainContentBackground, sideContent, sideContentBackground, height }
+ShowMoreView -> { height, children }
+TimedView -> { seconds, children }
+GradientView -> { colors, children }
+MenuBar -> { options, iconSize, color, backgroundColor, padding, radius, navigation, route, styles }
+CSVtoJSONConverterView()
 
 CONTROLS -
 Example:
@@ -137,9 +164,11 @@ Example:
 
 ButtonOne -> { children, backgroundColor, radius, padding, width, onPress, styles }
 ButtonTwo -> { children, borderWidth, borderColor, radius, padding, onPress, styles }
+SelectedButton -> { children, func, color, backgroundColor, selectedBackgroundColor, styles }
 IconButtonOne -> { name, size, padding, background, color, onPress, styles }
 IconButtonTwo -> {name, size, color, onPress, styles}
 IconButtonThree -> { name, size, color, borderColor, radius, padding, onPress, styles }
+TextIconButton -> { text, textSize, icon, iconSize, backgroundColor, radius, paddingH, paddingV, onPress }
 Icon -> { name, size, color, styles }
 LinkOne -> { children, underlineColor, onPress, styles }
 TextFieldOne -> { placeholder, textSize, onTyping, value, styles }
@@ -147,14 +176,17 @@ TextFieldOne -> { placeholder, textSize, onTyping, value, styles }
     function onTypeThing(text) {
         setThing(text);
     }
-TextAreaOne -> { placeholder, textSize, radius, onTyping, isPassword, autoCap, isNum, value, styles }
-    const [thing, setThing] = useState("");
-    function onTypeThing(text) {
-        setThing(text);
-    }
+TextFieldOne -> { placeholder, backgroundColor, borderBottomWidth, borderBottomColor, paddingH, paddingV, textSize, radius, onTyping, isPassword, autoCap, isNum, value, styles }
+  const [thing, setThing] = useState("");
+  function onTypeThing(text) {
+      setThing(text);
+  }
 DropdownOne -> { options, radius, value, setter }
 CheckboxOne -> { value, setter, text }
-SegmentedPicker => { options, value, setter, backgroundColor }
+SegmentedPicker -> { options, value, setter, backgroundColor }
+SegmentedPickerTwo -> { options, value, setter, borderBottomColor, selectedColor, color }
+IconSegmentedPicker -> { icons, backgroundColor, radius, setter, value }
+Accordion -> { children, top }
 CameraPicker -> { setToggle, setLoading, setImage }
 AsyncImage -> { path, width, height, radius }
 Map -> { coords, delta, height, radius, scrollEnabled }
@@ -163,14 +195,41 @@ AudioPlayer -> { audioName, audioPath }
 VideoPlayer -> { videoPath, radius }
 DateTime ->{ date, time, setDate, setTime }
 PaymentView -> { children, showPayButton, total, successFunc }
+TimerView -> { isActive, setSeconds, seconds, textSize, styles }
+BarGraphView -> { stats, barWidth, barRadius, graphHeight, showValue = true, showHeading = true, textSize }
+ProgressBar -> { progress, radius, color, backgroundColor, height, limit }
+ImagesView -> { images, styles, onPageSelected }
+NotificationCircle -> { text, textSize, color, children }
+SliderView -> { func, padding, icon, text }
+NumberPad -> { setter, value, text }
 
-FUNCTIONS -> 
+BASIC FUNCTIONS -
+randomString(length)
+filterArr(array, property, value)
+filterArrayMultiple(array, filters)
+reduceArray(array, property)
+removeDuplicates(array)
+removeDuplicatesByProperty(array, property)
+formatDate(date)
+formatLongDate(date)
+formatDateTime(date)
+compareDates(date1, date2)
+checkDate(date1, date2)
+getDistanceInMiles(coords1, coords2)
+getDistanceInKilometers(coords1, coords2)
+
+FUNCTIONS -
 function_PickImage(setLoading, setImage)
 function_GetLocation(setLoading, setLocation)
 function_NotificationsSetup()
 sendPushNotificationHandler(token, title, body)
 function_GetDirections(lat, lon)
 function_AddressToLatLon(address, setter)
+function_SendEmail(toEmails, subject, HTML)
+function_AsyncString(asyncFunction, setter)
+function_PlaySound(audio)
+function_TimedFunction(func, timesPerMinute)
+function_OpenPDF(pdfURL)
 
 STYLES - 
 layout ->
@@ -187,12 +246,13 @@ layout ->
     full_width, 
     fit_height,
     fit_width,
-    center_horizontal,
+    center,
     align_top,
     align_bottom,
     image_cover,
     image_contain,
-    image_fill
+    image_fill,
+    no_gap
 
 format ->
     center_text, 
@@ -201,7 +261,9 @@ format ->
     bold,
     radius,
     radius_full,
-    all_caps
+    all_caps,
+    strike,
+    shadow
 
 sizes ->
     xsmall_text, 
@@ -235,7 +297,8 @@ auth_ResetPassword(email)
 firebase_CreateUser(args, uid)
 firebase_GetDocument(setLoading, table, documentID, setter)
 firebase_GetAllDocuments(setLoading, table, setter, limit, order, orderField, whereField, whereCondition, whereValue)
-firebase_GetAllDocumentsListener(setLoading, table, setter, limit, order, orderField, whereField, whereCondition, whereValue)
+firebase_GetAllDocumentsListener(setLoading, table, setter, docLimit, order, orderField, whereField, whereCondition, whereValue, paginated = false, lastDoc = null, setLastDoc)
+firebase_GetAllDocumentsListenerByDistance( setLoading, table, setter, docLimit, order, orderField, whereField, whereCondition, whereValue, paginated = false, lastDoc = null, setLastDoc, distance, coordinates )
 firebase_CreateDocument(args, table, documentID)
 firebase_UpdateDocument(setLoading, table, documentID, args)
 firebase_DeleteDocument(setLoading, table, documentID)

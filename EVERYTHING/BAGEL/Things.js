@@ -13,10 +13,13 @@ import {
   ActivityIndicator,
   Image,
   Platform,
-  Linking,
   Animated,
   Easing,
+  ScrollView,
+  PanResponder,
+  Button,
 } from "react-native";
+import * as Linking from "expo-linking";
 import Slider from "@react-native-community/slider";
 import * as ImagePicker from "expo-image-picker";
 import { Camera, CameraType } from "expo-camera";
@@ -27,6 +30,14 @@ import CheckBox from "expo-checkbox";
 import * as Notifications from "expo-notifications";
 import { Audio, Video, ResizeMode } from "expo-av";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { BlurView } from "expo-blur";
+import * as MailComposer from "expo-mail-composer";
+import { LinearGradient } from "expo-linear-gradient";
+import * as DocumentPicker from "expo-document-picker";
+import PagerView from "react-native-pager-view";
+import * as FileSystem from "expo-file-system";
+import ngeohash from "ngeohash";
+//
 import { initializeApp } from "firebase/app";
 import {
   initializeAuth,
@@ -56,28 +67,15 @@ import {
   updateDoc,
   limit,
   setDoc,
+  startAfter,
+  where,
 } from "firebase/firestore";
-import {
-  StripeProvider,
-  presentPaymentSheet,
-  usePaymentSheet,
-} from "@stripe/stripe-react-native";
+import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
 // #endregion
 
 // CONSTANTS
 export const { height, width } = Dimensions.get("window");
-export function randomString(length) {
-  let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const charactersLength = characters.length;
-  let counter = 0;
-  while (counter < length) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    counter += 1;
-  }
-  return result;
-}
+
 export const c_projectID = "e4044789-90d5-4a16-829a-79b8868a1a43";
 export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4";
 export var me = {};
@@ -86,6 +84,7 @@ export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
 export var serverURL = "https://garnet-private-hisser.glitch.me";
+export var myCoords = {};
 
 // APP INFO
 export var appName = "Happy Code Dev";
@@ -221,13 +220,13 @@ export function RoundedCorners({
     </View>
   );
 }
-export function PulsingView({ children, speed = 1 }) {
+export function PulsingView({ children, speed = 1, scale = 1.4 }) {
   const scaleValue = useRef(new Animated.Value(1)).current;
 
   const pulseAnimation = () => {
     Animated.sequence([
       Animated.timing(scaleValue, {
-        toValue: 1.2,
+        toValue: scale,
         duration: 300 / speed, // Adjust duration based on speed
         easing: Easing.inOut(Easing.ease),
         useNativeDriver: true,
@@ -251,6 +250,319 @@ export function PulsingView({ children, speed = 1 }) {
     </Animated.View>
   );
 }
+export function BlurWrapper({ intensity, tint, radius, children, styles }) {
+  return (
+    <View style={[styles, { borderRadius: radius || 100, overflow: "hidden" }]}>
+      <BlurView
+        intensity={intensity !== undefined ? intensity : 50}
+        tint={tint !== undefined ? tint : "dark"}
+      >
+        {children}
+      </BlurView>
+    </View>
+  );
+}
+export function SlideWrapper({
+  mainContent,
+  mainContentBackground,
+  sideContent,
+  sideContentBackground,
+  height,
+}) {
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center" }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <View
+          style={{
+            width: width,
+            height: height !== undefined ? height : 60,
+            backgroundColor:
+              mainContentBackground !== undefined
+                ? mainContentBackground
+                : "white",
+          }}
+        >
+          {mainContent}
+        </View>
+        <View
+          style={{
+            height: height !== undefined ? height : 60,
+            backgroundColor:
+              sideContentBackground !== undefined
+                ? sideContentBackground
+                : "white",
+          }}
+        >
+          {sideContent}
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+export function ShowMoreView({ height, children }) {
+  const [showMore, setShowMore] = useState(false);
+
+  return (
+    <View>
+      <View
+        style={[
+          { overflow: "hidden", height: showMore ? undefined : height },
+          layout.padding,
+        ]}
+      >
+        {children}
+        {!showMore && (
+          <LinearGradient
+            colors={["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 1)"]}
+            style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: 80, // Adjust the faded area height as needed
+            }}
+          />
+        )}
+      </View>
+      <TouchableOpacity onPress={() => setShowMore(!showMore)}>
+        <View
+          style={[
+            {
+              paddingVertical: 2,
+              paddingHorizontal: 2,
+              marginTop: !showMore ? -15 : -10,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              {
+                fontSize: 12,
+                textAlign: "center",
+                marginRight: 15,
+                color: "gray",
+              },
+            ]}
+          >
+            {showMore ? "Show Less" : "Show More"}
+          </Text>
+        </View>
+      </TouchableOpacity>
+      <View></View>
+    </View>
+  );
+}
+export function TimedView({ seconds, children }) {
+  const [toggle, setToggle] = useState(true);
+  useEffect(() => {
+    const totalSec = (seconds !== undefined ? seconds : 5) * 1000;
+    setTimeout(() => {
+      setToggle(false);
+    }, totalSec);
+  }, []);
+
+  return <View>{toggle && <View>{children}</View>}</View>;
+}
+export function GradientView({ colors, children }) {
+  return (
+    <LinearGradient
+      colors={colors}
+      start={{ x: 0, y: 0.5 }}
+      end={{ x: 1, y: 0.5 }}
+      // style={{ flex: 1 }}
+    >
+      {children}
+    </LinearGradient>
+  );
+}
+export function MenuBar({
+  options,
+  iconSize,
+  color,
+  backgroundColor,
+  padding,
+  radius,
+  navigation,
+  route,
+  styles,
+}) {
+  return (
+    <View
+      style={[
+        styles,
+        {
+          justifyContent: "space-around",
+          position: "absolute",
+          bottom: 0,
+          width: "100%",
+          backgroundColor: backgroundColor || "rgba(0,0,0,0.1)",
+          paddingVertical: padding || 5,
+          borderRadius: radius || 10,
+        },
+        layout.horizontal,
+      ]}
+    >
+      {options.map((opt, i) => {
+        return (
+          <TouchableOpacity
+            key={i}
+            onPress={() => {
+              navigation.navigate(`${opt.route}`);
+            }}
+          >
+            <Icon
+              name={route.name === opt.route ? opt.icon : `${opt.icon}-outline`}
+              size={iconSize || 24}
+              color={color || "black"}
+            />
+            {opt.text && (
+              <Text style={[{ fontSize: 12, color: color || "black" }]}>
+                {opt.text}
+              </Text>
+            )}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+export function CSVtoJSONConverterView() {
+  const [jsonData, setJsonData] = useState(null);
+  const [headers, setHeaders] = useState(null);
+
+  const handleFilePick = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "text/csv",
+      });
+      const res = result.assets[0];
+
+      if (!result.canceled) {
+        const csvData = await FileSystem.readAsStringAsync(res.uri);
+
+        // Parse CSV to JSON
+        const parsedData = parseCSV(csvData);
+
+        setHeaders(parsedData.headers);
+        setJsonData(parsedData.data);
+      }
+    } catch (error) {
+      console.error("Error picking file:", error);
+    }
+  };
+
+  const parseCSV = (csvData) => {
+    const lines = csvData.trim().split("\n");
+    const firstLine = lines[0].trim();
+
+    // Determine the separator (`,` or `;`)
+    const separator = firstLine.includes(";") ? ";" : ",";
+
+    const headers = firstLine.split(separator);
+
+    const jsonData = lines.slice(1).map((line) => {
+      const values = line.split(separator);
+      return headers.reduce((obj, header, index) => {
+        obj[header] = values[index];
+        return obj;
+      }, {});
+    });
+
+    return { headers, data: jsonData };
+  };
+  const renderTable = () => {
+    if (!jsonData || jsonData.length === 0) {
+      return null;
+    }
+
+    return (
+      <View>
+        <View style={{ flexDirection: "column" }}>
+          {/* Table Header */}
+          <View
+            style={{
+              flexDirection: "row",
+              borderBottomWidth: 1,
+              borderBottomColor: "#ccc",
+            }}
+          >
+            {headers.map((header, index) => (
+              <View
+                key={index}
+                style={{
+                  width: 300,
+                  padding: 10,
+                  justifyContent: "center",
+                  alignItems: "center",
+                  borderRightWidth: 1,
+                  borderRightColor: "#000000",
+                  backgroundColor: "rgba(0,0,0,0.2)",
+                }}
+              >
+                <Text style={[format.bold]}>{header}</Text>
+              </View>
+            ))}
+          </View>
+
+          {/* Table Rows */}
+          {jsonData.map((row, rowIndex) => (
+            <View
+              key={rowIndex}
+              style={{
+                flexDirection: "row",
+                borderBottomWidth: 1,
+                borderBottomColor: "#ccc",
+              }}
+            >
+              {headers.map((header, index) => (
+                <View
+                  key={index}
+                  style={{
+                    width: 300,
+                    padding: 10,
+                    borderRightWidth: 1,
+                    borderRightColor: "#ccc",
+                  }}
+                >
+                  <Text>{row[header]}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+  const saveData = () => {
+    console.log(jsonData);
+  };
+
+  return (
+    <View style={[backgrounds.white]}>
+      <View style={[layout.padding]}>
+        <ButtonOne
+          onPress={handleFilePick}
+          styles={[layout.separate_horizontal]}
+        >
+          <Text style={[colors.white, sizes.medium_text]}>Choose CSV File</Text>
+          <Icon name="document-outline" color="white" size={30} />
+        </ButtonOne>
+      </View>
+      <ScrollView horizontal>
+        <ScrollView>{renderTable()}</ScrollView>
+      </ScrollView>
+      {jsonData && (
+        <View style={[layout.padding]}>
+          <ButtonOne onPress={saveData} styles={[layout.separate_horizontal]}>
+            <Text style={[colors.white, sizes.medium_text]}>Save CSV Data</Text>
+            <Icon name="save-outline" color="white" size={30} />
+          </ButtonOne>
+        </View>
+      )}
+    </View>
+  );
+}
+//
 export function ButtonOne({
   children,
   backgroundColor,
@@ -303,6 +615,39 @@ export function ButtonTwo({
       >
         {children}
       </View>
+    </TouchableOpacity>
+  );
+}
+export function SelectedButton({
+  children,
+  func,
+  color,
+  backgroundColor,
+  selectedBackgroundColor,
+  styles,
+}) {
+  const [selected, setSelected] = useState(false);
+  function selectFunc() {
+    setSelected((prev) => !prev);
+    func();
+  }
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        selectFunc();
+      }}
+      style={[
+        styles,
+        {
+          backgroundColor: selected
+            ? selectedBackgroundColor || "rgba(0,0,0,0.2)"
+            : backgroundColor || "rgba(0,0,0,0.05)",
+          borderWidth: selected ? 1 : 0,
+          borderColor: selected ? color || "rgba(0,0,0,0.8)" : "rgba(0,0,0,0)",
+        },
+      ]}
+    >
+      <View style={[styles]}>{children}</View>
     </TouchableOpacity>
   );
 }
@@ -384,6 +729,44 @@ export function IconButtonThree({
     </TouchableOpacity>
   );
 }
+export function TextIconButton({
+  text,
+  textSize,
+  icon,
+  iconSize,
+  backgroundColor,
+  radius,
+  paddingH,
+  paddingV,
+  onPress,
+}) {
+  function onThing() {
+    onPress();
+  }
+  return (
+    <TouchableOpacity onPress={onThing}>
+      <View
+        style={[
+          layout.horizontal,
+          {
+            alignItems: "center",
+            backgroundColor:
+              backgroundColor !== undefined
+                ? backgroundColor
+                : "rgba(0,0,0,0.1)",
+            borderRadius: radius !== undefined ? radius : 10,
+            alignSelf: "flex-start",
+            paddingHorizontal: paddingH !== undefined ? paddingH : 20,
+            paddingVertical: paddingV !== undefined ? paddingV : 10,
+          },
+        ]}
+      >
+        <Text style={[{ fontSize: textSize || 16 }]}>{text}</Text>
+        <Icon size={iconSize || 22} name={icon} />
+      </View>
+    </TouchableOpacity>
+  );
+}
 export function Icon({ name, size, color, styles }) {
   return (
     <Ionicons
@@ -414,6 +797,11 @@ export function LinkOne({ children, underlineColor, onPress, styles }) {
 }
 export function TextFieldOne({
   placeholder,
+  backgroundColor,
+  borderBottomWidth,
+  borderBottomColor,
+  paddingH,
+  paddingV,
   textSize,
   radius,
   onTyping,
@@ -434,13 +822,21 @@ export function TextFieldOne({
       value={value}
       secureTextEntry={isPassword}
       autoCapitalize={autoCap ? "sentences" : "none"}
-      keyboardType={isNum ? "number-pad" : "default"}
+      keyboardType={isNum ? "decimal-pad" : "default"}
       style={[
         {
-          padding: 14,
-          backgroundColor: "#dae0e3",
+          paddingHorizontal: paddingH !== undefined ? paddingH : 14,
+          paddingVertical: paddingV !== undefined ? paddingV : 14,
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "#dae0e3",
           fontSize: textSize !== undefined ? textSize : 16,
           borderRadius: radius !== undefined ? radius : 6,
+          borderBottomColor:
+            borderBottomColor !== undefined
+              ? borderBottomColor
+              : "rgba(0,0,0,0)",
+          borderBottomWidth:
+            borderBottomWidth !== undefined ? borderBottomWidth : 0,
         },
         styles,
       ]}
@@ -580,40 +976,153 @@ export function CheckboxOne({ value, setter, text }) {
 }
 export function SegmentedPicker({ options, value, setter, backgroundColor }) {
   return (
-    <View style={[layout.horizontal]}>
-      {options.map((option, i) => {
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={[layout.horizontal]}>
+        {options.map((option, i) => {
+          return (
+            <TouchableOpacity
+              key={i}
+              style={[
+                {
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderRadius: 50,
+                  backgroundColor:
+                    value === option
+                      ? backgroundColor !== undefined
+                        ? backgroundColor
+                        : "black"
+                      : "rgba(0,0,0,0.2)",
+                },
+              ]}
+              onPress={() => {
+                setter(option);
+              }}
+            >
+              <Text
+                style={[
+                  { color: value === option ? "white" : "black" },
+                  sizes.medium_text,
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+export function SegmentedPickerTwo({
+  options,
+  value,
+  setter,
+  borderBottomColor,
+  selectedColor,
+  color,
+}) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View style={[layout.horizontal]}>
+        {options.map((option, i) => {
+          return (
+            <TouchableOpacity
+              key={i}
+              style={[
+                {
+                  paddingVertical: 12,
+                  paddingHorizontal: 16,
+                  borderRadius: 0,
+                  borderBottomWidth: 2,
+                  borderBottomColor:
+                    value === option
+                      ? borderBottomColor !== undefined
+                        ? borderBottomColor
+                        : "black"
+                      : "rgba(0,0,0,0.0)",
+                },
+              ]}
+              onPress={() => {
+                setter(option);
+              }}
+            >
+              <Text
+                style={[
+                  {
+                    color:
+                      value === option
+                        ? selectedColor !== undefined
+                          ? selectedColor
+                          : "black"
+                        : color !== undefined
+                        ? color
+                        : "black",
+                  },
+                  sizes.medium_text,
+                ]}
+              >
+                {option}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+    </ScrollView>
+  );
+}
+export function IconSegmentedPicker({
+  icons,
+  backgroundColor,
+  radius,
+  setter,
+  value,
+}) {
+  return (
+    <View
+      style={[
+        {
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0.1)",
+          borderRadius: radius !== undefined ? radius : 10,
+          paddingHorizontal: 8,
+        },
+        layout.horizontal,
+        layout.no_gap,
+        layout.fit_width,
+      ]}
+    >
+      {icons.map((icon, i) => {
         return (
           <TouchableOpacity
+            style={[{ padding: 8 }]}
             key={i}
-            style={[
-              {
-                paddingVertical: 12,
-                paddingHorizontal: 16,
-                borderRadius: 50,
-                backgroundColor:
-                  value === option
-                    ? backgroundColor !== undefined
-                      ? backgroundColor
-                      : "black"
-                    : "rgba(0,0,0,0.2)",
-              },
-            ]}
             onPress={() => {
-              setter(option);
+              setter(icon.Value);
             }}
           >
-            <Text
-              style={[
-                { color: value === option ? "white" : "black" },
-                sizes.medium_text,
-              ]}
-            >
-              {option}
-            </Text>
+            <Icon
+              name={value === icon.Value ? icon.Icon : `${icon.Icon}-outline`}
+              size={25}
+              color={icon.Color !== undefined ? icon.Color : "black"}
+            />
           </TouchableOpacity>
         );
       })}
     </View>
+  );
+}
+export function Accordion({ children, top }) {
+  const [toggle, setToggle] = useState(false);
+  return (
+    <TouchableOpacity
+      onPress={() => {
+        setToggle(!toggle);
+      }}
+    >
+      <View>{top}</View>
+      {toggle && <View>{children}</View>}
+    </TouchableOpacity>
   );
 }
 export function CameraPicker({ setToggle, setLoading, setImage }) {
@@ -1016,14 +1525,7 @@ export function AudioPlayer({ audioName, audioPath }) {
   };
 
   return (
-    <View
-      style={[
-        layout.padding,
-        backgrounds.shadow,
-        backgrounds.white,
-        format.radius,
-      ]}
-    >
+    <View style={[layout.padding, backgrounds.white, format.radius]}>
       <View style={[layout.horizontal]}>
         <IconButtonTwo
           name={isPlaying ? "pause" : "play"}
@@ -1293,6 +1795,620 @@ export function PaymentView({ children, showPayButton, total, successFunc }) {
     </StripeProvider>
   );
 }
+export function TimerView({ isActive, setSeconds, seconds, textSize, styles }) {
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (isActive) {
+      timerRef.current = setInterval(() => {
+        setSeconds((prevSeconds) => prevSeconds + 1);
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+
+    return () => clearInterval(timerRef.current);
+  }, [isActive, setSeconds]);
+
+  const formatTime = (timeInSeconds) => {
+    const hours = Math.floor(timeInSeconds / 3600);
+    const minutes = Math.floor((timeInSeconds % 3600) / 60);
+    const seconds = timeInSeconds % 60;
+
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+      2,
+      "0"
+    )}:${String(seconds).padStart(2, "0")}`;
+  };
+
+  return (
+    <View>
+      <Text
+        style={[styles, { fontSize: textSize !== undefined ? textSize : 18 }]}
+      >
+        {formatTime(seconds)}
+      </Text>
+    </View>
+  );
+}
+export function BarGraphView({
+  stats,
+  barWidth,
+  barRadius,
+  graphHeight,
+  showValue = true,
+  showHeading = true,
+  textSize,
+  gap,
+}) {
+  const maxValue = Math.max(...stats.map((stat) => stat.Value));
+
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+      <View
+        style={{
+          flexDirection: "row",
+          padding: 16,
+          height: graphHeight || height * 0.3,
+          gap: gap || 4,
+        }}
+      >
+        {stats.map((stat, index) => (
+          <View key={index} style={{ alignItems: "center" }}>
+            <Text style={{ fontSize: 12, marginBottom: 4 }}>
+              {showValue ? stat.Value : ""}
+            </Text>
+            <View
+              style={{
+                backgroundColor: `${
+                  stat.Color !== undefined ? stat.Color : "black"
+                }`,
+                width: barWidth !== undefined ? barWidth : "100%",
+                height: (stat.Value / maxValue) * 70 + "%",
+                marginTop: "auto", // Align at the bottom
+                borderRadius: barRadius || 10,
+              }}
+            />
+            <Text style={{ fontSize: textSize || 14, marginTop: 8 }}>
+              {showHeading ? stat.Heading : ""}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
+export function ProgressBar({
+  progress,
+  radius,
+  color,
+  backgroundColor,
+  height,
+  limit,
+}) {
+  const normalizedProgress = Math.min(100, Math.max(0, progress)); // Ensure progress is within the range 0-100
+
+  const normalizedLimit = limit || 100;
+  const normalizedWidth = (normalizedProgress / normalizedLimit) * 100;
+
+  return (
+    <View
+      style={{
+        height: height || 20,
+        width: "100%",
+        backgroundColor: backgroundColor || "rgba(0,0,0,0.1)",
+        borderRadius: radius || 6,
+        overflow: "hidden",
+      }}
+    >
+      <View
+        style={{
+          height: "100%",
+          width: `${normalizedWidth}%`,
+          backgroundColor: color || "blue",
+          borderRadius: radius || 6,
+        }}
+      ></View>
+    </View>
+  );
+}
+export function ImagesView({ images, styles, onPageSelected }) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const total = images.length;
+
+  const handlePageSelected = (event) => {
+    const { position } = event.nativeEvent;
+    setCurrentPage(position);
+    if (onPageSelected) {
+      onPageSelected(position);
+    }
+  };
+
+  return (
+    <View style={{ height: "100%" }}>
+      <PagerView
+        style={[{ height: "100%" }]}
+        onPageSelected={handlePageSelected}
+      >
+        {images.map((img, i) => (
+          <View key={i}>
+            <Image
+              source={img}
+              style={[styles, { width: "100%", height: "100%" }]}
+            />
+          </View>
+        ))}
+      </PagerView>
+      <View style={[layout.absolute, { right: 10, bottom: 10 }]}>
+        <BlurWrapper intensity={80}>
+          <Text
+            style={[
+              colors.white,
+              { fontSize: 10, paddingVertical: 4, paddingHorizontal: 12 },
+            ]}
+          >
+            {currentPage + 1}/{total}
+          </Text>
+        </BlurWrapper>
+      </View>
+    </View>
+  );
+}
+export function NotificationCircle({ text, textSize, color, children }) {
+  return (
+    <View style={[{ position: "relative" }]}>
+      <View
+        style={[
+          {
+            position: "absolute",
+            top: 5,
+            right: 5,
+            paddingVertical: 4,
+            paddingHorizontal: 8,
+            backgroundColor: color || "#60D0FF",
+            zIndex: 500,
+          },
+          format.radius_full,
+        ]}
+      >
+        <Text style={[{ fontSize: textSize || 10 }, colors.white]}>{text}</Text>
+      </View>
+      {children}
+    </View>
+  );
+}
+export function SliderView({ func, padding, icon, text }) {
+  const [screenWidth, setScreenWidth] = useState(
+    Dimensions.get("window").width
+  );
+  const circleSize = 50; // Adjust this based on the desired size of the circle
+
+  useEffect(() => {
+    const handleScreenResize = () => {
+      setScreenWidth(Dimensions.get("window").width);
+    };
+
+    Dimensions.addEventListener("change", handleScreenResize);
+
+    return () => {
+      Dimensions.removeEventListener("change", handleScreenResize);
+    };
+  }, []);
+
+  const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
+  const panResponder = PanResponder.create({
+    onStartShouldSetPanResponder: () => true,
+    onPanResponderMove: Animated.event([null, { dx: pan.x, dy: pan.y }], {
+      useNativeDriver: false,
+    }),
+    onPanResponderRelease: (_, gesture) => {
+      // Check if the circle has reached the end (right edge of the screen)
+      const endPositionX = screenWidth - circleSize;
+      if (gesture.moveX >= endPositionX) {
+        // Trigger the function when the circle reaches the end
+        func();
+      }
+
+      // Reset the position of the circle to the starting position
+      Animated.spring(pan, {
+        toValue: { x: 0, y: 0 },
+        useNativeDriver: false,
+      }).start();
+    },
+  });
+
+  return (
+    <View
+      style={{
+        justifyContent: "center",
+        alignItems: "center",
+        height: circleSize + (padding !== undefined ? padding : 10), // Set the height of the container to the size of the circle
+        backgroundColor: "black",
+        borderRadius: 100,
+        position: "relative", // Added to position the icon relative to the container
+      }}
+    >
+      <View style={[layout.absolute, format.center_text]}>
+        <Text style={[colors.white, format.bold]}>
+          {text || "Everything Bagel"}
+        </Text>
+      </View>
+      <Animated.View
+        {...panResponder.panHandlers}
+        style={{
+          position: "absolute",
+          left: 0,
+          width: circleSize,
+          height: circleSize,
+          borderRadius: circleSize / 2,
+          backgroundColor: "white",
+          transform: [{ translateX: pan.x }],
+          marginLeft: padding !== undefined ? padding / 2 : 5,
+        }}
+      >
+        <View
+          style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+        >
+          {/* Use your preferred icon component here */}
+          <Icon name={icon || "star-outline"} size={20} color={"black"} />
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+export function NumberPad({ setter, value, text }) {
+  function onTypeNum(num) {
+    const thing = `${num}`;
+    if (thing !== "back") {
+      setter((prev) => `${prev}${thing}`);
+    } else {
+      if (value.length > 0) {
+        // REMOVE CHAR
+        setter((prev) => prev.slice(0, -1));
+      }
+    }
+  }
+  return (
+    <View style={[{ flex: 1 }]}>
+      <View
+        style={[
+          layout.padding_horizontal,
+          layout.padding_vertical_small,
+          { backgroundColor: "#F7F8FC" },
+        ]}
+      >
+        <Text style={[sizes.small_text, { color: "gray" }]}>
+          {text || "Price"}
+        </Text>
+        <Text style={[sizes.xlarge_text, format.bold]}>{value}</Text>
+      </View>
+      <View
+        style={[{ borderBottomColor: "rgba(0,0,0,0.1)", borderBottomWidth: 1 }]}
+      ></View>
+      <Grid columns={3}>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(1);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              1
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(2);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              2
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(3);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              3
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(4);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              4
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(5);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              5
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(6);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              6
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(7);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              7
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(8);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              8
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(9);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              9
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(".");
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              .
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum(0);
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+              0
+            </Text>
+          </View>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            onTypeNum("back");
+          }}
+        >
+          <View style={[{ padding: 20 }]}>
+            <Icon
+              styles={[layout.center]}
+              name={"backspace-outline"}
+              size={40}
+            />
+          </View>
+        </TouchableOpacity>
+      </Grid>
+      <View style={[layout.padding_horizontal]}>
+        <ButtonOne backgroundColor={"#F5F7FD"} radius={14} padding={10}>
+          <Text style={[format.center_text, format.bold]}>Done</Text>
+        </ButtonOne>
+      </View>
+    </View>
+  );
+}
+
+// BASIC FUNCTIONS
+export function randomString(length) {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  const charactersLength = characters.length;
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    counter += 1;
+  }
+  return result;
+}
+export function filterArr(array, property, value) {
+  return array.filter((item) => item[property] === value);
+}
+export function filterArrayMultiple(array, filters) {
+  return array.filter((item) =>
+    filters.every((filter) => item[filter.property] === filter.value)
+  );
+}
+export function reduceArray(array, property) {
+  return array.reduce(
+    (total, item) => total + parseFloat(item[property] || 0),
+    0
+  );
+}
+export function removeDuplicates(array) {
+  const seen = new Set();
+  return array.filter((item) => {
+    if (seen.has(item)) {
+      return false;
+    } else {
+      seen.add(item);
+      return true;
+    }
+  });
+}
+export function removeDuplicatesByProperty(array, property) {
+  const seen = new Set();
+  return array.filter((item) => {
+    const value = item[property];
+    if (seen.has(value)) {
+      return false;
+    } else {
+      seen.add(value);
+      return true;
+    }
+  });
+}
+export function formatDate(date) {
+  const tempDate = date;
+
+  const formattedDate = tempDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return formattedDate;
+}
+export function formatLongDate(date) {
+  const tempDate = date;
+
+  const formattedDate = tempDate.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return formattedDate;
+}
+export function formatDateTime(date) {
+  const tempDate = date;
+
+  const formattedDateTime = `${tempDate.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  })} ${tempDate.toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+  })}`;
+
+  return formattedDateTime;
+}
+export function compareDates(date1, date2) {
+  const timestamp1 = date1 instanceof Date ? date1.getTime() : NaN;
+  const timestamp2 = date2 instanceof Date ? date2.getTime() : NaN;
+
+  if (isNaN(timestamp1) || isNaN(timestamp2)) {
+    throw new Error("Invalid date format");
+  }
+
+  return timestamp1 > timestamp2;
+}
+export function checkDate(date1, date2) {
+  const startOfDay = new Date(date1);
+  startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00.000
+
+  const endOfDay = new Date(date1);
+  endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59.999
+
+  return date2 >= startOfDay && date2 <= endOfDay;
+}
+export async function getDistanceInMiles(coords1, coords2) {
+  const apiKey = c_googleMapsAPI;
+  const apiUrl = "https://maps.googleapis.com/maps/api/distancematrix/json";
+
+  const origin = `${coords1.latitude},${coords1.longitude}`;
+  const destination = `${coords2.latitude},${coords2.longitude}`;
+  const requestUrl = `${apiUrl}?origins=${origin}&destinations=${destination}&key=${apiKey}`;
+
+  console.log("Request URL:", requestUrl);
+
+  try {
+    const response = await fetch(requestUrl);
+    const data = await response.json();
+
+    console.log("API Response:", data);
+
+    if (
+      data.status === "OK" &&
+      data.rows.length > 0 &&
+      data.rows[0].elements.length > 0
+    ) {
+      const distanceInMeters = data.rows[0].elements[0].distance.value;
+      const distanceInMiles = (distanceInMeters * 0.000621371).toFixed(2);
+      console.log(distanceInMiles);
+      return distanceInMiles;
+    } else {
+      throw new Error("Error fetching distance data");
+    }
+  } catch (error) {
+    console.error("Error:", error.message);
+    throw error;
+  }
+}
+export async function getDistanceInKilometers(coords1, coords2) {
+  const apiKey = c_googleMapsAPI;
+  const apiUrl = "https://maps.googleapis.com/maps/api/distancematrix/json";
+
+  const origin = `${coords1.latitude},${coords1.longitude}`;
+  const destination = `${coords2.latitude},${coords2.longitude}`;
+
+  try {
+    const response = await fetch(
+      `${apiUrl}?origins=${origin}&destinations=${destination}&key=${apiKey}`
+    );
+
+    const data = await response.json();
+
+    if (
+      data.status === "OK" &&
+      data.rows.length > 0 &&
+      data.rows[0].elements.length > 0
+    ) {
+      const distanceInMeters = data.rows[0].elements[0].distance.value;
+      const distanceInKilometers = (distanceInMeters / 1000).toFixed(2);
+      return distanceInKilometers;
+    } else {
+      throw new Error("Error fetching distance data");
+    }
+  } catch (error) {
+    console.error("Error:", error.message);
+    throw error;
+  }
+}
+
+// LOCAL FUNCTIONS
+function milesToLat(miles) {
+  return miles / 69.172; // Approximate degrees of latitude per mile
+}
+function milesToLon(miles, latitude) {
+  const milesPerDegreeLon = 69.172 * Math.cos(latitude * (Math.PI / 180));
+  return miles / milesPerDegreeLon;
+}
 
 // FUNCTIONS
 export async function function_PickImage(setLoading, setImage) {
@@ -1327,40 +2443,58 @@ export async function function_GetLocation(setLoading, setLocation) {
     setLoading(false);
     console.log(status);
     console.log(userLocation.coords);
+    myCoords = userLocation.coords;
   } catch (error) {
     console.error("Error getting location:", error);
     setLoading(false);
   }
 }
 export async function function_NotificationsSetup() {
-  const { status } = await Notifications.getPermissionsAsync();
-  let finalStatus = status;
-
-  if (finalStatus !== "granted") {
+  try {
+    // Always request notification permissions
     const { status } = await Notifications.requestPermissionsAsync();
-    finalStatus = status;
-  }
 
-  if (finalStatus !== "granted") {
-    Alert.alert(
-      "Permission Required",
-      "Push notifications need the appropriate permissions."
-    );
-    return;
-  }
+    if (status === 'denied') {
+      Alert.alert(
+        'Permission Required',
+        'Push notifications are required for this app. Please enable notifications in your device settings.'
+      );
 
-  const pushTokenData = await Notifications.getExpoPushTokenAsync({
-    projectId: c_projectID,
-  });
-  console.log(pushTokenData);
-  firebase_UpdateToken(pushTokenData.data);
-  myToken = pushTokenData.data;
+      // Optionally provide a button to open device settings
+      Alert.alert(
+        'Enable Notifications',
+        'To receive notifications, go to your device settings and enable notifications for this app.',
+        [
+          {
+            text: 'Open Settings',
+            onPress: () => Linking.openSettings(),
+          },
+        ]
+      );
 
-  if (Platform.OS === "android") {
-    Notifications.setNotificationChannelAsync("default", {
-      name: "default",
-      importance: Notifications.AndroidImportance.DEFAULT,
+      return;
+    }
+
+    // Force generation of a new push token
+    Notifications.addNotificationReceivedListener(notification => {
+      console.log('Notification received while app is open:', notification);
+      // Handle the notification as needed
     });
+    const pushTokenData = await Notifications.getExpoPushTokenAsync({
+      projectId: c_projectID,
+    });
+    console.log(pushTokenData);
+    firebase_UpdateToken(pushTokenData.data);
+    myToken = pushTokenData.data;
+
+    if (Platform.OS === 'android') {
+      Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.DEFAULT,
+      });
+    }
+  } catch (error) {
+    console.error('Error requesting notification permissions:', error);
   }
 }
 export function sendPushNotification(token, title, body) {
@@ -1407,6 +2541,91 @@ export async function function_AddressToLatLon(address, setter) {
     throw error;
   }
 }
+export async function function_SendEmail(toEmails, subject, HTML) {
+  try {
+    const isAvailable = await MailComposer.isAvailableAsync();
+    if (!isAvailable) {
+      Alert.alert("Email functionality is not available on this device.");
+      return;
+    }
+
+    await MailComposer.composeAsync({
+      recipients: toEmails,
+      subject: subject,
+      body: HTML,
+      isHtml: true,
+    });
+  } catch (error) {
+    console.error("Error opening email composer:", error);
+    Alert.alert("Error", "Failed to open email composer");
+  }
+}
+export async function function_AsyncString(asyncFunction, setter) {
+  try {
+    const result = await asyncFunction;
+    setter(result.toString()); // Convert the result to a string
+  } catch (error) {
+    console.error("Error:", error);
+    // You might want to set an error state here or handle the error differently
+  }
+}
+export async function function_PlaySound(audio) {
+  const { sound } = await Audio.Sound.createAsync(audio, { shouldPlay: true });
+}
+export function function_TimedFunction(func, timesPerMinute) {
+  const millisecondsPerMinute = 60 * 1000;
+  const interval = millisecondsPerMinute / timesPerMinute;
+
+  const executeAtNextInterval = () => {
+    const now = Date.now();
+    const nextExecution = Math.ceil(now / interval) * interval;
+    const delay = nextExecution - now;
+
+    setTimeout(() => {
+      func();
+      executeAtNextInterval();
+    }, delay);
+  };
+
+  executeAtNextInterval();
+
+  // Return a function to stop the timer when needed
+  return () => clearTimeout(timerId);
+}
+export async function function_OpenLink(url) {
+  try {
+    await Linking.openURL(url);
+  } catch (error) {
+    console.error("An error occurred while opening the link:", error);
+  }
+}
+export async function function_ChooseFile(setter, setterType) {
+  try {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: [
+        "application/pdf",
+        "image/*",
+        "application/msword",
+        "application/vnd.ms-excel",
+        "audio/*",
+        "video/*",
+      ],
+    });
+    const newResult = result.assets[0];
+    const type = result.assets[0].mimeType;
+    if (newResult.uri !== undefined) {
+      console.log(newResult);
+      setter(newResult);
+      setterType(type);
+    } else {
+      // Handle the case where the user cancels the picker or selects an unsupported file type
+      console.log("Document picker canceled or unsupported file type");
+    }
+  } catch (error) {
+    console.error("Error picking document:", error);
+    // Handle other errors if needed
+  }
+}
 
 // STYLES
 export const format = StyleSheet.create({
@@ -1430,6 +2649,22 @@ export const format = StyleSheet.create({
   },
   all_caps: {
     textTransform: "uppercase",
+  },
+  strike: {
+    textDecorationLine: "line-through",
+  },
+  shadow: {
+    ...Platform.select({
+      ios: {
+        shadowColor: "black",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.5,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
 });
 export const sizes = StyleSheet.create({
@@ -1531,6 +2766,7 @@ export const layout = StyleSheet.create({
   },
   full_height: {
     flex: 1,
+    height: "100%",
   },
   full_width: {
     flex: 1,
@@ -1542,8 +2778,9 @@ export const layout = StyleSheet.create({
   fit_width: {
     alignSelf: "flex-start",
   },
-  center_horizontal: {
+  center: {
     alignSelf: "center",
+    justifyContent: "center",
   },
   align_bottom: {
     alignItems: "flex-end",
@@ -1559,6 +2796,9 @@ export const layout = StyleSheet.create({
   },
   image_fill: {
     objectFit: "fill",
+  },
+  no_gap: {
+    gap: 0,
   },
 });
 export const backgrounds = StyleSheet.create({
@@ -1580,13 +2820,13 @@ export const backgrounds = StyleSheet.create({
 // AUTH
 // Config
 const firebaseConfig = {
-  apiKey: "AIzaSyDR8zoNJPj1AC5xRbuD92BCACDADPAnpJM",
-  authDomain: "iic-appline-library.firebaseapp.com",
-  projectId: "iic-appline-library",
-  storageBucket: "iic-appline-library.appspot.com",
-  messagingSenderId: "592200952214",
-  appId: "1:592200952214:web:37732adf2306768ff655b7",
-  measurementId: "G-YKNCN415JB",
+  apiKey: "AIzaSyAMkZs0qvSSYVfA4pOMzSkXl-Nkut7raqw",
+  authDomain: "iic-appline-template.firebaseapp.com",
+  projectId: "iic-appline-template",
+  storageBucket: "iic-appline-template.appspot.com",
+  messagingSenderId: "957439211423",
+  appId: "1:957439211423:web:57d7872b6486b922102faa",
+  measurementId: "G-D2Y4Q8QLJW",
 };
 // Initializations
 const app = initializeApp(firebaseConfig);
@@ -1721,6 +2961,18 @@ export function auth_ResetPassword(email) {
       // ..
     });
 }
+export function auth_DeleteUser() {
+  const user = auth.currentUser;
+
+  deleteUser(user)
+    .then(() => {
+      // User deleted.
+    })
+    .catch((error) => {
+      // An error ocurred
+      // ...
+    });
+}
 export async function firebase_CreateUser(args, uid) {
   await setDoc(doc(db, "Users", uid), args);
 }
@@ -1822,36 +3074,33 @@ export function firebase_GetAllDocumentsListener(
   orderField,
   whereField,
   whereCondition,
-  whereValue
+  whereValue,
+  paginated = false,
+  lastDoc = null,
+  setLastDoc
 ) {
   console.log("GETTING DOCS");
   const collectionRef = collection(db, table);
-  let queryRef = collectionRef;
 
-  if (docLimit > 0) {
-    if (whereField !== "" && whereField !== null && whereField !== undefined) {
-      queryRef = query(
-        queryRef,
-        where(whereField, whereCondition, whereValue),
-        orderBy(orderField, order),
-        limit(docLimit)
-      );
-    } else {
-      queryRef = query(queryRef, orderBy(orderField, order), limit(docLimit));
-    }
-  } else {
-    if (whereField !== "" && whereField !== null && whereField !== undefined) {
-      queryRef = query(
-        queryRef,
-        where(whereField, whereCondition, whereValue),
-        orderBy(orderField, order)
-      );
-    } else {
-      queryRef = query(queryRef, orderBy(orderField, order));
-    }
+  let baseQuery = query(collectionRef);
+
+  if (whereField && whereCondition && whereValue) {
+    baseQuery = query(baseQuery, where(whereField, whereCondition, whereValue));
   }
 
-  const _ = onSnapshot(queryRef, (querySnapshot) => {
+  baseQuery = query(baseQuery, orderBy(orderField, order));
+
+  if (docLimit > 0) {
+    baseQuery = query(baseQuery, limit(docLimit));
+  }
+
+  let finalQuery = baseQuery;
+
+  if (paginated && lastDoc) {
+    finalQuery = query(baseQuery, startAfter(lastDoc[orderField]));
+  }
+
+  const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
     const things = [];
     querySnapshot.forEach((doc) => {
       const thing = {
@@ -1860,9 +3109,90 @@ export function firebase_GetAllDocumentsListener(
       };
       things.push(thing);
     });
-    setter(things);
+
+    // Update lastDoc if there are new documents and setLastDoc is available
+    if (things.length > 0 && setLastDoc) {
+      setLastDoc(things[things.length - 1]);
+    }
+
+    setter((prev) => [...prev, ...things]); // Append to the existing state
     setLoading(false);
   });
+
+  return unsubscribe;
+}
+export function firebase_GetAllDocumentsListenerByDistance(
+  setLoading,
+  table,
+  setter,
+  docLimit,
+  order,
+  orderField,
+  whereField,
+  whereCondition,
+  whereValue,
+  paginated = false,
+  lastDoc = null,
+  setLastDoc,
+  distance,
+  coordinates
+) {
+  console.log("GETTING DOCS");
+  const collectionRef = collection(db, table);
+  let baseQuery = query(collectionRef);
+
+  if (whereField && whereCondition && whereValue) {
+    baseQuery = query(baseQuery, where(whereField, whereCondition, whereValue));
+  }
+
+  const latDiff = milesToLat(distance);
+  const lonDiff = milesToLon(distance, coordinates.latitude);
+  const minGeohash = ngeohash.encode(
+    coordinates.latitude - latDiff,
+    coordinates.longitude - lonDiff
+  );
+  const maxGeohash = ngeohash.encode(
+    coordinates.latitude + latDiff,
+    coordinates.longitude + lonDiff
+  );
+  baseQuery = query(
+    baseQuery,
+    where("geohash", ">=", minGeohash),
+    where("geohash", "<=", maxGeohash),
+    orderBy("geohash", order)
+  );
+
+  if (docLimit > 0) {
+    baseQuery = query(baseQuery, limit(docLimit));
+  }
+
+  let finalQuery = baseQuery;
+
+  if (paginated && lastDoc) {
+    console.log("Using startAfter:", lastDoc.data());
+    finalQuery = query(baseQuery, startAfter(lastDoc));
+  }
+
+  const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
+    const things = [];
+    querySnapshot.forEach((doc) => {
+      const thing = {
+        id: doc.id,
+        ...doc.data(),
+      };
+      things.push(thing);
+    });
+
+    if (things.length > 0 && setLastDoc) {
+      const lastDocSnapshot = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastDoc(lastDocSnapshot);
+    }
+
+    setter((prev) => [...prev, ...things]);
+    setLoading(false);
+  });
+
+  return unsubscribe;
 }
 export async function firebase_CreateDocument(args, table, documentID) {
   await setDoc(doc(db, table, documentID), args);
@@ -1889,7 +3219,12 @@ export async function firebase_UpdateToken(token) {
     Token: token,
   });
 }
-export async function storage_UploadImage(setLoading, image, path) {
+export async function storage_UploadImage(
+  setLoading,
+  image,
+  path,
+  setProgress
+) {
   setLoading(true);
   try {
     // Convert the data URL to a Blob
@@ -1906,12 +3241,14 @@ export async function storage_UploadImage(setLoading, image, path) {
         // Handle progress changes, if needed
         const progress =
           (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setProgress(progress);
         console.log(`Upload is ${progress}% done`);
       },
       (error) => {
         // Handle errors
         console.error("Error uploading image:", error);
         setLoading(false); // Update loading state in case of an error
+        Alert.alert("Error", "Please try again.");
       },
       async () => {
         // Handle successful completion
@@ -1921,5 +3258,61 @@ export async function storage_UploadImage(setLoading, image, path) {
   } catch (error) {
     console.error("Error creating document: ", error);
     setLoading(false); // Update loading state in case of an error
+  }
+}
+export async function storage_UploadFile(setLoading, file, path, setProgress) {
+  setLoading(true);
+
+  try {
+    // Convert the file to a Blob
+    const fileBlob = await fetch(file).then((res) => res.blob());
+
+    // Upload the Blob to Firebase Storage
+    const storageRef = ref(storage, path);
+    const uploadTask = uploadBytesResumable(storageRef, fileBlob);
+
+    // Listen for state changes, errors, and completion of the upload.
+    uploadTask.on(
+      "state_changed",
+      (snapshot) => {
+        // Handle progress changes, if needed
+        const progress =
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        setProgress(progress);
+        console.log(`Upload is ${progress}% done`);
+      },
+      (error) => {
+        // Handle errors
+        console.error("Error uploading file:", error);
+        setLoading(false); // Update loading state in case of an error
+        Alert.alert("Error", "Please try again.");
+      },
+      async () => {
+        // Handle successful completion
+        setLoading(false); // Update loading state
+      }
+    );
+  } catch (error) {
+    console.error("Error uploading file: ", error);
+    setLoading(false); // Update loading state in case of an error
+  }
+}
+export async function storage_DownloadFile(setLoading, path, setter) {
+  setLoading(true);
+  console.log("DOWNLOADING");
+  try {
+    // Get the download URL for the file
+    const storageRef = ref(storage, path);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Set the file using the provided setter
+    setter(downloadURL);
+
+    // Update loading state
+    setLoading(false);
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    setLoading(false); // Update loading state in case of an error
+    Alert.alert("Error", "Please try again.");
   }
 }
