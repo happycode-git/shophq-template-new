@@ -2,13 +2,12 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import Test from "./Test";
 import { useEffect } from "react";
-import { function_NotificationsSetup } from "./EVERYTHING/BAGEL/Things";
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
   useEffect(() => {
-    function_NotificationsSetup();
+    // function_NotificationsSetup();
   }, []);
   return (
     <NavigationContainer>

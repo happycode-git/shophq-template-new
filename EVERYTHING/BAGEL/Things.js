@@ -37,6 +37,7 @@ import * as DocumentPicker from "expo-document-picker";
 import PagerView from "react-native-pager-view";
 import * as FileSystem from "expo-file-system";
 import ngeohash from "ngeohash";
+import algoliasearch from "algoliasearch";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -75,7 +76,11 @@ import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
 
 // CONSTANTS
 export const { height, width } = Dimensions.get("window");
-
+// Bagel Algolia Account
+export const searchClient = algoliasearch(
+  "HSJCKI6X51",
+  "8fb09774a5a37c5f0ef68ae2081a0c8e"
+);
 export const c_projectID = "e4044789-90d5-4a16-829a-79b8868a1a43";
 export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4";
 export var me = {};
@@ -95,6 +100,8 @@ export function SafeArea({
   loading,
   children,
   backgroundColor,
+  imageBackground,
+  blurIntensity,
   styles,
 }) {
   return (
@@ -102,7 +109,7 @@ export function SafeArea({
       style={[
         {
           flex: 1,
-          paddingTop: Platform.OS === "ios" ? 50 : 35,
+          paddingTop: Platform.OS === "ios" ? 20 : 25,
           paddingBottom: Platform.OS === "ios" ? 35 : 10,
           backgroundColor:
             backgroundColor !== undefined ? backgroundColor : "white",
@@ -112,6 +119,12 @@ export function SafeArea({
     >
       <StatusBar style={statusBar === "light" ? "light" : "dark"}></StatusBar>
       {loading && <Loading />}
+      {imageBackground !== undefined && (
+        <ImageBackground
+          blurIntensity={blurIntensity}
+          image={imageBackground}
+        />
+      )}
       {children}
     </View>
   );
@@ -177,22 +190,31 @@ export function Loading() {
       style={[
         {
           position: "absolute",
-          height: height,
-          width: width,
-          backgroundColor: "rgba(0,0,0,0.75)",
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
           zIndex: 10000,
         },
       ]}
     >
-      <View style={[{ flex: 1 }]}></View>
-      <View style={[layout.center_horizontal, layout.padding]}>
-        <Image
-          source={require("../../assets/logo.png")}
-          style={[{ width: 80, height: 80 }, format.radius]}
-        />
-      </View>
-      <ActivityIndicator />
-      <View style={[{ flex: 1 }]}></View>
+      <BlurWrapper
+        intensity={40}
+        radius={0}
+        styles={[{ flex: 1, height: height }]}
+      >
+        <View style={[{ flex: 1 }]}></View>
+        <View style={[format.center_text, layout.padding]}>
+          <PulsingView speed={0.5} scale={1.1}>
+            <Image
+              source={require("../../assets/loading.png")}
+              style={[{ width: 80, height: 80 }, format.radius, layout.center]}
+            />
+          </PulsingView>
+        </View>
+        {/* <ActivityIndicator color={"white"} /> */}
+        <View style={[{ flex: 1 }]}></View>
+      </BlurWrapper>
     </View>
   );
 }
@@ -252,10 +274,19 @@ export function PulsingView({ children, speed = 1, scale = 1.4 }) {
 }
 export function BlurWrapper({ intensity, tint, radius, children, styles }) {
   return (
-    <View style={[styles, { borderRadius: radius || 100, overflow: "hidden" }]}>
+    <View
+      style={[
+        styles,
+        {
+          borderRadius: radius !== undefined ? radius : 100,
+          overflow: "hidden",
+        },
+      ]}
+    >
       <BlurView
         intensity={intensity !== undefined ? intensity : 50}
         tint={tint !== undefined ? tint : "dark"}
+        style={[styles]}
       >
         {children}
       </BlurView>
@@ -395,9 +426,10 @@ export function MenuBar({
           position: "absolute",
           bottom: 0,
           width: "100%",
-          backgroundColor: backgroundColor || "rgba(0,0,0,0.1)",
-          paddingVertical: padding || 5,
-          borderRadius: radius || 10,
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0.1)",
+          paddingVertical: padding !== undefined ? padding : 5,
+          borderRadius: radius !== undefined ? radius : 10,
         },
         layout.horizontal,
       ]}
@@ -412,11 +444,18 @@ export function MenuBar({
           >
             <Icon
               name={route.name === opt.route ? opt.icon : `${opt.icon}-outline`}
-              size={iconSize || 24}
-              color={color || "black"}
+              size={iconSize !== undefined ? iconSize : 24}
+              color={color !== undefined ? color : "black"}
             />
             {opt.text && (
-              <Text style={[{ fontSize: 12, color: color || "black" }]}>
+              <Text
+                style={[
+                  {
+                    fontSize: 12,
+                    color: color !== undefined ? color : "black",
+                  },
+                ]}
+              >
                 {opt.text}
               </Text>
             )}
@@ -429,20 +468,16 @@ export function MenuBar({
 export function CSVtoJSONConverterView() {
   const [jsonData, setJsonData] = useState(null);
   const [headers, setHeaders] = useState(null);
-
   const handleFilePick = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "text/csv",
       });
       const res = result.assets[0];
-
       if (!result.canceled) {
         const csvData = await FileSystem.readAsStringAsync(res.uri);
-
         // Parse CSV to JSON
         const parsedData = parseCSV(csvData);
-
         setHeaders(parsedData.headers);
         setJsonData(parsedData.data);
       }
@@ -452,6 +487,7 @@ export function CSVtoJSONConverterView() {
   };
 
   const parseCSV = (csvData) => {
+    console.log(csvData);
     const lines = csvData.trim().split("\n");
     const firstLine = lines[0].trim();
 
@@ -562,6 +598,27 @@ export function CSVtoJSONConverterView() {
     </View>
   );
 }
+export function ImageBackground({ image, blurIntensity }) {
+  return (
+    <BlurWrapper
+      radius={0}
+      intensity={blurIntensity !== undefined ? blurIntensity : 0}
+      styles={[{ position: "absolute", top: 0, right: 0, left: 0, bottom: 0 }]}
+    >
+      <Image
+        source={image}
+        style={[
+          {
+            zIndex: -10,
+            height: height,
+            width: width,
+          },
+          layout.image_cover,
+        ]}
+      />
+    </BlurWrapper>
+  );
+}
 //
 export function ButtonOne({
   children,
@@ -640,10 +697,18 @@ export function SelectedButton({
         styles,
         {
           backgroundColor: selected
-            ? selectedBackgroundColor || "rgba(0,0,0,0.2)"
-            : backgroundColor || "rgba(0,0,0,0.05)",
+            ? selectedBackgroundColor !== undefined
+              ? selectedBackgroundColor
+              : "rgba(0,0,0,0.2)"
+            : backgroundColor !== undefined
+            ? backgroundColor
+            : "rgba(0,0,0,0.05)",
           borderWidth: selected ? 1 : 0,
-          borderColor: selected ? color || "rgba(0,0,0,0.8)" : "rgba(0,0,0,0)",
+          borderColor: selected
+            ? color !== undefined
+              ? color
+              : "rgba(0,0,0,0.8)"
+            : "rgba(0,0,0,0)",
         },
       ]}
     >
@@ -761,8 +826,10 @@ export function TextIconButton({
           },
         ]}
       >
-        <Text style={[{ fontSize: textSize || 16 }]}>{text}</Text>
-        <Icon size={iconSize || 22} name={icon} />
+        <Text style={[{ fontSize: textSize !== undefined ? textSize : 16 }]}>
+          {text}
+        </Text>
+        <Icon size={iconSize !== undefined ? iconSize : 22} name={icon} />
       </View>
     </TouchableOpacity>
   );
@@ -1732,7 +1799,6 @@ export function PaymentView({ children, showPayButton, total, successFunc }) {
   const initializePaymentSheet = async () => {
     const { paymentIntent, ephemeralKey, customer } =
       await fetchPaymentSheetParams();
-
     const { error } = await initPaymentSheet({
       merchantDisplayName: appName,
       customerId: customer,
@@ -1849,8 +1915,8 @@ export function BarGraphView({
         style={{
           flexDirection: "row",
           padding: 16,
-          height: graphHeight || height * 0.3,
-          gap: gap || 4,
+          height: graphHeight !== undefined ? graphHeight : height * 0.3,
+          gap: gap !== undefined ? gap : 4,
         }}
       >
         {stats.map((stat, index) => (
@@ -1866,10 +1932,15 @@ export function BarGraphView({
                 width: barWidth !== undefined ? barWidth : "100%",
                 height: (stat.Value / maxValue) * 70 + "%",
                 marginTop: "auto", // Align at the bottom
-                borderRadius: barRadius || 10,
+                borderRadius: barRadius !== undefined ? barRadius : 10,
               }}
             />
-            <Text style={{ fontSize: textSize || 14, marginTop: 8 }}>
+            <Text
+              style={{
+                fontSize: textSize !== undefined ? textSize : 14,
+                marginTop: 8,
+              }}
+            >
               {showHeading ? stat.Heading : ""}
             </Text>
           </View>
@@ -1888,16 +1959,17 @@ export function ProgressBar({
 }) {
   const normalizedProgress = Math.min(100, Math.max(0, progress)); // Ensure progress is within the range 0-100
 
-  const normalizedLimit = limit || 100;
+  const normalizedLimit = limit !== undefined ? limit : 100;
   const normalizedWidth = (normalizedProgress / normalizedLimit) * 100;
 
   return (
     <View
       style={{
-        height: height || 20,
+        height: height !== undefined ? height : 20,
         width: "100%",
-        backgroundColor: backgroundColor || "rgba(0,0,0,0.1)",
-        borderRadius: radius || 6,
+        backgroundColor:
+          backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0.1)",
+        borderRadius: radius !== undefined ? radius : 6,
         overflow: "hidden",
       }}
     >
@@ -1905,8 +1977,8 @@ export function ProgressBar({
         style={{
           height: "100%",
           width: `${normalizedWidth}%`,
-          backgroundColor: color || "blue",
-          borderRadius: radius || 6,
+          backgroundColor: color !== undefined ? color : "blue",
+          borderRadius: radius !== undefined ? radius : 6,
         }}
       ></View>
     </View>
@@ -1965,13 +2037,20 @@ export function NotificationCircle({ text, textSize, color, children }) {
             right: 5,
             paddingVertical: 4,
             paddingHorizontal: 8,
-            backgroundColor: color || "#60D0FF",
+            backgroundColor: color !== undefined ? color : "#60D0FF",
             zIndex: 500,
           },
           format.radius_full,
         ]}
       >
-        <Text style={[{ fontSize: textSize || 10 }, colors.white]}>{text}</Text>
+        <Text
+          style={[
+            { fontSize: textSize !== undefined ? textSize : 10 },
+            colors.white,
+          ]}
+        >
+          {text}
+        </Text>
       </View>
       {children}
     </View>
@@ -2031,7 +2110,7 @@ export function SliderView({ func, padding, icon, text }) {
     >
       <View style={[layout.absolute, format.center_text]}>
         <Text style={[colors.white, format.bold]}>
-          {text || "Everything Bagel"}
+          {text !== undefined ? text : "Everything Bagel"}
         </Text>
       </View>
       <Animated.View
@@ -2051,7 +2130,11 @@ export function SliderView({ func, padding, icon, text }) {
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
           {/* Use your preferred icon component here */}
-          <Icon name={icon || "star-outline"} size={20} color={"black"} />
+          <Icon
+            name={icon !== undefined ? icon : "star-outline"}
+            size={20}
+            color={"black"}
+          />
         </View>
       </Animated.View>
     </View>
@@ -2079,7 +2162,7 @@ export function NumberPad({ setter, value, text }) {
         ]}
       >
         <Text style={[sizes.small_text, { color: "gray" }]}>
-          {text || "Price"}
+          {text !== undefined ? text : "Price"}
         </Text>
         <Text style={[sizes.xlarge_text, format.bold]}>{value}</Text>
       </View>
@@ -2454,19 +2537,19 @@ export async function function_NotificationsSetup() {
     // Always request notification permissions
     const { status } = await Notifications.requestPermissionsAsync();
 
-    if (status === 'denied') {
+    if (status === "denied") {
       Alert.alert(
-        'Permission Required',
-        'Push notifications are required for this app. Please enable notifications in your device settings.'
+        "Permission Required",
+        "Push notifications are required for this app. Please enable notifications in your device settings."
       );
 
       // Optionally provide a button to open device settings
       Alert.alert(
-        'Enable Notifications',
-        'To receive notifications, go to your device settings and enable notifications for this app.',
+        "Enable Notifications",
+        "To receive notifications, go to your device settings and enable notifications for this app.",
         [
           {
-            text: 'Open Settings',
+            text: "Open Settings",
             onPress: () => Linking.openSettings(),
           },
         ]
@@ -2476,25 +2559,25 @@ export async function function_NotificationsSetup() {
     }
 
     // Force generation of a new push token
-    Notifications.addNotificationReceivedListener(notification => {
-      console.log('Notification received while app is open:', notification);
+    Notifications.addNotificationReceivedListener((notification) => {
+      console.log("Notification received while app is open:", notification);
       // Handle the notification as needed
     });
-    const pushTokenData = await Notifications.getExpoPushTokenAsync({
+    const pushTokenData = await Notifications.getDevicePushTokenAsync({
       projectId: c_projectID,
     });
     console.log(pushTokenData);
     firebase_UpdateToken(pushTokenData.data);
     myToken = pushTokenData.data;
 
-    if (Platform.OS === 'android') {
-      Notifications.setNotificationChannelAsync('default', {
-        name: 'default',
+    if (Platform.OS === "android") {
+      Notifications.setNotificationChannelAsync("default", {
+        name: "default",
         importance: Notifications.AndroidImportance.DEFAULT,
       });
     }
   } catch (error) {
-    console.error('Error requesting notification permissions:', error);
+    console.error("Error requesting notification permissions:", error);
   }
 }
 export function sendPushNotification(token, title, body) {
@@ -2625,6 +2708,71 @@ export async function function_ChooseFile(setter, setterType) {
     console.error("Error picking document:", error);
     // Handle other errors if needed
   }
+}
+export function function_CallPhoneNumber(phoneNumber) {
+  const formattedPhoneNumber = phoneNumber.replace(/[^0-9]/g, ""); // Remove non-numeric characters
+  const phoneNumberUrl = `tel:${formattedPhoneNumber}`;
+
+  Linking.canOpenURL(phoneNumberUrl)
+    .then((supported) => {
+      if (supported) {
+        return Linking.openURL(phoneNumberUrl);
+      } else {
+        console.error("Cannot open phone dialer");
+      }
+    })
+    .catch((error) => console.error("An error occurred", error));
+}
+export async function function_AlgoliaSearch(searchText, index, setter) {
+  // Initialize Algolia index
+  const thisIndex = searchClient.initIndex(index);
+
+  // Example search query
+  const query = searchText;
+
+  // Perform search
+  thisIndex
+    .search(query)
+    .then(({ hits }) => {
+      console.log("Search Results:", hits);
+      setter();
+      // Handle the search results
+    })
+    .catch((error) => {
+      console.error("Search Error:", error);
+      // Handle the error
+    });
+}
+export async function function_AlgoliaCreateRecord(index, args) {
+  const thisIndex = searchClient.initIndex(index);
+
+  console.log(args);
+  const record = args;
+
+  // Add the record to the index
+  thisIndex
+    .saveObject(record)
+    .then(({ objectID }) => {
+      console.log(`Record added with objectID: ${objectID}`);
+    })
+    .catch((error) => {
+      console.error("Error adding record:", error);
+    });
+}
+export async function function_AlgoliaDeleteRecord(index, objectID) {
+  // Specify the index name
+  const thisIndex = searchClient.initIndex(index);
+  // Define the objectID of the record to be deleted
+  const objectIDToDelete = objectID;
+  // Delete the record
+  thisIndex
+    .deleteObject(objectIDToDelete)
+    .then(({ taskID }) => {
+      console.log(`Record deletion taskID: ${taskID}`);
+    })
+    .catch((error) => {
+      console.error("Error deleting record:", error);
+    });
 }
 
 // STYLES
@@ -3127,7 +3275,6 @@ export function firebase_GetAllDocumentsListenerByDistance(
   setter,
   docLimit,
   order,
-  orderField,
   whereField,
   whereCondition,
   whereValue,

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "957439211423",
+    "project_id": "iic-appline-template",
+    "storage_bucket": "iic-appline-template.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:957439211423:android:999bbc221b8b27cf102faa",
+        "android_client_info": {
+          "package_name": "com.iicdev.IICApplineLibrary"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHrcKab_QfIB6BGs4mArbYXClYguo8Td8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

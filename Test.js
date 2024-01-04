@@ -22,6 +22,7 @@ import {
   IconButtonThree,
   IconButtonTwo,
   IconSegmentedPicker,
+  ImageBackground,
   ImagesView,
   LinkOne,
   Loading,
@@ -67,6 +68,9 @@ import {
   formatDate,
   formatDateTime,
   formatLongDate,
+  function_AlgoliaCreateRecord,
+  function_AlgoliaDeleteRecord,
+  function_AlgoliaSearch,
   function_AsyncString,
   function_ChooseFile,
   function_GetLocation,
@@ -81,6 +85,7 @@ import {
   getDistanceInMiles,
   layout,
   playSound,
+  randomString,
   reduceArray,
   removeDuplicates,
   removeDuplicatesByProperty,
@@ -95,27 +100,27 @@ import { useEffect, useState } from "react";
 function Test({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [things, setThings] = useState([]);
-  const [lastDoc, setLastDoc] = useState(null);
 
-  useEffect(() => {
-   
-  }, []);
+  useEffect(() => {}, []);
 
   return (
     <SafeArea loading={loading}>
       <View style={{ flex: 1 }}>
         <Spacer height={160} />
         {/* TESTING AREA */}
-
         <ButtonOne
-          onPress={() => {
-            
-          }}
-          padding={0}
+          backgroundColor={"rgba(0,0,0,0)"}
+          onPress={() => {}}
+          padding={10}
         >
-          <Text style={[colors.white]}>Press Me</Text>
+          <BlurWrapper styles={[layout.fit_width, { padding: 8 }]}>
+            <Text style={[colors.white]}>Press Me</Text>
+          </BlurWrapper>
         </ButtonOne>
 
+       
+
+        <Spacer height={20} />
       </View>
     </SafeArea>
   );

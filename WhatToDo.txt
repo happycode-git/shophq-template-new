@@ -40,6 +40,8 @@ npx expo install expo-document-Picker
 npm install react-native-file-viewer
 npm install react-native-draggable-flatlist
 npx expo install react-native-pager-view
+sudo npm install algoliasearch react-instantsearch
+
 
 
 SYNTAX -
@@ -155,6 +157,7 @@ TimedView -> { seconds, children }
 GradientView -> { colors, children }
 MenuBar -> { options, iconSize, color, backgroundColor, padding, radius, navigation, route, styles }
 CSVtoJSONConverterView()
+ImageBackground -> { image, blurIntensity }
 
 CONTROLS -
 Example:
@@ -195,6 +198,7 @@ AudioPlayer -> { audioName, audioPath }
 VideoPlayer -> { videoPath, radius }
 DateTime ->{ date, time, setDate, setTime }
 PaymentView -> { children, showPayButton, total, successFunc }
+- amount must be greater than $0.50 usd
 TimerView -> { isActive, setSeconds, seconds, textSize, styles }
 BarGraphView -> { stats, barWidth, barRadius, graphHeight, showValue = true, showHeading = true, textSize }
 ProgressBar -> { progress, radius, color, backgroundColor, height, limit }

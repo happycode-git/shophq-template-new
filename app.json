@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "IICApplineLibrary",
-    "slug": "IICApplineLibrary",
+    "slug": "iic-appline-library",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -17,11 +17,43 @@
     "ios": {
       "supportsTablet": true
     },
+    "notifications": {
+      "color": "#ffffff",
+      "permissions": {
+        "ios": {
+          "alert": true,
+          "badge": true,
+          "sound": true
+        },
+        "android": {
+          "useNextNotificationsApi": true,
+          "color": "#000000",
+          "priority": "max",
+          "sound": true,
+          "vibrate": true,
+          "firebaseSenderId": "931444482872",
+          "firebaseAppId": "1:931444482872:android:07700be798805c3842d7cd",
+          "firebaseApiKey": "AIzaSyD6dYviMLxisVSdckCID3rSNR_4IIEApUE"
+        }
+      }
+    },
     "android": {
+      "googleServicesFile": "./google-services.json",
+      "versionCode": 8,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM"
+      ],
+      "package": "com.iicdev.IICApplineLibrary"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,8 +77,8 @@
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location.",
-          "locationAlwaysPermission" : "Allow $(PRODUCT_NAME) to use your location.",
-          "locationWhenInUsePermission" : "Allow $(PRODUCT_NAME) to use your location."
+          "locationAlwaysPermission": "Allow $(PRODUCT_NAME) to use your location.",
+          "locationWhenInUsePermission": "Allow $(PRODUCT_NAME) to use your location."
         }
       ],
       [
@@ -55,6 +87,11 @@
           "iCloudContainerEnvironment": "Production"
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "42ec020e-de92-4dbb-abff-f6097a2bbf88"
+      }
+    }
   }
 }
