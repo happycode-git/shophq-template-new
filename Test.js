@@ -108,19 +108,8 @@ function Test({ navigation, route }) {
       <View style={{ flex: 1 }}>
         <Spacer height={160} />
         {/* TESTING AREA */}
-        <ButtonOne
-          backgroundColor={"rgba(0,0,0,0)"}
-          onPress={() => {}}
-          padding={10}
-        >
-          <BlurWrapper styles={[layout.fit_width, { padding: 8 }]}>
-            <Text style={[colors.white]}>Press Me</Text>
-          </BlurWrapper>
-        </ButtonOne>
-
-       
-
-        <Spacer height={20} />
+        
+        
       </View>
     </SafeArea>
   );

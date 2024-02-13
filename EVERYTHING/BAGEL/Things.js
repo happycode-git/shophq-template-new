@@ -36,8 +36,9 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as DocumentPicker from "expo-document-picker";
 import PagerView from "react-native-pager-view";
 import * as FileSystem from "expo-file-system";
-import ngeohash from "ngeohash";
+import * as ngeohash from "ngeohash";
 import algoliasearch from "algoliasearch";
+
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -47,9 +48,11 @@ import {
   signInWithEmailAndPassword,
   signOut,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import {
+  deleteObject,
   getDownloadURL,
   getStorage,
   ref,
@@ -70,6 +73,7 @@ import {
   setDoc,
   startAfter,
   where,
+  documentId,
 } from "firebase/firestore";
 import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
 // #endregion
@@ -78,18 +82,22 @@ import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
 export const { height, width } = Dimensions.get("window");
 // Bagel Algolia Account
 export const searchClient = algoliasearch(
-  "HSJCKI6X51",
-  "8fb09774a5a37c5f0ef68ae2081a0c8e"
+  "2DOEMGLWFB",
+  "7cb8106771824a1a327f1e7cb9d81feb"
 );
-export const c_projectID = "e4044789-90d5-4a16-829a-79b8868a1a43";
-export const c_googleMapsAPI = "AIzaSyBtE2qvx3l_A-a5ldpcFvQHu7qdT9CMVH4";
+export const c_projectID = "178e14d8-0dce-4f61-8732-26291c7f545e";
+export const c_googleMapsAPI = "AIzaSyD0y3c_it9f63AILxXHR-Y8YprSynEfxsY";
 export var me = {};
 export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
 export var serverURL = "https://garnet-private-hisser.glitch.me";
-export var myCoords = {};
+export var myCoords = {
+  latitude: 35.66526085,
+  longitude: 139.69219744,
+};
+const myGeohash = "xn76fu8v0n";
 
 // APP INFO
 export var appName = "Happy Code Dev";
@@ -109,7 +117,7 @@ export function SafeArea({
       style={[
         {
           flex: 1,
-          paddingTop: Platform.OS === "ios" ? 20 : 25,
+          paddingTop: Platform.OS === "ios" ? 38 : 30,
           paddingBottom: Platform.OS === "ios" ? 35 : 10,
           backgroundColor:
             backgroundColor !== undefined ? backgroundColor : "white",
@@ -143,20 +151,26 @@ export function SplitView({ children, leftSize, rightSize, styles }) {
     </View>
   );
 }
-export function Grid({ columns, children, styles }) {
+export function Grid({ columns, children, styles, gap }) {
   const childrenArray = React.Children.toArray(children);
   const rows = Math.ceil(childrenArray.length / columns);
 
   return (
     <View
-      style={[{ flex: 1, flexDirection: "column", flexWrap: "wrap" }, styles]}
+      style={[
+        { flex: 1, flexDirection: "column", flexWrap: "wrap", gap },
+        styles,
+      ]}
     >
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <View key={rowIndex} style={{ flexDirection: "row" }}>
           {childrenArray
             .slice(rowIndex * columns, (rowIndex + 1) * columns)
             .map((child, colIndex) => (
-              <View key={colIndex} style={[{ flex: 1 / columns }]}>
+              <View
+                key={colIndex}
+                style={[{ flex: 1 / columns, marginRight: gap }]}
+              >
                 {child}
               </View>
             ))}
@@ -208,7 +222,11 @@ export function Loading() {
           <PulsingView speed={0.5} scale={1.1}>
             <Image
               source={require("../../assets/loading.png")}
-              style={[{ width: 80, height: 80 }, format.radius, layout.center]}
+              style={[
+                { width: 140, height: 140 },
+                format.radius,
+                layout.center,
+              ]}
             />
           </PulsingView>
         </View>
@@ -284,9 +302,16 @@ export function BlurWrapper({ intensity, tint, radius, children, styles }) {
       ]}
     >
       <BlurView
+        blurReductionFactor={3}
         intensity={intensity !== undefined ? intensity : 50}
         tint={tint !== undefined ? tint : "dark"}
-        style={[styles]}
+        style={[
+          styles,
+          {
+            borderRadius: radius !== undefined ? radius : 100,
+            overflow: "hidden",
+          },
+        ]}
       >
         {children}
       </BlurView>
@@ -394,13 +419,13 @@ export function TimedView({ seconds, children }) {
 
   return <View>{toggle && <View>{children}</View>}</View>;
 }
-export function GradientView({ colors, children }) {
+export function GradientView({ colors, children, styles }) {
   return (
     <LinearGradient
       colors={colors}
       start={{ x: 0, y: 0.5 }}
       end={{ x: 1, y: 0.5 }}
-      // style={{ flex: 1 }}
+      style={[styles]}
     >
       {children}
     </LinearGradient>
@@ -603,19 +628,32 @@ export function ImageBackground({ image, blurIntensity }) {
     <BlurWrapper
       radius={0}
       intensity={blurIntensity !== undefined ? blurIntensity : 0}
-      styles={[{ position: "absolute", top: 0, right: 0, left: 0, bottom: 0 }]}
+      styles={[
+        {
+          position: "absolute",
+          top: 0,
+          right: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: -5,
+          height: height,
+          width: width,
+        },
+      ]}
     >
-      <Image
-        source={image}
-        style={[
-          {
-            zIndex: -10,
-            height: height,
-            width: width,
-          },
-          layout.image_cover,
-        ]}
-      />
+      <View style={[{ zIndex: -10 }]}>
+        <Image
+          source={image}
+          style={[
+            {
+              zIndex: -10,
+              height: height,
+              width: width,
+            },
+            layout.image_cover,
+          ]}
+        />
+      </View>
     </BlurWrapper>
   );
 }
@@ -864,12 +902,14 @@ export function LinkOne({ children, underlineColor, onPress, styles }) {
 }
 export function TextFieldOne({
   placeholder,
+  placeholderColor,
   backgroundColor,
   borderBottomWidth,
   borderBottomColor,
   paddingH,
   paddingV,
   textSize,
+  textColor,
   radius,
   onTyping,
   isPassword,
@@ -884,7 +924,9 @@ export function TextFieldOne({
   return (
     <TextInput
       placeholder={placeholder}
-      placeholderTextColor={"rgba(0,0,0,0.5)"}
+      placeholderTextColor={
+        placeholderColor !== undefined ? placeholderColor : "rgba(0,0,0,0.5)"
+      }
       onChangeText={onType}
       value={value}
       secureTextEntry={isPassword}
@@ -904,6 +946,7 @@ export function TextFieldOne({
               : "rgba(0,0,0,0)",
           borderBottomWidth:
             borderBottomWidth !== undefined ? borderBottomWidth : 0,
+          color: textColor !== undefined ? textColor : "black",
         },
         styles,
       ]}
@@ -912,7 +955,10 @@ export function TextFieldOne({
 }
 export function TextAreaOne({
   placeholder,
+  placeholderColor,
+  backgroundColor,
   textSize,
+  textColor,
   radius,
   onTyping,
   value,
@@ -949,7 +995,8 @@ export function TextAreaOne({
       <View
         style={[
           {
-            backgroundColor: "#dae0e3",
+            backgroundColor:
+              backgroundColor !== undefined ? backgroundColor : "#dae0e3",
             padding: 14,
             borderRadius: radius !== undefined ? radius : 6,
           },
@@ -958,12 +1005,17 @@ export function TextAreaOne({
         <TextInput
           multiline={true}
           placeholder={placeholder}
-          placeholderTextColor={"rgba(0,0,0,0.5)"}
+          placeholderTextColor={
+            placeholderColor !== undefined
+              ? placeholderColor
+              : "rgba(0,0,0,0.5)"
+          }
           onChangeText={onType}
           value={value}
           style={[
             {
               fontSize: textSize !== undefined ? textSize : 16,
+              color: textColor !== undefined ? textColor : "black",
             },
             styles,
           ]}
@@ -985,7 +1037,15 @@ export function TextAreaOne({
     </View>
   );
 }
-export function DropdownOne({ options, radius, value, setter, styles }) {
+export function DropdownOne({
+  options,
+  radius,
+  value,
+  setter,
+  backgroundColor,
+  textColor,
+  styles,
+}) {
   const [toggle, setToggle] = useState(false);
   return (
     <View style={styles}>
@@ -997,7 +1057,8 @@ export function DropdownOne({ options, radius, value, setter, styles }) {
         <View
           style={[
             {
-              backgroundColor: "#dae0e3",
+              backgroundColor:
+                backgroundColor !== undefined ? backgroundColor : "#dae0e3",
               padding: 14,
               borderRadius: radius !== undefined ? radius : 10,
             },
@@ -1005,8 +1066,19 @@ export function DropdownOne({ options, radius, value, setter, styles }) {
             layout.relative,
           ]}
         >
-          <Text style={[sizes.medium_text]}>{value}</Text>
-          <Ionicons name="chevron-down-outline" size={25} />
+          <Text
+            style={[
+              sizes.medium_text,
+              { color: textColor !== undefined ? textColor : "black" },
+            ]}
+          >
+            {value}
+          </Text>
+          <Ionicons
+            name="chevron-down-outline"
+            size={25}
+            color={textColor !== undefined ? textColor : "black"}
+          />
         </View>
       </TouchableOpacity>
       {toggle && (
@@ -1021,7 +1093,14 @@ export function DropdownOne({ options, radius, value, setter, styles }) {
                   setToggle(false);
                 }}
               >
-                <Text style={[sizes.medium_text]}>{option}</Text>
+                <Text
+                  style={[
+                    sizes.medium_text,
+                    { color: textColor !== undefined ? textColor : "black" },
+                  ]}
+                >
+                  {option}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -1030,14 +1109,21 @@ export function DropdownOne({ options, radius, value, setter, styles }) {
     </View>
   );
 }
-export function CheckboxOne({ value, setter, text }) {
+export function CheckboxOne({ value, setter, text, textColor }) {
   function onCheck() {
     setter(!value);
   }
   return (
     <View style={[layout.horizontal]}>
       <CheckBox value={value} onValueChange={onCheck} />
-      <Text style={[sizes.medium_text]}>{text}</Text>
+      <Text
+        style={[
+          sizes.medium_text,
+          { color: textColor !== undefined ? textColor : "black" },
+        ]}
+      >
+        {text}
+      </Text>
     </View>
   );
 }
@@ -1088,6 +1174,7 @@ export function SegmentedPickerTwo({
   borderBottomColor,
   selectedColor,
   color,
+  fontSize,
 }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -1125,8 +1212,8 @@ export function SegmentedPickerTwo({
                         : color !== undefined
                         ? color
                         : "black",
+                    fontSize: fontSize !== undefined ? fontSize : 18,
                   },
-                  sizes.medium_text,
                 ]}
               >
                 {option}
@@ -1179,11 +1266,14 @@ export function IconSegmentedPicker({
     </View>
   );
 }
-export function Accordion({ children, top }) {
+export function Accordion({ children, top, func }) {
   const [toggle, setToggle] = useState(false);
   return (
     <TouchableOpacity
       onPress={() => {
+        if (func !== undefined) {
+          func();
+        }
         setToggle(!toggle);
       }}
     >
@@ -1192,7 +1282,7 @@ export function Accordion({ children, top }) {
     </TouchableOpacity>
   );
 }
-export function CameraPicker({ setToggle, setLoading, setImage }) {
+export function CameraPicker({ setToggle, setLoading, func }) {
   const [type, setType] = useState(CameraType.back);
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -1210,7 +1300,7 @@ export function CameraPicker({ setToggle, setLoading, setImage }) {
       setLoading(true);
       try {
         const photo = await cameraRef.current.takePictureAsync();
-        setImage(photo.uri);
+        func(photo.uri);
         setLoading(false);
         setToggle(false);
       } finally {
@@ -1348,7 +1438,15 @@ export function AsyncImage({ path, width, height, radius }) {
   const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
-    const storageRef = ref(storage, path);
+    const newPath = `${
+      !path.startsWith("Images/") && !path.startsWith("Stock/") ? "Images/" : ""
+    }${path}`;
+
+    var storageRef = ref(storage, newPath);
+    if (path === "") {
+      storageRef = ref(storage, "Stock/abstract.jpg");
+    }
+    // console.log(path)
     getDownloadURL(storageRef)
       .then((url) => {
         // Image has been successfully loaded
@@ -1357,6 +1455,9 @@ export function AsyncImage({ path, width, height, radius }) {
       .catch((error) => {
         // Handle any errors
         console.error("Error loading image:", error);
+        getDownloadURL(ref(storage, "Stock/abstract.jpg")).then((url) => {
+          setImageUrl(url);
+        });
       })
       .finally(() => {
         // Update loading state when the operation is complete
@@ -1372,7 +1473,7 @@ export function AsyncImage({ path, width, height, radius }) {
             {
               width: width !== undefined ? width : 100,
               height: height !== undefined ? height : 100,
-              backgroundColor: "rgba(0,0,0,0.2)",
+              backgroundColor: "rgba(255,255,255,0.1)",
               borderRadius: radius !== undefined ? radius : 10,
             },
             layout.separate_vertical,
@@ -1401,7 +1502,7 @@ export function AsyncImage({ path, width, height, radius }) {
             {
               width: width !== undefined ? width : 100,
               height: height !== undefined ? height : 100,
-              backgroundColor: "rgba(0,0,0,0.2)",
+              backgroundColor: "rgba(255,255,255,0.1)",
               borderRadius: radius !== undefined ? radius : 10,
             },
             layout.separate_vertical,
@@ -1411,6 +1512,56 @@ export function AsyncImage({ path, width, height, radius }) {
           <View></View>
           <ActivityIndicator />
           <View></View>
+        </View>
+      )}
+    </View>
+  );
+}
+export function AsyncImagesView({ paths, styles, onPageSelected, radius }) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const total = paths.length;
+
+  const handlePageSelected = (event) => {
+    const { position } = event.nativeEvent;
+    setCurrentPage(position);
+    if (onPageSelected) {
+      onPageSelected(position);
+    }
+  };
+
+  useEffect(() => {
+    // console.log(paths);
+  }, []);
+
+  return (
+    <View style={{ height: "100%" }}>
+      <PagerView
+        style={[styles, { height: "100%" }]}
+        onPageSelected={handlePageSelected}
+      >
+        {paths.map((path, i) => (
+          <View key={i}>
+            <AsyncImage
+              path={path}
+              width={"100%"}
+              height={"100%"}
+              radius={radius !== undefined ? radius : 10}
+            />
+          </View>
+        ))}
+      </PagerView>
+      {paths.length > 1 && (
+        <View style={[layout.absolute, { right: 10, bottom: 10 }]}>
+          <BlurWrapper intensity={80}>
+            <Text
+              style={[
+                colors.white,
+                { fontSize: 10, paddingVertical: 4, paddingHorizontal: 8 },
+              ]}
+            >
+              {currentPage + 1}/{total}
+            </Text>
+          </BlurWrapper>
         </View>
       )}
     </View>
@@ -1426,7 +1577,7 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
   useEffect(() => {}, []);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View>
       <MapView
         style={{
           width: "100%",
@@ -1455,7 +1606,7 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
         >
           <Image
             source={require("../../assets/marker.png")}
-            style={{ width: 40, height: 40 }}
+            style={{ width: 85, height: 85 }}
           />
         </Marker>
       </MapView>
@@ -2033,12 +2184,12 @@ export function NotificationCircle({ text, textSize, color, children }) {
         style={[
           {
             position: "absolute",
-            top: 5,
-            right: 5,
+            top: -5,
+            right: -5,
             paddingVertical: 4,
             paddingHorizontal: 8,
             backgroundColor: color !== undefined ? color : "#60D0FF",
-            zIndex: 500,
+            zIndex: 800,
           },
           format.radius_full,
         ]}
@@ -2109,7 +2260,7 @@ export function SliderView({ func, padding, icon, text }) {
       }}
     >
       <View style={[layout.absolute, format.center_text]}>
-        <Text style={[colors.white, format.bold]}>
+        <Text style={[colors.white, sizes.medium_text]}>
           {text !== undefined ? text : "Everything Bagel"}
         </Text>
       </View>
@@ -2132,7 +2283,7 @@ export function SliderView({ func, padding, icon, text }) {
           {/* Use your preferred icon component here */}
           <Icon
             name={icon !== undefined ? icon : "star-outline"}
-            size={20}
+            size={25}
             color={"black"}
           />
         </View>
@@ -2483,18 +2634,110 @@ export async function getDistanceInKilometers(coords1, coords2) {
     throw error;
   }
 }
+export function separateKeys(inputArray) {
+  const resultArray = [];
+
+  inputArray.forEach((obj) => {
+    // Iterate through each key in the object
+    Object.keys(obj).forEach((key) => {
+      // Create a new object with a single key
+      const newObj = { [key]: obj[key] };
+      // Add the new object to the result array
+      resultArray.push(newObj);
+    });
+  });
+
+  return resultArray;
+}
+export function createGeohash(latitude, longitude) {
+  // Generate a geohash from latitude and longitude
+  const geohash = ngeohash.encode(latitude, longitude, 10);
+
+  return geohash;
+}
+export async function addRecordToAlgolia(args, indexName) {
+  const index = searchClient.initIndex(`${indexName}`);
+  try {
+    const objectID = `${args.id}`; // Provide a unique object ID for each record
+    const record = {
+      objectID,
+      ...args,
+    };
+
+    // Add the record to Algolia index
+    const result = await index.saveObject(record);
+
+    console.log("Record added to Algolia:", result);
+  } catch (error) {
+    console.error("Error adding record to Algolia:", error);
+  }
+}
+export async function removeRecordFromAlgolia(objectID, indexName) {
+  try {
+    const index = client.initIndex(indexName);
+
+    // Remove the record from Algolia index
+    const result = await index.deleteObject(objectID);
+
+    console.log("Record removed from Algolia:", result);
+  } catch (error) {
+    console.error("Error removing record from Algolia:", error);
+  }
+}
+export function convertToPrecision10(geohash) {
+  // Ensure the geohash is at least 10 characters long
+  while (geohash.length < 10) {
+    geohash += "0";
+  }
+
+  // Trim extra characters if the geohash is longer than 10 characters
+  return geohash.substring(0, 10);
+}
+export function ensurePrecision10(geohash) {
+  // Ensure the geohash has at least 10 characters
+  while (geohash.length < 10) {
+    geohash += "0";
+  }
+
+  return geohash;
+}
+export function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 6371; // Radius of the Earth in kilometers
+  const dLat = (lat2 - lat1) * (Math.PI / 180);
+  const dLon = (lon2 - lon1) * (Math.PI / 180);
+
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * (Math.PI / 180)) *
+      Math.cos(lat2 * (Math.PI / 180)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  const distance = R * c; // Distance in kilometers
+
+  return distance;
+}
 
 // LOCAL FUNCTIONS
 function milesToLat(miles) {
   return miles / 69.172; // Approximate degrees of latitude per mile
 }
-function milesToLon(miles, latitude) {
-  const milesPerDegreeLon = 69.172 * Math.cos(latitude * (Math.PI / 180));
+function milesToLon(miles, longitude) {
+  const milesPerDegreeLon = 69.172 * Math.cos(longitude * (Math.PI / 180));
   return miles / milesPerDegreeLon;
+}
+export function kmToLat(km) {
+  return km / 110.574;
+}
+export function kmToLon(km, latitude) {
+  const kmPerDegreeLon = 111.32 * Math.cos(latitude * (Math.PI / 180));
+  return km / kmPerDegreeLon;
 }
 
 // FUNCTIONS
-export async function function_PickImage(setLoading, setImage) {
+export async function function_PickImage(setLoading, setImage, func) {
   // No permissions request is necessary for launching the image library
   let result = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -2508,6 +2751,64 @@ export async function function_PickImage(setLoading, setImage) {
   if (!result.canceled) {
     setLoading(false);
     setImage(result.assets[0].uri);
+    func(result.assets[0].uri);
+  }
+}
+export async function function_PickImageWithParams(
+  setLoading,
+  setImage,
+  func,
+  params
+) {
+  // No permissions request is necessary for launching the image library
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  console.log(result);
+
+  if (!result.canceled) {
+    setLoading(false);
+    setImage(result.assets[0].uri);
+    func(result.assets[0].uri, params);
+  }
+}
+export async function function_PickImageToArr(
+  setLoading,
+  setImages,
+  setImage,
+  func
+) {
+  // No permissions request is necessary for launching the image library
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  console.log(result);
+
+  if (!result.canceled) {
+    setLoading(false);
+    setImage(result.assets[0].uri);
+    setImages((prev) => {
+      const newUri = result.assets[0].uri;
+
+      // Check if the newUri already exists in the array
+      if (!prev.includes(newUri)) {
+        // Add the newUri to the array
+        return [...prev, newUri];
+      }
+
+      // If it already exists, return the current array without changes
+      return prev;
+    });
+    // console.log(result.assets[0].uri)
+    func(result.assets[0].uri);
   }
 }
 export async function function_GetLocation(setLoading, setLocation) {
@@ -2532,7 +2833,7 @@ export async function function_GetLocation(setLoading, setLocation) {
     setLoading(false);
   }
 }
-export async function function_NotificationsSetup() {
+export async function function_NotificationsSetup(userID) {
   try {
     // Always request notification permissions
     const { status } = await Notifications.requestPermissionsAsync();
@@ -2563,11 +2864,11 @@ export async function function_NotificationsSetup() {
       console.log("Notification received while app is open:", notification);
       // Handle the notification as needed
     });
-    const pushTokenData = await Notifications.getDevicePushTokenAsync({
+    const pushTokenData = await Notifications.getExpoPushTokenAsync({
       projectId: c_projectID,
     });
     console.log(pushTokenData);
-    firebase_UpdateToken(pushTokenData.data);
+    firebase_UpdateToken(pushTokenData.data, userID);
     myToken = pushTokenData.data;
 
     if (Platform.OS === "android") {
@@ -2602,22 +2903,26 @@ export function function_GetDirections(lat, lon) {
     console.error("Error opening Google Maps:", err)
   );
 }
-export async function function_AddressToLatLon(address, setter) {
-  const apiKey = c_googleMapsAPI; // Replace with your own API key
+export async function function_AddressToLatLon(address, setter, apiKey) {
   const apiUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
     address
   )}&key=${apiKey}`;
-
+  console.log(apiUrl);
   try {
     const response = await fetch(apiUrl);
-    const data = await response.json();
 
+    if (!response.ok) {
+      throw new Error(`Failed to fetch. Status: ${response.status}`);
+    }
+
+    const data = await response.json();
     if (data.results.length > 0) {
+      console.log("HERE WE ARE");
       const location = data.results[0].geometry.location;
       const { lat, lng } = location;
       setter({ latitude: lat, longitude: lng });
     } else {
-      throw new Error("No results found for the given address.");
+      throw new Error(`No results found for the given address: ${address}`);
     }
   } catch (error) {
     console.error("Error geocoding address:", error.message);
@@ -2645,8 +2950,9 @@ export async function function_SendEmail(toEmails, subject, HTML) {
 }
 export async function function_AsyncString(asyncFunction, setter) {
   try {
-    const result = await asyncFunction;
-    setter(result.toString()); // Convert the result to a string
+    const result = await asyncFunction();
+    console.log(result);
+    return result.toString(); // Convert the result to a string
   } catch (error) {
     console.error("Error:", error);
     // You might want to set an error state here or handle the error differently
@@ -2734,8 +3040,8 @@ export async function function_AlgoliaSearch(searchText, index, setter) {
   thisIndex
     .search(query)
     .then(({ hits }) => {
-      console.log("Search Results:", hits);
-      setter();
+      console.log(hits.length);
+      setter(hits);
       // Handle the search results
     })
     .catch((error) => {
@@ -2753,10 +3059,15 @@ export async function function_AlgoliaCreateRecord(index, args) {
   thisIndex
     .saveObject(record)
     .then(({ objectID }) => {
-      console.log(`Record added with objectID: ${objectID}`);
+      console.log(
+        `---------------------------------------------Record added with objectID: ${objectID}`
+      );
     })
     .catch((error) => {
-      console.error("Error adding record:", error);
+      console.error(
+        "-------------------------------------------Error adding record:",
+        error
+      );
     });
 }
 export async function function_AlgoliaDeleteRecord(index, objectID) {
@@ -2768,10 +3079,15 @@ export async function function_AlgoliaDeleteRecord(index, objectID) {
   thisIndex
     .deleteObject(objectIDToDelete)
     .then(({ taskID }) => {
-      console.log(`Record deletion taskID: ${taskID}`);
+      console.log(
+        `----------------------------------------------Record deletion taskID: ${taskID}`
+      );
     })
     .catch((error) => {
-      console.error("Error deleting record:", error);
+      console.error(
+        "-----------------------------------------------Error deleting record:",
+        error
+      );
     });
 }
 
@@ -2845,6 +3161,9 @@ export const colors = StyleSheet.create({
   blue: {
     color: "#169FFF",
   },
+  gray: {
+    color: "#CFCFD0",
+  },
 });
 export const layout = StyleSheet.create({
   padding: {
@@ -2887,6 +3206,7 @@ export const layout = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     alignItems: "flex-start",
+    overflow: "hidden",
   },
   vertical: {
     flexDirection: "column",
@@ -2968,13 +3288,13 @@ export const backgrounds = StyleSheet.create({
 // AUTH
 // Config
 const firebaseConfig = {
-  apiKey: "AIzaSyAMkZs0qvSSYVfA4pOMzSkXl-Nkut7raqw",
-  authDomain: "iic-appline-template.firebaseapp.com",
-  projectId: "iic-appline-template",
-  storageBucket: "iic-appline-template.appspot.com",
-  messagingSenderId: "957439211423",
-  appId: "1:957439211423:web:57d7872b6486b922102faa",
-  measurementId: "G-D2Y4Q8QLJW",
+  apiKey: "AIzaSyAL_JCUzKv5NuPULopwrFYIwpYvsY1nIxc",
+  authDomain: "easysellv3.firebaseapp.com",
+  projectId: "easysellv3",
+  storageBucket: "easysellv3.appspot.com",
+  messagingSenderId: "779089473276",
+  appId: "1:779089473276:web:8100821e66ad2a0d95f179",
+  measurementId: "G-SDMFE66120",
 };
 // Initializations
 const app = initializeApp(firebaseConfig);
@@ -2982,21 +3302,22 @@ const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(ReactNativeAsyncStorage),
 });
 const storage = getStorage();
-const db = getFirestore(app);
+export const db = getFirestore(app);
 
 export function auth_IsUserSignedIn(
   setLoading,
   navigation,
   ifLoggedIn,
   ifNotLoggedIn,
-  params
+  params,
+  setter
 ) {
-  onAuthStateChanged(auth, (user) => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
     if (user) {
       const uid = user.uid;
       myID = uid;
       firebase_UpdateToken(myToken);
-      firebase_GetMe(uid);
+      firebase_GetMe(user.email, setter);
       setLoading(false);
       if (params !== null) {
         navigation.navigate(ifLoggedIn, params);
@@ -3013,6 +3334,9 @@ export function auth_IsUserSignedIn(
       }
     }
   });
+
+  // Unsubscribe from the auth state listener when the component unmounts
+  return unsubscribe;
 }
 export function auth_SignIn(
   setLoading,
@@ -3020,7 +3344,8 @@ export function auth_SignIn(
   password,
   navigation,
   params,
-  redirect
+  redirect,
+  setter
 ) {
   signInWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
@@ -3029,7 +3354,7 @@ export function auth_SignIn(
       const userID = user.uid;
       myID = userID;
       firebase_UpdateToken(myToken);
-      firebase_GetMe(userID);
+      firebase_GetMe(user.email, setter);
       console.log(userID);
       setLoading(false);
       if (params !== null) {
@@ -3124,20 +3449,19 @@ export function auth_DeleteUser() {
 export async function firebase_CreateUser(args, uid) {
   await setDoc(doc(db, "Users", uid), args);
 }
-export async function firebase_GetMe(uid) {
-  const docRef = doc(db, "Users", uid);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists()) {
-    const user = {
-      id: docSnap.id,
-      ...docSnap.data(),
-    };
-    me = user;
-  } else {
-    // docSnap.data() will be undefined in this case
-    console.log("No such document!");
-  }
+export async function firebase_GetMe(email, setter) {
+  const q = query(collection(db, "Users"), where("Email", "==", email));
+  const _ = onSnapshot(q, (querySnapshot) => {
+    querySnapshot.forEach((doc) => {
+      const user = {
+        id: doc.id,
+        ...doc.data(),
+      };
+      me = user;
+      console.log(`I am ${user.DisplayName}`);
+      setter(user);
+    });
+  });
 }
 export async function firebase_GetDocument(
   setLoading,
@@ -3213,6 +3537,50 @@ export async function firebase_GetAllDocuments(
   setter(things);
   setLoading(false);
 }
+export async function firebase_GetAllDocumentsByIds(
+  table,
+  setter,
+  docLimit,
+  order,
+  orderField,
+  whereArray,
+  paginated = false,
+  lastDoc = null
+) {
+  console.log("GETTING DOCS");
+  const collectionRef = collection(db, table);
+
+  let baseQuery = query(collectionRef);
+
+  if (whereArray) {
+    baseQuery = query(baseQuery, where(documentId(), "in", whereArray));
+  }
+
+  baseQuery = query(baseQuery, orderBy(orderField, order));
+
+  if (docLimit > 0) {
+    baseQuery = query(baseQuery, limit(docLimit));
+  }
+
+  let finalQuery = baseQuery;
+
+  if (paginated && lastDoc) {
+    finalQuery = query(baseQuery, startAfter(lastDoc[orderField]));
+  }
+
+  const querySnapshot = await getDocs(finalQuery);
+  const things = [];
+
+  querySnapshot.forEach((doc) => {
+    const thing = {
+      id: doc.id,
+      ...doc.data(),
+    };
+    things.push(thing);
+  });
+
+  setter(things);
+}
 export function firebase_GetAllDocumentsListener(
   setLoading,
   table,
@@ -3225,6 +3593,71 @@ export function firebase_GetAllDocumentsListener(
   whereValue,
   paginated = false,
   lastDoc = null,
+  setLastDoc,
+) {
+  console.log("GETTING DOCS");
+  setLoading(true);
+  const collectionRef = collection(db, table);
+
+  let baseQuery = query(collectionRef);
+
+  if (whereField && whereCondition && whereValue) {
+    baseQuery = query(baseQuery, where(whereField, whereCondition, whereValue));
+  }
+
+  baseQuery = query(baseQuery, orderBy(orderField, order));
+
+  if (docLimit > 0) {
+    baseQuery = query(baseQuery, limit(docLimit));
+  }
+
+  let finalQuery = baseQuery;
+
+  if (paginated && lastDoc) {
+    finalQuery = query(baseQuery, startAfter(lastDoc[orderField]));
+  }
+
+  const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
+    const things = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Update lastDoc if there are new documents and setLastDoc is available
+    if (things.length > 0 && setLastDoc) {
+      setLastDoc(things[things.length - 1]);
+    }
+
+    if (paginated) {
+      setter((prev) => {
+        const uniqueThings = [...prev, ...things].reduce(
+          (acc, current) =>
+            acc.some((thing) => thing.id === current.id)
+              ? acc
+              : [...acc, current],
+          []
+        );
+        return uniqueThings;
+      });
+    } else {
+      setter(things);
+    }
+
+    setLoading(false);
+  });
+
+  return unsubscribe;
+}
+export function firebase_GetAllDocumentsListenerByIds(
+  setLoading,
+  table,
+  setter,
+  docLimit,
+  order,
+  orderField,
+  whereArray,
+  paginated = false,
+  lastDoc = null,
   setLastDoc
 ) {
   console.log("GETTING DOCS");
@@ -3232,8 +3665,8 @@ export function firebase_GetAllDocumentsListener(
 
   let baseQuery = query(collectionRef);
 
-  if (whereField && whereCondition && whereValue) {
-    baseQuery = query(baseQuery, where(whereField, whereCondition, whereValue));
+  if (whereArray) {
+    baseQuery = query(baseQuery, where(documentId(), "in", whereArray));
   }
 
   baseQuery = query(baseQuery, orderBy(orderField, order));
@@ -3263,7 +3696,7 @@ export function firebase_GetAllDocumentsListener(
       setLastDoc(things[things.length - 1]);
     }
 
-    setter((prev) => [...prev, ...things]); // Append to the existing state
+    setter((prev) => removeDuplicatesByProperty([...prev, ...things], "id"));
     setLoading(false);
   });
 
@@ -3281,31 +3714,41 @@ export function firebase_GetAllDocumentsListenerByDistance(
   paginated = false,
   lastDoc = null,
   setLastDoc,
-  distance,
   coordinates
 ) {
-  console.log("GETTING DOCS");
+  setLoading(true);
+  console.log("GETTING DOCUMENTS LISTENER");
   const collectionRef = collection(db, table);
   let baseQuery = query(collectionRef);
+  const precision = 10;
+  const distance = 100;
 
   if (whereField && whereCondition && whereValue) {
     baseQuery = query(baseQuery, where(whereField, whereCondition, whereValue));
   }
+  const latDiff = kmToLat(distance);
+  const lonDiff = kmToLon(distance, coordinates.latitude);
 
-  const latDiff = milesToLat(distance);
-  const lonDiff = milesToLon(distance, coordinates.latitude);
-  const minGeohash = ngeohash.encode(
-    coordinates.latitude - latDiff,
-    coordinates.longitude - lonDiff
+  const minGeohash = convertToPrecision10(
+    ngeohash.encode(
+      coordinates.latitude - latDiff,
+      coordinates.longitude - lonDiff,
+      precision
+    )
   );
-  const maxGeohash = ngeohash.encode(
-    coordinates.latitude + latDiff,
-    coordinates.longitude + lonDiff
+  const maxGeohash = convertToPrecision10(
+    ngeohash.encode(
+      coordinates.latitude + latDiff,
+      coordinates.longitude + lonDiff,
+      precision
+    )
   );
+
   baseQuery = query(
     baseQuery,
     where("geohash", ">=", minGeohash),
     where("geohash", "<=", maxGeohash),
+    where("Active", "==", true),
     orderBy("geohash", order)
   );
 
@@ -3316,26 +3759,33 @@ export function firebase_GetAllDocumentsListenerByDistance(
   let finalQuery = baseQuery;
 
   if (paginated && lastDoc) {
-    console.log("Using startAfter:", lastDoc.data());
-    finalQuery = query(baseQuery, startAfter(lastDoc));
+    const lastDocData = lastDoc;
+    finalQuery = query(baseQuery, startAfter(lastDocData));
   }
 
-  const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
+  const unsubscribe = onSnapshot(finalQuery, async (querySnapshot) => {
     const things = [];
-    querySnapshot.forEach((doc) => {
+    for (const doc of querySnapshot.docs) {
+      const distance = haversineDistance(
+        myCoords.latitude,
+        myCoords.longitude,
+        doc.data().Lat,
+        doc.data().Lon
+      );
       const thing = {
         id: doc.id,
         ...doc.data(),
+        Distance: distance.toFixed(2),
       };
       things.push(thing);
-    });
-
+    }
     if (things.length > 0 && setLastDoc) {
       const lastDocSnapshot = querySnapshot.docs[querySnapshot.docs.length - 1];
       setLastDoc(lastDocSnapshot);
     }
+    things.sort((a, b) => a.Distance - b.Distance);
 
-    setter((prev) => [...prev, ...things]);
+    setter((prev) => removeDuplicatesByProperty([...prev, ...things], "id"));
     setLoading(false);
   });
 
@@ -3358,8 +3808,8 @@ export async function firebase_DeleteDocument(setLoading, table, documentID) {
   await deleteDoc(doc(db, table, documentID));
   setLoading(false);
 }
-export async function firebase_UpdateToken(token) {
-  const washingtonRef = doc(db, "Users", myID);
+export async function firebase_UpdateToken(token, userID) {
+  const washingtonRef = doc(db, "Users", userID);
 
   // Set the "capital" field of the city 'DC'
   await updateDoc(washingtonRef, {
@@ -3399,6 +3849,7 @@ export async function storage_UploadImage(
       },
       async () => {
         // Handle successful completion
+        setProgress(0);
         setLoading(false); // Update loading state
       }
     );
@@ -3461,5 +3912,40 @@ export async function storage_DownloadFile(setLoading, path, setter) {
     console.error("Error downloading file:", error);
     setLoading(false); // Update loading state in case of an error
     Alert.alert("Error", "Please try again.");
+  }
+}
+export async function storage_DownloadFiles(setLoading, path, setter) {
+  setLoading(true);
+  console.log("DOWNLOADING");
+  console.log(path);
+  try {
+    // Get the download URL for the file
+    const storageRef = ref(storage, path);
+    const downloadURL = await getDownloadURL(storageRef);
+
+    // Set the file using the provided setter
+    console.log(downloadURL);
+    setter((prev) => [...prev, downloadURL]);
+
+    // Update loading state
+    setLoading(false);
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    setLoading(false); // Update loading state in case of an error
+    Alert.alert("Error", "Please try again.");
+  }
+}
+export async function storage_DeleteImage(setLoading, path) {
+  try {
+    const imageRef = ref(storage, path);
+
+    // Delete the file
+    await deleteObject(imageRef);
+
+    console.log(`Image at path ${path} deleted successfully`);
+  } catch (error) {
+    console.error("Error deleting image:", error.message);
+  } finally {
+    setLoading(false);
   }
 }
