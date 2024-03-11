@@ -39,6 +39,7 @@ import * as FileSystem from "expo-file-system";
 import * as ngeohash from "ngeohash";
 import algoliasearch from "algoliasearch";
 import QRCode from "react-native-qrcode-svg";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -2976,6 +2977,29 @@ export function haversineDistance(lat1, lon1, lat2, lon2) {
   const distance = R * c; // Distance in kilometers
 
   return distance;
+}
+export async function storeInDevice(key, value) {
+  try {
+    await AsyncStorage.setItem(key, JSON.stringify(value));
+  } catch (error) {
+    console.error("Error storing data:", error);
+  }
+}
+export async function getInDevice(key, setter) {
+  try {
+    const value = await AsyncStorage.getItem(key);
+    setter(value ? JSON.parse(value) : null);
+  } catch (error) {
+    console.error("Error getting data:", error);
+    return null;
+  }
+}
+export async function removeInDevice(key) {
+  try {
+    await AsyncStorage.removeItem(key);
+  } catch (error) {
+    console.error("Error removing data:", error);
+  }
 }
 
 // LOCAL FUNCTIONS

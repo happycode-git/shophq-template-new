@@ -49,6 +49,7 @@ npx expo install expo-dev-client
 npm install tesseract.js@latest
 npm install expo-image-manipulator
 npm install axios
+npm install @react-native-async-storage/async-storage
 
 SYNTAX -
 ------ JSX

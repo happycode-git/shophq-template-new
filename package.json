@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@emailjs/browser": "^3.11.0",
-    "@react-native-async-storage/async-storage": "^1.19.4",
+    "@react-native-async-storage/async-storage": "^1.22.3",
     "@react-native-community/datetimepicker": "7.2.0",
     "@react-native-community/slider": "^4.4.3",
     "@react-navigation/native": "^6.1.9",
