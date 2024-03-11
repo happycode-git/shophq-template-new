@@ -1075,6 +1075,9 @@ export function DropdownOne({
   setter,
   backgroundColor,
   textColor,
+  textSize,
+  iconSize,
+  padding,
   styles,
 }) {
   const [toggle, setToggle] = useState(false);
@@ -1090,7 +1093,7 @@ export function DropdownOne({
             {
               backgroundColor:
                 backgroundColor !== undefined ? backgroundColor : "#dae0e3",
-              padding: 14,
+              padding: padding !== undefined ? padding : 12,
               borderRadius: radius !== undefined ? radius : 10,
             },
             layout.separate_horizontal,
@@ -1099,26 +1102,29 @@ export function DropdownOne({
         >
           <Text
             style={[
-              sizes.medium_text,
-              { color: textColor !== undefined ? textColor : "black" },
+              {
+                color: textColor !== undefined ? textColor : "black",
+                fontSize: textSize !== undefined ? textSize : 14,
+              },
             ]}
           >
             {value}
           </Text>
           <Ionicons
             name="chevron-down-outline"
-            size={25}
+            size={iconSize !== undefined ? iconSize : 16}
             color={textColor !== undefined ? textColor : "black"}
           />
         </View>
       </TouchableOpacity>
+      <Spacer height={6} />
       {toggle && (
         <View>
           {options.map((option, i) => {
             return (
               <TouchableOpacity
                 key={i}
-                style={[{ padding: 14 }]}
+                style={[{ padding: 10 }, layout.separate_horizontal]}
                 onPress={() => {
                   setter(option);
                   setToggle(false);
@@ -1126,12 +1132,21 @@ export function DropdownOne({
               >
                 <Text
                   style={[
-                    sizes.medium_text,
-                    { color: textColor !== undefined ? textColor : "black" },
+                    {
+                      color: textColor !== undefined ? textColor : "black",
+                      fontSize: textSize !== undefined ? textSize : 14,
+                    },
                   ]}
                 >
                   {option}
                 </Text>
+                {option === value && (
+                  <Icon
+                    name={"ellipse"}
+                    size={iconSize !== undefined ? iconSize - 6 : 12}
+                    color={"#1BA8FF"}
+                  />
+                )}
               </TouchableOpacity>
             );
           })}
@@ -3634,13 +3649,15 @@ export function auth_CreateUser(
   args,
   navigation,
   params,
-  redirect
+  redirect,
+  userID
 ) {
   createUserWithEmailAndPassword(auth, email, password)
     .then((userCredential) => {
       // Signed up
       const user = userCredential.user;
       const uid = user.uid;
+      userID(uid);
       myID = uid;
       firebase_UpdateToken(myToken);
       firebase_CreateUser(args, uid).then(() => {
