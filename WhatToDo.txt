@@ -30,19 +30,25 @@ npx expo install react-native-maps
 npx expo install expo-checkbox
 npx expo install expo-av
 npx expo install expo-asset
+npm install expo-linking
 npx expo install @react-native-community/datetimepicker
 npm install stripe --save
 npx expo install expo-blur
 npx expo install expo-mail-composer
 expo install expo-linear-gradient
 npx expo install expo-file-system
-npx expo install expo-document-Picker
+npx expo install expo-document-picker
 npm install react-native-file-viewer
 npm install react-native-draggable-flatlist
 npx expo install react-native-pager-view
 sudo npm install algoliasearch react-instantsearch
-
-
+npm install react-native-qrcode-svg
+npm install ngeohash
+npm install react-native-nfc-manager
+npx expo install expo-dev-client
+npm install tesseract.js@latest
+npm install expo-image-manipulator
+npm install axios
 
 SYNTAX -
 ------ JSX

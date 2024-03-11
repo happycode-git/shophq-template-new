@@ -3,6 +3,7 @@ import {
   Accordion,
   AsyncImage,
   AudioPlayer,
+  BarCodeView,
   BarGraphView,
   BlurWrapper,
   ButtonOne,
@@ -13,6 +14,10 @@ import {
   ChangeOrderView,
   CheckboxOne,
   ConfettiView,
+  CreditCardScanner,
+  DatePicker,
+  DateTime,
+  DebitCreditCardScanner,
   DropdownOne,
   FadeWrapper,
   GradientView,
@@ -35,6 +40,8 @@ import {
   PlayButton,
   ProgressBar,
   PulsingView,
+  QRCodeView,
+  QRReader,
   RecordingButton,
   RoundedCorners,
   SafeArea,
@@ -58,6 +65,7 @@ import {
   backgrounds,
   checkDate,
   colors,
+  firebase_CreateDocument,
   firebase_DeleteDocument,
   firebase_GetAllDocuments,
   firebase_GetAllDocumentsListener,
@@ -78,7 +86,9 @@ import {
   function_OpenLink,
   function_PickImage,
   function_PlaySound,
+  function_QuickBooksNewSale,
   function_SendEmail,
+  function_StripeConnect,
   function_TimedFunction,
   function_UploadFile,
   getDistanceInKilometers,
@@ -99,18 +109,15 @@ import { useEffect, useState } from "react";
 
 function Test({ navigation, route }) {
   const [loading, setLoading] = useState(false);
-  const [things, setThings] = useState([]);
+  const [thing1, setThing1] = useState(new Date());
+  const [thing2, setThing2] = useState(new Date())
+
+  const [toggle, setToggle] = useState(true);
 
   useEffect(() => {}, []);
 
   return (
     <SafeArea loading={loading}>
-      <View style={{ flex: 1 }}>
-        <Spacer height={160} />
-        {/* TESTING AREA */}
-        
-        
-      </View>
     </SafeArea>
   );
 }

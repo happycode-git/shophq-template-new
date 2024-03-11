@@ -38,7 +38,7 @@ import PagerView from "react-native-pager-view";
 import * as FileSystem from "expo-file-system";
 import * as ngeohash from "ngeohash";
 import algoliasearch from "algoliasearch";
-
+import QRCode from "react-native-qrcode-svg";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -92,12 +92,12 @@ export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
+//
 export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var myCoords = {
   latitude: 35.66526085,
   longitude: 139.69219744,
 };
-const myGeohash = "xn76fu8v0n";
 
 // APP INFO
 export var appName = "Happy Code Dev";
@@ -117,8 +117,6 @@ export function SafeArea({
       style={[
         {
           flex: 1,
-          paddingTop: Platform.OS === "ios" ? 38 : 30,
-          paddingBottom: Platform.OS === "ios" ? 35 : 10,
           backgroundColor:
             backgroundColor !== undefined ? backgroundColor : "white",
         },
@@ -133,7 +131,17 @@ export function SafeArea({
           image={imageBackground}
         />
       )}
-      {children}
+      <View
+        style={[
+          {
+            flex: 1,
+            paddingTop: Platform.OS === "ios" ? 42 : 30,
+            paddingBottom: Platform.OS === "ios" ? 25 : 10,
+          },
+        ]}
+      >
+        {children}
+      </View>
     </View>
   );
 }
@@ -209,13 +217,19 @@ export function Loading() {
           left: 0,
           right: 0,
           zIndex: 10000,
+          height: height,
         },
       ]}
     >
       <BlurWrapper
         intensity={40}
         radius={0}
-        styles={[{ flex: 1, height: height }]}
+        styles={[
+          {
+            flex: 1,
+            height: height,
+          },
+        ]}
       >
         <View style={[{ flex: 1 }]}></View>
         <View style={[format.center_text, layout.padding]}>
@@ -490,7 +504,7 @@ export function MenuBar({
     </View>
   );
 }
-export function CSVtoJSONConverterView() {
+export function CSVtoJSONConverterView({ func }) {
   const [jsonData, setJsonData] = useState(null);
   const [headers, setHeaders] = useState(null);
   const handleFilePick = async () => {
@@ -510,9 +524,8 @@ export function CSVtoJSONConverterView() {
       console.error("Error picking file:", error);
     }
   };
-
   const parseCSV = (csvData) => {
-    console.log(csvData);
+    // console.log(csvData);
     const lines = csvData.trim().split("\n");
     const firstLine = lines[0].trim();
 
@@ -522,7 +535,7 @@ export function CSVtoJSONConverterView() {
     const headers = firstLine.split(separator);
 
     const jsonData = lines.slice(1).map((line) => {
-      const values = line.split(separator);
+      const values = line.split(",");
       return headers.reduce((obj, header, index) => {
         obj[header] = values[index];
         return obj;
@@ -540,6 +553,7 @@ export function CSVtoJSONConverterView() {
       <View>
         <View style={{ flexDirection: "column" }}>
           {/* Table Header */}
+
           <View
             style={{
               flexDirection: "row",
@@ -595,12 +609,12 @@ export function CSVtoJSONConverterView() {
     );
   };
   const saveData = () => {
-    console.log(jsonData);
+    // console.log(jsonData);
   };
 
   return (
     <View style={[backgrounds.white]}>
-      <View style={[layout.padding]}>
+      <View style={[layout.padding, layout.vertical]}>
         <ButtonOne
           onPress={handleFilePick}
           styles={[layout.separate_horizontal]}
@@ -608,6 +622,22 @@ export function CSVtoJSONConverterView() {
           <Text style={[colors.white, sizes.medium_text]}>Choose CSV File</Text>
           <Icon name="document-outline" color="white" size={30} />
         </ButtonOne>
+        {jsonData && jsonData.length > 0 && (
+          <View>
+            <ButtonOne
+              onPress={() => {
+                func(jsonData);
+              }}
+              backgroundColor={"#2F70D5"}
+            >
+              <Text
+                style={[colors.white, sizes.medium_text, format.center_text]}
+              >
+                Do Something
+              </Text>
+            </ButtonOne>
+          </View>
+        )}
       </View>
       <ScrollView horizontal>
         <ScrollView>{renderTable()}</ScrollView>
@@ -657,6 +687,7 @@ export function ImageBackground({ image, blurIntensity }) {
     </BlurWrapper>
   );
 }
+
 //
 export function ButtonOne({
   children,
@@ -1127,6 +1158,109 @@ export function CheckboxOne({ value, setter, text, textColor }) {
     </View>
   );
 }
+export function DatePicker({ date, setDate, backgroundColor }) {
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setDate(currentDate);
+  };
+
+  return (
+    <View
+      style={[
+        layout.horizontal,
+        {
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0)",
+        },
+        format.radius,
+        layout.padding_small,
+        { width: "100%" },
+      ]}
+    >
+      <DateTimePicker
+        testID="datePicker"
+        value={date}
+        mode="date"
+        is24Hour={true}
+        display="calendar"
+        onChange={onDateChange}
+      />
+    </View>
+  );
+}
+export function TimePicker({ time, setTime, backgroundColor }) {
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || time;
+    setTime(currentTime);
+  };
+
+  return (
+    <View
+      style={[
+        layout.horizontal,
+        {
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0)",
+        },
+        format.radius,
+        layout.padding_small,
+        { width: "100%" },
+      ]}
+    >
+      <DateTimePicker
+        testID="timePicker"
+        value={time}
+        mode="time"
+        is24Hour={true}
+        display="default"
+        onChange={onTimeChange}
+      />
+    </View>
+  );
+}
+export function DateTime({ date, time, setDate, setTime, backgroundColor }) {
+  const onDateChange = (event, selectedDate) => {
+    const currentDate = selectedDate || date;
+    setDate(currentDate);
+  };
+
+  const onTimeChange = (event, selectedTime) => {
+    const currentTime = selectedTime || time;
+    setTime(currentTime);
+  };
+
+  return (
+    <View
+      style={[
+        layout.horizontal,
+        {
+          backgroundColor:
+            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0)",
+        },
+        format.radius,
+        layout.padding_small,
+        { width: "100%" },
+      ]}
+    >
+      <DateTimePicker
+        testID="datePicker"
+        value={date}
+        mode="date"
+        is24Hour={true}
+        display="calendar"
+        onChange={onDateChange}
+      />
+      <DateTimePicker
+        testID="timePicker"
+        value={time}
+        mode="time"
+        is24Hour={true}
+        display="default"
+        onChange={onTimeChange}
+      />
+    </View>
+  );
+}
 export function SegmentedPicker({ options, value, setter, backgroundColor }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -1282,7 +1416,7 @@ export function Accordion({ children, top, func }) {
     </TouchableOpacity>
   );
 }
-export function CameraPicker({ setToggle, setLoading, func }) {
+export function CameraView({ setToggle, setLoading, func }) {
   const [type, setType] = useState(CameraType.back);
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -1517,7 +1651,7 @@ export function AsyncImage({ path, width, height, radius }) {
     </View>
   );
 }
-export function AsyncImagesView({ paths, styles, onPageSelected, radius }) {
+export function AsyncImagesView({ paths, radius, styles }) {
   const [currentPage, setCurrentPage] = useState(0);
   const total = paths.length;
 
@@ -1567,7 +1701,15 @@ export function AsyncImagesView({ paths, styles, onPageSelected, radius }) {
     </View>
   );
 }
-export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
+export function Map({
+  coordsArray,
+  delta,
+  height,
+  radius,
+  markerSize,
+  func,
+  scrollEnabled = true,
+}) {
   // Default location for the app's headquarters
   const defaultLocation = {
     latitude: 37.7749, // Default latitude
@@ -1575,6 +1717,44 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
   };
 
   useEffect(() => {}, []);
+
+  const getMapRegion = () => {
+    if (coordsArray.length === 0) {
+      return {
+        latitude: defaultLocation.latitude,
+        longitude: defaultLocation.longitude,
+        latitudeDelta: delta !== undefined ? delta : 0.005,
+        longitudeDelta: delta !== undefined ? delta : 0.005,
+      };
+    }
+
+    let minX = coordsArray[0].latitude;
+    let maxX = coordsArray[0].latitude;
+    let minY = coordsArray[0].longitude;
+    let maxY = coordsArray[0].longitude;
+
+    coordsArray.forEach((coord) => {
+      minX = Math.min(minX, coord.latitude);
+      maxX = Math.max(maxX, coord.latitude);
+      minY = Math.min(minY, coord.longitude);
+      maxY = Math.max(maxY, coord.longitude);
+    });
+
+    const midX = (minX + maxX) / 2;
+    const midY = (minY + maxY) / 2;
+    const latitudeDistance = maxX - minX;
+    const longitudeDistance = maxY - minY;
+    const padding = Math.max(latitudeDistance, longitudeDistance) * 0.2; // 10% of the larger distance as padding
+    const deltaX = latitudeDistance + padding; // Add padding to latitudeDelta
+    const deltaY = longitudeDistance + padding; // Add padding to longitudeDelta
+
+    return {
+      latitude: midX,
+      longitude: midY,
+      latitudeDelta: deltaX,
+      longitudeDelta: deltaY,
+    };
+  };
 
   return (
     <View>
@@ -1584,31 +1764,32 @@ export function Map({ coords, delta, height, radius, scrollEnabled = true }) {
           height: height !== undefined ? height : 125,
           borderRadius: radius !== undefined ? radius : 10,
         }}
-        region={{
-          latitude:
-            coords.latitude !== undefined
-              ? coords.latitude
-              : defaultLocation.latitude,
-          longitude:
-            coords.longitude !== undefined
-              ? coords.longitude
-              : defaultLocation.longitude,
-          latitudeDelta: delta !== undefined ? delta : 0.005,
-          longitudeDelta: delta !== undefined ? delta : 0.005,
-        }}
+        region={getMapRegion()}
         scrollEnabled={scrollEnabled}
       >
-        <Marker
-          coordinate={{
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-          }}
-        >
-          <Image
-            source={require("../../assets/marker.png")}
-            style={{ width: 85, height: 85 }}
-          />
-        </Marker>
+        {coordsArray.map((coords, index) => (
+          <TouchableOpacity
+            onPress={() => {
+              func({ latitude: coords.latitude, longitude: coords.longitude });
+            }}
+          >
+            <Marker
+              key={index}
+              coordinate={{
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              }}
+            >
+              <Image
+                source={require("../../assets/marker.png")}
+                style={{
+                  width: markerSize !== undefined ? markerSize : 45,
+                  height: markerSize !== undefined ? markerSize : 45,
+                }}
+              />
+            </Marker>
+          </TouchableOpacity>
+        ))}
       </MapView>
     </View>
   );
@@ -1619,6 +1800,7 @@ export function LocalNotification({
   message,
   color,
   setToggle,
+  radius,
   seconds,
 }) {
   useEffect(() => {
@@ -1626,46 +1808,48 @@ export function LocalNotification({
     setTimeout(() => {
       setToggle(false);
       console.log("NOTIFICATION ENDED");
-    }, seconds * 1000);
+    }, (seconds !== undefined ? seconds : 5) * 1000);
   }, []);
 
   return (
-    <TouchableOpacity
+    <View>
+      <TouchableOpacity
       style={[
         layout.absolute,
-        { top: Platform.OS === "ios" ? 60 : 35, right: 0, left: 0 },
+        layout.margin_horizontal,
+        layout.padding,
+        {
+          top: Platform.OS === "ios" ? 25 : 35,
+          right: 0,
+          left: 0,
+          borderColor: "rgba(0,0,0,0.1)",
+          borderWidth: 1,
+          borderRadius: radius !== undefined ? radius : 10,
+        },
       ]}
       onPress={() => {
         setToggle(false);
       }}
     >
-      <View
-        style={[
-          backgrounds.white,
-          layout.padding,
-          layout.margin,
-          format.radius,
-          layout.horizontal,
-          {
-            elevation: 5, // Android shadow
-            shadowColor: "rgba(0,0,0,0.3)",
-            shadowOffset: { width: 2, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 5,
-          },
-        ]}
-      >
+      <View style={[backgrounds.white, format.radius, layout.horizontal]}>
         <Icon
           name={icon !== undefined ? icon : "close-outline"}
           size={35}
-          color={color}
+          color={color !== undefined ? color : "red"}
         />
         <View>
-          <Text style={[format.bold, sizes.small_text]}>{title}</Text>
-          <Text style={[sizes.small_text]}>{message}</Text>
+          <Text style={[format.bold, sizes.small_text]}>
+            {title !== undefined ? title : "Everything Bagel"}
+          </Text>
+          <Text style={[sizes.small_text, {width: "85%"}]}>
+            {message !== undefined
+              ? message
+              : "There are many things to know about the bagel."}
+          </Text>
         </View>
       </View>
     </TouchableOpacity>
+    </View>
   );
 }
 export function AudioPlayer({ audioName, audioPath }) {
@@ -1879,139 +2063,6 @@ export function VideoPlayer({ videoPath, radius }) {
     </View>
   );
 }
-export function DateTime({ date, time, setDate, setTime }) {
-  const onDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setDate(currentDate);
-  };
-
-  const onTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || time;
-    setTime(currentTime);
-  };
-
-  return (
-    <View
-      style={[
-        layout.horizontal,
-        { backgroundColor: "rgba(0,0,0,0.4)" },
-        format.radius,
-        layout.padding_small,
-        { width: "100%" },
-      ]}
-    >
-      <DateTimePicker
-        testID="datePicker"
-        value={date}
-        mode="date"
-        is24Hour={true}
-        display="calendar"
-        onChange={onDateChange}
-      />
-      <DateTimePicker
-        testID="timePicker"
-        value={time}
-        mode="time"
-        is24Hour={true}
-        display="default"
-        onChange={onTimeChange}
-      />
-    </View>
-  );
-}
-export function PaymentView({ children, showPayButton, total, successFunc }) {
-  const [pi, setPi] = useState("");
-  const [stripeLoading, setStripeLoading] = useState(false);
-  const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
-  const newTotal = total !== undefined ? total : 1000;
-  //
-  const fetchPaymentSheetParams = async () => {
-    const customerID = me.CustomerID !== undefined ? me.CustomerID : null;
-    const response = await fetch(`${serverURL}/payment-sheet`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        customerId: customerID,
-        total: newTotal, // Pass existing CustomerID if available
-      }),
-    });
-
-    const { paymentIntent, ephemeralKey, customer } = await response.json();
-    setPi(`${paymentIntent.split("_")[0]}_${paymentIntent.split("_")[1]}`);
-
-    return {
-      paymentIntent,
-      ephemeralKey,
-      customer,
-    };
-  };
-  const initializePaymentSheet = async () => {
-    const { paymentIntent, ephemeralKey, customer } =
-      await fetchPaymentSheetParams();
-    const { error } = await initPaymentSheet({
-      merchantDisplayName: appName,
-      customerId: customer,
-      customerEphemeralKeySecret: ephemeralKey,
-      paymentIntentClientSecret: paymentIntent,
-      allowsDelayedPaymentMethods: true,
-      // applePay: {
-      //   merchantCountryCode: "usd",
-      // },
-      // googlePay: {
-      //   merchantCountryCode: "usd",
-      //   testEnv: true,
-      //   currencyCode: "usd",
-      // },
-    });
-    if (!error) {
-      if (me.CustomerID === undefined) {
-        console.log(ephemeralKey);
-        firebase_UpdateDocument(setStripeLoading, "Users", me.id, {
-          CustomerID: customer,
-        });
-      }
-      setStripeLoading(true);
-    }
-  };
-  const openPaymentSheet = async () => {
-    const { error } = await presentPaymentSheet();
-
-    if (error) {
-      Alert.alert(`Error code: ${error.code}`, error.message);
-    } else {
-      successFunc();
-    }
-  };
-
-  useEffect(() => {
-    initializePaymentSheet();
-  }, []);
-
-  return (
-    <StripeProvider
-      publishableKey={stripePublishableKey}
-      merchantIdentifier={`iicdev.com.${appName}`}
-    >
-      <View>{children}</View>
-      <View style={[layout.absolute, { bottom: 25, right: 0, left: 0 }]}>
-        {showPayButton && stripeLoading && (
-          <ButtonOne
-            backgroundColor={"#117DFA"}
-            radius={0}
-            onPress={openPaymentSheet}
-          >
-            <View style={[layout.separate_horizontal]}>
-              <Text style={[colors.white, sizes.small_text]}>Pay Now</Text>
-              <Icon name={"arrow-forward-outline"} size={20} color={"white"} />
-            </View>
-          </ButtonOne>
-        )}
-      </View>
-    </StripeProvider>
-  );
-}
 export function TimerView({ isActive, setSeconds, seconds, textSize, styles }) {
   const timerRef = useRef(null);
 
@@ -2179,16 +2230,16 @@ export function ImagesView({ images, styles, onPageSelected }) {
 }
 export function NotificationCircle({ text, textSize, color, children }) {
   return (
-    <View style={[{ position: "relative" }]}>
+    <View style={[{ position: "relative" }, layout.fit_width]}>
       <View
         style={[
           {
             position: "absolute",
-            top: -5,
-            right: -5,
+            top: -14,
+            right: -16,
             paddingVertical: 4,
             paddingHorizontal: 8,
-            backgroundColor: color !== undefined ? color : "#60D0FF",
+            backgroundColor: color !== undefined ? color : "#F40202",
             zIndex: 800,
           },
           format.radius_full,
@@ -2196,18 +2247,18 @@ export function NotificationCircle({ text, textSize, color, children }) {
       >
         <Text
           style={[
-            { fontSize: textSize !== undefined ? textSize : 10 },
+            { fontSize: textSize !== undefined ? textSize : 10},
             colors.white,
           ]}
         >
-          {text}
+          {text !== undefined ? text : "1"}
         </Text>
       </View>
       {children}
     </View>
   );
 }
-export function SliderView({ func, padding, icon, text }) {
+export function SliderView({ func, padding, icon, text, textSize }) {
   const [screenWidth, setScreenWidth] = useState(
     Dimensions.get("window").width
   );
@@ -2260,7 +2311,7 @@ export function SliderView({ func, padding, icon, text }) {
       }}
     >
       <View style={[layout.absolute, format.center_text]}>
-        <Text style={[colors.white, sizes.medium_text]}>
+        <Text style={[colors.white, {fontSize: textSize !== undefined ? textSize : 16}]}>
           {text !== undefined ? text : "Everything Bagel"}
         </Text>
       </View>
@@ -2282,7 +2333,7 @@ export function SliderView({ func, padding, icon, text }) {
         >
           {/* Use your preferred icon component here */}
           <Icon
-            name={icon !== undefined ? icon : "star-outline"}
+            name={icon !== undefined ? icon : "cart-outline"}
             size={25}
             color={"black"}
           />
@@ -2464,6 +2515,198 @@ export function NumberPad({ setter, value, text }) {
     </View>
   );
 }
+export function QRCodeView({ value, background, color, size }) {
+  return (
+    <View style={{ justifyContent: "center", alignItems: "center" }}>
+      <QRCode
+        value={
+          value !== undefined
+            ? value
+            : "https://innovativeinternetcreations.com"
+        }
+        size={size !== undefined ? size : 200}
+        bgColor={background !== undefined ? background : "black"}
+        fgColor={color !== undefined ? color : "white"}
+      />
+    </View>
+  );
+}
+export function QRReader({ func }) {
+  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [scanning, setScanning] = useState(false);
+  const [qrValue, setQrValue] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      requestPermission();
+    })();
+  }, []);
+
+  const handleBarCodeScanned = ({ type, data }) => {
+    setScanning(false);
+    setQrValue(data);
+    func(data);
+  };
+
+  if (!permission) {
+    // Camera permissions are still loading
+    return <View />;
+  }
+  if (!permission.granted) {
+    // Camera permissions are not granted yet
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Text>We need your permission to show the camera</Text>
+        <ButtonTwo borderColor={"#2F70D5"}>
+          <Text style={[sizes.small_text, { color: "#2F70D5" }]}>
+            Grant Permission
+          </Text>
+        </ButtonTwo>
+        <TouchableOpacity
+          onPress={() => {
+            requestPermission();
+            console.log("GRANTED");
+            // setToggle(true);
+          }}
+        ></TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        backgrounds.black,
+        layout.absolute,
+        { top: 0, right: 0, left: 0, bottom: 0 },
+      ]}
+    >
+      {qrValue === null && (
+        <View
+          style={[
+            backgrounds.black,
+            layout.absolute,
+            { top: 0, right: 0, left: 0, bottom: 0 },
+            layout.full_height,
+            layout.full_width,
+            layout.padding_vertical,
+          ]}
+        >
+          <View style={[layout.vertical]}>
+            <Text style={[colors.white, layout.padding_horizontal]}>
+              Scanning for QR Code...
+            </Text>
+            <Camera
+              style={[{ width: width, height: "100%" }]}
+              type={Camera.Constants.Type.back}
+              onBarCodeScanned={handleBarCodeScanned}
+            />
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+export function PaymentView({ children, showPayButton, total, successFunc }) {
+  const [pi, setPi] = useState("");
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
+  const newTotal = total !== undefined ? total : 1000;
+  //
+  const fetchPaymentSheetParams = async () => {
+    const customerID = me.CustomerID !== undefined ? me.CustomerID : null;
+    const response = await fetch(`${serverURL}/payment-sheet`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        customerId: customerID,
+        total: newTotal, // Pass existing CustomerID if available
+      }),
+    });
+
+    const { paymentIntent, ephemeralKey, customer } = await response.json();
+    setPi(`${paymentIntent.split("_")[0]}_${paymentIntent.split("_")[1]}`);
+
+    return {
+      paymentIntent,
+      ephemeralKey,
+      customer,
+    };
+  };
+  const initializePaymentSheet = async () => {
+    const { paymentIntent, ephemeralKey, customer } =
+      await fetchPaymentSheetParams();
+    const { error } = await initPaymentSheet({
+      merchantDisplayName: appName,
+      customerId: customer,
+      customerEphemeralKeySecret: ephemeralKey,
+      paymentIntentClientSecret: paymentIntent,
+      allowsDelayedPaymentMethods: true,
+      // applePay: {
+      //   merchantCountryCode: "usd",
+      // },
+      // googlePay: {
+      //   merchantCountryCode: "usd",
+      //   testEnv: true,
+      //   currencyCode: "usd",
+      // },
+    });
+    if (!error) {
+      if (me.CustomerID === undefined) {
+        console.log(ephemeralKey);
+        firebase_UpdateDocument(setStripeLoading, "Users", me.id, {
+          CustomerID: customer,
+        });
+      }
+      setStripeLoading(true);
+    }
+  };
+  const openPaymentSheet = async () => {
+    const { error } = await presentPaymentSheet();
+
+    if (error) {
+      Alert.alert(`Error code: ${error.code}`, error.message);
+    } else {
+      successFunc(pi);
+    }
+  };
+
+  useEffect(() => {
+    initializePaymentSheet();
+  }, []);
+
+  return (
+    <StripeProvider
+      publishableKey={stripePublishableKey}
+      merchantIdentifier={`iicdev.com.${appName}`}
+    >
+      <View>{children}</View>
+      <View style={[layout.absolute, { bottom: 25, right: 0, left: 0 }]}>
+        {showPayButton && stripeLoading && (
+          <ButtonOne
+            backgroundColor={"#117DFA"}
+            radius={0}
+            onPress={openPaymentSheet}
+          >
+            <View style={[layout.separate_horizontal]}>
+              <Text style={[colors.white, sizes.small_text]}>Pay Now</Text>
+              <Icon name={"arrow-forward-outline"} size={20} color={"white"} />
+            </View>
+          </ButtonOne>
+        )}
+      </View>
+    </StripeProvider>
+  );
+}
 
 // BASIC FUNCTIONS
 export function randomString(length) {
@@ -2562,14 +2805,14 @@ export function compareDates(date1, date2) {
 
   return timestamp1 > timestamp2;
 }
-export function checkDate(date1, date2) {
-  const startOfDay = new Date(date1);
+export function checkDate(date, checkedDate) {
+  const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00.000
 
-  const endOfDay = new Date(date1);
+  const endOfDay = new Date(date);
   endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59.999
 
-  return date2 >= startOfDay && date2 <= endOfDay;
+  return checkedDate >= startOfDay && checkedDate <= endOfDay;
 }
 export async function getDistanceInMiles(coords1, coords2) {
   const apiKey = c_googleMapsAPI;
@@ -2758,7 +3001,7 @@ export async function function_PickImageWithParams(
   setLoading,
   setImage,
   func,
-  params
+  returnParams
 ) {
   // No permissions request is necessary for launching the image library
   let result = await ImagePicker.launchImageLibraryAsync({
@@ -2773,7 +3016,7 @@ export async function function_PickImageWithParams(
   if (!result.canceled) {
     setLoading(false);
     setImage(result.assets[0].uri);
-    func(result.assets[0].uri, params);
+    func(result.assets[0].uri, returnParams);
   }
 }
 export async function function_PickImageToArr(
@@ -3288,13 +3531,13 @@ export const backgrounds = StyleSheet.create({
 // AUTH
 // Config
 const firebaseConfig = {
-  apiKey: "AIzaSyAL_JCUzKv5NuPULopwrFYIwpYvsY1nIxc",
-  authDomain: "easysellv3.firebaseapp.com",
-  projectId: "easysellv3",
-  storageBucket: "easysellv3.appspot.com",
-  messagingSenderId: "779089473276",
-  appId: "1:779089473276:web:8100821e66ad2a0d95f179",
-  measurementId: "G-SDMFE66120",
+  apiKey: "AIzaSyAMkZs0qvSSYVfA4pOMzSkXl-Nkut7raqw",
+  authDomain: "iic-appline-template.firebaseapp.com",
+  projectId: "iic-appline-template",
+  storageBucket: "iic-appline-template.appspot.com",
+  messagingSenderId: "957439211423",
+  appId: "1:957439211423:web:57d7872b6486b922102faa",
+  measurementId: "G-D2Y4Q8QLJW",
 };
 // Initializations
 const app = initializeApp(firebaseConfig);
@@ -3594,6 +3837,9 @@ export function firebase_GetAllDocumentsListener(
   paginated = false,
   lastDoc = null,
   setLastDoc,
+  funcAdded,
+  funcUpdated,
+  funcRemoved
 ) {
   console.log("GETTING DOCS");
   setLoading(true);
@@ -3616,8 +3862,20 @@ export function firebase_GetAllDocumentsListener(
   if (paginated && lastDoc) {
     finalQuery = query(baseQuery, startAfter(lastDoc[orderField]));
   }
-
+  let initialSnapshotReceived = false;
   const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
+    querySnapshot.docChanges().forEach((change) => {
+      if (change.type === "modified") {
+        funcUpdated();
+        console.log("Document modified:", change.doc.id);
+      } else if (change.type === "added" && initialSnapshotReceived) {
+        funcAdded();
+        console.log("Document added:", change.doc.id);
+      } else if (change.type === "removed") {
+        funcRemoved();
+        console.log("Document removed:", change.doc.id);
+      }
+    });
     const things = querySnapshot.docs.map((doc) => ({
       id: doc.id,
       ...doc.data(),
@@ -3626,6 +3884,9 @@ export function firebase_GetAllDocumentsListener(
     // Update lastDoc if there are new documents and setLastDoc is available
     if (things.length > 0 && setLastDoc) {
       setLastDoc(things[things.length - 1]);
+    }
+    if (!initialSnapshotReceived) {
+      initialSnapshotReceived = true;
     }
 
     if (paginated) {
@@ -3658,7 +3919,10 @@ export function firebase_GetAllDocumentsListenerByIds(
   whereArray,
   paginated = false,
   lastDoc = null,
-  setLastDoc
+  setLastDoc,
+  funcAdded,
+  funcUpdated,
+  funcRemoved
 ) {
   console.log("GETTING DOCS");
   const collectionRef = collection(db, table);
@@ -3680,8 +3944,20 @@ export function firebase_GetAllDocumentsListenerByIds(
   if (paginated && lastDoc) {
     finalQuery = query(baseQuery, startAfter(lastDoc[orderField]));
   }
-
+  let initialSnapshotReceived = false;
   const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
+    querySnapshot.docChanges().forEach((change) => {
+      if (change.type === "modified") {
+        funcUpdated();
+        console.log("Document modified:", change.doc.id);
+      } else if (change.type === "added" && initialSnapshotReceived) {
+        funcAdded();
+        console.log("Document added:", change.doc.id);
+      } else if (change.type === "removed") {
+        funcRemoved();
+        console.log("Document removed:", change.doc.id);
+      }
+    });
     const things = [];
     querySnapshot.forEach((doc) => {
       const thing = {
@@ -3695,7 +3971,9 @@ export function firebase_GetAllDocumentsListenerByIds(
     if (things.length > 0 && setLastDoc) {
       setLastDoc(things[things.length - 1]);
     }
-
+    if (!initialSnapshotReceived) {
+      initialSnapshotReceived = true;
+    }
     setter((prev) => removeDuplicatesByProperty([...prev, ...things], "id"));
     setLoading(false);
   });
@@ -3714,7 +3992,10 @@ export function firebase_GetAllDocumentsListenerByDistance(
   paginated = false,
   lastDoc = null,
   setLastDoc,
-  coordinates
+  coordinates,
+  funcAdded,
+  funcUpdated,
+  funcRemoved
 ) {
   setLoading(true);
   console.log("GETTING DOCUMENTS LISTENER");
@@ -3762,8 +4043,20 @@ export function firebase_GetAllDocumentsListenerByDistance(
     const lastDocData = lastDoc;
     finalQuery = query(baseQuery, startAfter(lastDocData));
   }
-
+  let initialSnapshotReceived = false;
   const unsubscribe = onSnapshot(finalQuery, async (querySnapshot) => {
+    querySnapshot.docChanges().forEach((change) => {
+      if (change.type === "modified") {
+        funcUpdated();
+        console.log("Document modified:", change.doc.id);
+      } else if (change.type === "added" && initialSnapshotReceived) {
+        funcAdded();
+        console.log("Document added:", change.doc.id);
+      } else if (change.type === "removed") {
+        funcRemoved();
+        console.log("Document removed:", change.doc.id);
+      }
+    });
     const things = [];
     for (const doc of querySnapshot.docs) {
       const distance = haversineDistance(
@@ -3782,6 +4075,9 @@ export function firebase_GetAllDocumentsListenerByDistance(
     if (things.length > 0 && setLastDoc) {
       const lastDocSnapshot = querySnapshot.docs[querySnapshot.docs.length - 1];
       setLastDoc(lastDocSnapshot);
+    }
+    if (!initialSnapshotReceived) {
+      initialSnapshotReceived = true;
     }
     things.sort((a, b) => a.Distance - b.Distance);
 
