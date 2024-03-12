@@ -1325,6 +1325,8 @@ export function SegmentedPickerTwo({
   selectedColor,
   color,
   fontSize,
+  paddingV,
+  paddingH
 }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -1335,8 +1337,8 @@ export function SegmentedPickerTwo({
               key={i}
               style={[
                 {
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
+                  paddingVertical: paddingV !== undefined ? paddingV : 12,
+                  paddingHorizontal: paddingH !== undefined ? paddingH : 6,
                   borderRadius: 0,
                   borderBottomWidth: 2,
                   borderBottomColor:
