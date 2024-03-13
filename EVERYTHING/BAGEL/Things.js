@@ -1820,6 +1820,7 @@ export function LocalNotification({
   setToggle,
   radius,
   seconds,
+  backgroundColor,
 }) {
   useEffect(() => {
     console.log("NOTIFICATION START");
@@ -1830,43 +1831,45 @@ export function LocalNotification({
   }, []);
 
   return (
-    <View>
+    <View style={[{ zIndex: 2000 }]}>
       <TouchableOpacity
-      style={[
-        layout.absolute,
-        layout.margin_horizontal,
-        layout.padding,
-        {
-          top: Platform.OS === "ios" ? 25 : 35,
-          right: 0,
-          left: 0,
-          borderColor: "rgba(0,0,0,0.1)",
-          borderWidth: 1,
-          borderRadius: radius !== undefined ? radius : 10,
-        },
-      ]}
-      onPress={() => {
-        setToggle(false);
-      }}
-    >
-      <View style={[backgrounds.white, format.radius, layout.horizontal]}>
-        <Icon
-          name={icon !== undefined ? icon : "close-outline"}
-          size={35}
-          color={color !== undefined ? color : "red"}
-        />
-        <View>
-          <Text style={[format.bold, sizes.small_text]}>
-            {title !== undefined ? title : "Everything Bagel"}
-          </Text>
-          <Text style={[sizes.small_text, {width: "85%"}]}>
-            {message !== undefined
-              ? message
-              : "There are many things to know about the bagel."}
-          </Text>
+        style={[
+          layout.absolute,
+          layout.margin_horizontal,
+          layout.padding,
+          {
+            top: Platform.OS === "ios" ? 25 : 35,
+            right: 0,
+            left: 0,
+            borderColor: "rgba(0,0,0,0.1)",
+            borderWidth: 1,
+            borderRadius: radius !== undefined ? radius : 10,
+            backgroundColor:
+              backgroundColor !== undefined ? backgroundColor : "white",
+          },
+        ]}
+        onPress={() => {
+          setToggle(false);
+        }}
+      >
+        <View style={[backgrounds.white, format.radius, layout.horizontal]}>
+          <Icon
+            name={icon !== undefined ? icon : "close-outline"}
+            size={35}
+            color={color !== undefined ? color : "red"}
+          />
+          <View>
+            <Text style={[format.bold, sizes.small_text]}>
+              {title !== undefined ? title : "Everything Bagel"}
+            </Text>
+            <Text style={[sizes.small_text, { width: "85%" }]}>
+              {message !== undefined
+                ? message
+                : "There are many things to know about the bagel."}
+            </Text>
+          </View>
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -3244,6 +3247,32 @@ export async function function_AsyncString(asyncFunction, setter) {
 }
 export async function function_PlaySound(audio) {
   const { sound } = await Audio.Sound.createAsync(audio, { shouldPlay: true });
+}
+export async function function_PlaySoundFromUrl(
+  url,
+  soundInstance,
+  setSoundInstance,
+  isPlaying,
+  setIsPlaying
+) {
+  try {
+    if (soundInstance && isPlaying) {
+      // If a sound is already playing, stop it
+      await soundInstance.stopAsync();
+      setSoundInstance(null);
+      setIsPlaying(false);
+    } else {
+      // Create a new sound instance
+      const { sound } = await Audio.Sound.createAsync(
+        { uri: url },
+        { shouldPlay: true }
+      );
+      setSoundInstance(sound);
+      setIsPlaying(true);
+    }
+  } catch (error) {
+    console.error("Error playing sound:", error);
+  }
 }
 export function function_TimedFunction(func, timesPerMinute) {
   const millisecondsPerMinute = 60 * 1000;
