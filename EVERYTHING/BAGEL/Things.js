@@ -1972,7 +1972,15 @@ export function AudioPlayer({ audioName, audioPath }) {
     </View>
   );
 }
-export function VideoPlayer({ videoPath, radius }) {
+export function VideoPlayer({
+  videoPath,
+  radius,
+  autoPlay = false,
+  autoLoop = false,
+  noControls = false,
+  width = "100%",
+  height = 300,
+}) {
   const video = useRef(null);
   const [status, setStatus] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -1987,6 +1995,9 @@ export function VideoPlayer({ videoPath, radius }) {
     setIsLoading(false);
     setStatus(loadStatus);
     setDuration(loadStatus.durationMillis);
+    if (autoPlay) {
+      await video.current.playAsync();
+    }
   };
 
   const seekBackward = async () => {
@@ -2049,14 +2060,14 @@ export function VideoPlayer({ videoPath, radius }) {
     <View>
       <Video
         style={{
-          height: "auto",
-          aspectRatio: 16 / 9,
+          width: width,
+          height: height,
           borderRadius: radius !== undefined ? radius : 10,
         }}
         ref={video}
-        useNativeControls
-        resizeMode={ResizeMode.CONTAIN}
-        isLooping
+        useNativeControls={!noControls}
+        resizeMode="contain"
+        isLooping={autoLoop}
         onPlaybackStatusUpdate={(newStatus) => {
           setStatus(newStatus);
           setPosition(newStatus.positionMillis);
