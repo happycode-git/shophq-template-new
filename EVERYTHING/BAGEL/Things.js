@@ -5097,6 +5097,56 @@ export async function firebase_GetAllDocuments(
   table,
   setter,
   docLimit,
+  whereField,
+  whereCondition,
+  whereValue
+) {
+  console.log("GETTING DOCS");
+  const collectionRef = collection(db, table);
+  let queryRef = collectionRef;
+
+  if (docLimit > 0) {
+    if (whereField !== "" && whereField !== null && whereField !== undefined) {
+      queryRef = query(
+        queryRef,
+        where(whereField, whereCondition, whereValue),
+        orderBy(orderField, order),
+        limit(docLimit)
+      );
+    } else {
+      queryRef = query(queryRef, orderBy(orderField, order), limit(docLimit));
+    }
+  } else {
+    if (whereField !== "" && whereField !== null && whereField !== undefined) {
+      queryRef = query(
+        queryRef,
+        where(whereField, whereCondition, whereValue),
+        orderBy(orderField, order)
+      );
+    } else {
+      queryRef = query(queryRef, orderBy(orderField, order));
+    }
+  }
+
+  const querySnapshot = await getDocs(queryRef);
+  const things = [];
+
+  querySnapshot.forEach((doc) => {
+    const thing = {
+      id: doc.id,
+      ...doc.data(),
+    };
+    things.push(thing);
+  });
+
+  setter(things);
+  setLoading(false);
+}
+export async function firebase_GetAllDocumentsOrdered(
+  setLoading,
+  table,
+  setter,
+  docLimit,
   order,
   orderField,
   whereField,
