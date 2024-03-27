@@ -5193,6 +5193,87 @@ export function firebase_GetAllDocumentsListener(
   table,
   setter,
   docLimit,
+  whereField,
+  whereCondition,
+  whereValue,
+  paginated = false,
+  lastDoc = null,
+  setLastDoc,
+  funcAdded,
+  funcUpdated,
+  funcRemoved
+) {
+  console.log("GETTING DOCS");
+  setLoading(true);
+  const collectionRef = collection(db, table);
+
+  let baseQuery = query(collectionRef);
+
+  if (whereField && whereCondition && whereValue) {
+    baseQuery = query(baseQuery, where(whereField, whereCondition, whereValue));
+  }
+
+  if (docLimit > 0) {
+    baseQuery = query(baseQuery, limit(docLimit));
+  }
+
+  let finalQuery = baseQuery;
+
+  if (paginated && lastDoc) {
+    finalQuery = query(baseQuery, startAfter(lastDoc[orderField]));
+  }
+  let initialSnapshotReceived = false;
+  const unsubscribe = onSnapshot(finalQuery, (querySnapshot) => {
+    querySnapshot.docChanges().forEach((change) => {
+      if (change.type === "modified") {
+        funcUpdated();
+        console.log("Document modified:", change.doc.id);
+      } else if (change.type === "added" && initialSnapshotReceived) {
+        funcAdded();
+        console.log("Document added:", change.doc.id);
+      } else if (change.type === "removed") {
+        funcRemoved();
+        console.log("Document removed:", change.doc.id);
+      }
+    });
+    const things = querySnapshot.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+
+    // Update lastDoc if there are new documents and setLastDoc is available
+    if (things.length > 0 && setLastDoc) {
+      setLastDoc(things[things.length - 1]);
+    }
+    if (!initialSnapshotReceived) {
+      initialSnapshotReceived = true;
+    }
+
+    if (paginated) {
+      setter((prev) => {
+        const uniqueThings = [...prev, ...things].reduce(
+          (acc, current) =>
+            acc.some((thing) => thing.id === current.id)
+              ? acc
+              : [...acc, current],
+          []
+        );
+        return uniqueThings;
+      });
+    } else {
+      setter(things);
+    }
+
+    setLoading(false);
+  });
+
+  return unsubscribe;
+}
+export function firebase_GetAllDocumentsListenerOrdered(
+  setLoading,
+  table,
+  setter,
+  docLimit,
   order,
   orderField,
   whereField,
