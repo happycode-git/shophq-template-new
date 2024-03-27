@@ -8,12 +8,13 @@ import {
   auth_SignIn,
   format,
   layout,
+  themedBackgroundColor,
   themedButtonColor,
   themedButtonTextColor,
 } from "../EVERYTHING/BAGEL/Things";
 import { useState } from "react";
 
-export function Login({ navigation, setLoading, redirect, theme }) {
+export function LoginScreen({ navigation, setLoading, redirect, theme }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -54,7 +55,14 @@ export function Login({ navigation, setLoading, redirect, theme }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <View style={[{ flex: 1 }, layout.separate_vertical, layout.padding]}>
+      <View
+        style={[
+          { flex: 1 },
+          layout.separate_vertical,
+          layout.padding,
+          { backgroundColor: themedBackgroundColor(theme) },
+        ]}
+      >
         <View>
           <TextView theme={theme} size={36}>
             Login

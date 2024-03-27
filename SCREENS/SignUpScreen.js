@@ -15,12 +15,13 @@ import {
   firebase_GetAllDocuments,
   format,
   layout,
+  themedBackgroundColor,
   themedButtonColor,
   themedButtonTextColor,
 } from "../EVERYTHING/BAGEL/Things";
 import { useState } from "react";
 
-export function SignUp({ navigation, setLoading, redirect, theme }) {
+export function SignUpScreen({ navigation, setLoading, redirect, theme }) {
   const [fakeLoading, setFakeLoading] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -77,7 +78,14 @@ export function SignUp({ navigation, setLoading, redirect, theme }) {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <View style={[{ flex: 1 }, layout.separate_vertical, layout.padding]}>
+      <View
+        style={[
+          { flex: 1 },
+          layout.separate_vertical,
+          layout.padding,
+          { backgroundColor: themedBackgroundColor(theme) },
+        ]}
+      >
         <ScrollView showsVerticalScrollIndicator={false}>
           <View>
             <TextView theme={theme} size={24}>

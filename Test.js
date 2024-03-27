@@ -132,7 +132,7 @@ import {
   width,
 } from "./EVERYTHING/BAGEL/Things";
 import { useEffect, useState } from "react";
-import { Login } from "./SCREENS/Login";
+import { LoginScreen } from "./SCREENS/LoginScreen";
 import {
   TopFive,
   TopFour,
@@ -140,7 +140,7 @@ import {
   TopThree,
   TopTwo,
 } from "./SCREEN_COMPONENTS/Top";
-import { SignUp } from "./SCREENS/SignUp";
+import { SignUpScreen } from "./SCREENS/SignUpScreen";
 import { GetStarted } from "./SCREENS/GetStarted";
 
 function Test({ navigation, route }) {

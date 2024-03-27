@@ -146,3 +146,36 @@ export function TopFive({ title, caption, theme }) {
     </View>
   );
 }
+export function TopSix({ title, caption, icon, onPress, theme }) {
+  return (
+    <View
+      style={[
+        layout.padding_horizontal,
+        layout.padding_vertical_small,
+        layout.separate_horizontal,
+      ]}
+    >
+      <View>
+        <TextView size={20} theme={theme}>
+          {title !== undefined ? title : "Hello, Bagel!"}
+        </TextView>
+        {caption !== undefined && (
+          <TextView theme={theme} color={secondaryThemedTextColor(theme)}>
+            {caption}
+          </TextView>
+        )}
+      </View>
+      <IconButtonTwo
+        theme={theme}
+        name={icon !== undefined ? icon : "search-outline"}
+        onPress={
+          onPress !== undefined
+            ? onPress
+            : () => {
+                console.log("PRESSED");
+              }
+        }
+      />
+    </View>
+  );
+}

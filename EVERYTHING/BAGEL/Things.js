@@ -29,7 +29,7 @@ import * as Location from "expo-location";
 import MapView, { Marker } from "react-native-maps";
 import CheckBox from "expo-checkbox";
 import * as Notifications from "expo-notifications";
-import { Audio, Video, ResizeMode } from "expo-av";
+import { Audio, Video } from "expo-av";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { BlurView } from "expo-blur";
 import * as MailComposer from "expo-mail-composer";
@@ -578,23 +578,23 @@ export function MenuBar({
                 navigation.navigate(`${opt.Route}`);
               }}
             >
-              <Icon
+              <Ionicons
                 name={`${opt.Icon}-outline`}
                 size={iconSize !== undefined ? iconSize : 22}
                 color={color !== undefined ? color : themedTextColor(theme)}
-                styles={[layout.center]}
+                style={[layout.center]}
               />
 
               {opt.Route === route.name && (
                 <View>
                   <Spacer height={2} />
-                  <Icon
+                  <Ionicons
                     name={"ellipse"}
                     size={7}
                     color={
                       selectedColor !== undefined ? selectedColor : "#1BA8FF"
                     }
-                    styles={[layout.center]}
+                    style={[layout.center]}
                   />
                 </View>
               )}
@@ -773,7 +773,15 @@ export function SeparatedView({ children }) {
 }
 
 //
-export function TextView({ children, color, theme, size, styles }) {
+export function TextView({
+  children,
+  color,
+  bold,
+  center,
+  theme,
+  size,
+  styles,
+}) {
   return (
     <Text
       style={[
@@ -781,6 +789,8 @@ export function TextView({ children, color, theme, size, styles }) {
           color: color !== undefined ? color : themedTextColor(theme),
           fontSize: size !== undefined ? size : 14,
         },
+        bold !== undefined && format.bold,
+        center !== undefined && format.center_text,
         styles,
       ]}
     >
@@ -4633,11 +4643,7 @@ export async function function_AlgoliaDeleteRecord(index, objectID) {
       );
     });
 }
-export async function function_Refund(
-  paymentIntentID,
-  amount,
-  successFunc
-) {
+export async function function_Refund(paymentIntentID, amount, successFunc) {
   const newTotal = amount;
   const paymentIntentId = paymentIntentID;
   try {
@@ -5099,7 +5105,10 @@ export async function firebase_GetAllDocuments(
   docLimit,
   whereField,
   whereCondition,
-  whereValue
+  whereValue,
+  paginated,
+  lastDoc,
+  setLastDoc
 ) {
   console.log("GETTING DOCS");
   const collectionRef = collection(db, table);
@@ -5110,22 +5119,24 @@ export async function firebase_GetAllDocuments(
       queryRef = query(
         queryRef,
         where(whereField, whereCondition, whereValue),
-        orderBy(orderField, order),
         limit(docLimit)
       );
     } else {
-      queryRef = query(queryRef, orderBy(orderField, order), limit(docLimit));
+      queryRef = query(queryRef, limit(docLimit));
     }
   } else {
     if (whereField !== "" && whereField !== null && whereField !== undefined) {
       queryRef = query(
         queryRef,
         where(whereField, whereCondition, whereValue),
-        orderBy(orderField, order)
       );
     } else {
-      queryRef = query(queryRef, orderBy(orderField, order));
+      queryRef = query(queryRef);
     }
+  }
+
+  if (paginated && lastDoc) {
+    queryRef = queryRef.startAfter(lastDoc);
   }
 
   const querySnapshot = await getDocs(queryRef);
@@ -5138,6 +5149,10 @@ export async function firebase_GetAllDocuments(
     };
     things.push(thing);
   });
+
+  if (paginated && things.length > 0) {
+    setLastDoc(things[things.length - 1]);
+  }
 
   setter(things);
   setLoading(false);
@@ -5151,7 +5166,10 @@ export async function firebase_GetAllDocumentsOrdered(
   orderField,
   whereField,
   whereCondition,
-  whereValue
+  whereValue,
+  paginated,
+  lastDoc,
+  setLastDoc
 ) {
   console.log("GETTING DOCS");
   const collectionRef = collection(db, table);
@@ -5180,6 +5198,10 @@ export async function firebase_GetAllDocumentsOrdered(
     }
   }
 
+  if (paginated && lastDoc) {
+    queryRef = queryRef.startAfter(lastDoc);
+  }
+
   const querySnapshot = await getDocs(queryRef);
   const things = [];
 
@@ -5190,6 +5212,10 @@ export async function firebase_GetAllDocumentsOrdered(
     };
     things.push(thing);
   });
+
+  if (paginated && things.length > 0) {
+    setLastDoc(things[things.length - 1]);
+  }
 
   setter(things);
   setLoading(false);
