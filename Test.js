@@ -6,11 +6,14 @@ import {
   BarCodeView,
   BarGraphView,
   BlurWrapper,
+  BorderPill,
   ButtonOne,
   ButtonTwo,
   CSVtoJSONConverter,
   CSVtoJSONConverterView,
+  CalendarView,
   CameraPicker,
+  CameraView,
   ChangeOrderView,
   CheckboxOne,
   ConfettiView,
@@ -18,10 +21,12 @@ import {
   DatePicker,
   DateTime,
   DebitCreditCardScanner,
+  Divider,
   DropdownOne,
   FadeWrapper,
   GradientView,
   Grid,
+  HHMMtoDate,
   Icon,
   IconButtonOne,
   IconButtonThree,
@@ -34,11 +39,14 @@ import {
   LocalNotification,
   Map,
   MenuBar,
+  ModalView,
   NotificationCircle,
   NumberPad,
+  OptionsView,
   PaymentView,
   PlayButton,
   ProgressBar,
+  ProgressCircle,
   PulsingView,
   QRCodeView,
   QRReader,
@@ -48,14 +56,21 @@ import {
   SegmentedPicker,
   SegmentedPickerTwo,
   SelectedButton,
+  SeparatedView,
   ShowMoreView,
+  SideBySide,
   SlideWrapper,
-  SliderView,
+  SliderCircleView,
+  SmallBubble,
   Spacer,
   SplitView,
+  SwitchOne,
   TextAreaOne,
   TextFieldOne,
-  TextIconButton,
+  TextIconPill,
+  TextPill,
+  TextView,
+  TimePicker,
   TimedView,
   TimerView,
   VideoPlayer,
@@ -65,6 +80,10 @@ import {
   backgrounds,
   checkDate,
   colors,
+  copyToClipboard,
+  createDate,
+  dateToHHMM,
+  dateToTime24,
   firebase_CreateDocument,
   firebase_DeleteDocument,
   firebase_GetAllDocuments,
@@ -91,33 +110,53 @@ import {
   function_StripeConnect,
   function_TimedFunction,
   function_UploadFile,
+  getDaysOfMonth,
   getDistanceInKilometers,
   getDistanceInMiles,
+  getFirstDateOfMonth,
+  getInDevice,
   layout,
+  monthLongtoNum,
+  monthNumToLong,
   playSound,
   randomString,
   reduceArray,
   removeDuplicates,
   removeDuplicatesByProperty,
+  setInDevice,
   setupSound,
   sizes,
   storage_DownloadFile,
   storage_UploadFile,
   storage_UploadImage,
+  width,
 } from "./EVERYTHING/BAGEL/Things";
 import { useEffect, useState } from "react";
+import { Login } from "./SCREENS/Login";
+import {
+  TopFive,
+  TopFour,
+  TopOne,
+  TopThree,
+  TopTwo,
+} from "./SCREEN_COMPONENTS/Top";
+import { SignUp } from "./SCREENS/SignUp";
+import { GetStarted } from "./SCREENS/GetStarted";
 
 function Test({ navigation, route }) {
   const [loading, setLoading] = useState(false);
-  const [thing1, setThing1] = useState(new Date());
-  const [thing2, setThing2] = useState(new Date())
+  const [thing, setThing] = useState("");
+  const [toggle, setToggle] = useState(false);
+  const [theme, setTheme] = useState("light");
 
-  const [toggle, setToggle] = useState(true);
-
-  useEffect(() => {}, []);
+  useEffect(() => {
+    setInDevice("theme", "dark");
+    getInDevice("theme", setTheme);
+  }, []);
 
   return (
-    <SafeArea loading={loading}>
+    <SafeArea loading={loading} theme={theme}>
+      <GetStarted theme={theme} caption={"As easy as 1, 2, 3.."}/>
     </SafeArea>
   );
 }

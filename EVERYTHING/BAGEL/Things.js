@@ -17,7 +17,8 @@ import {
   Easing,
   ScrollView,
   PanResponder,
-  Button,
+  Switch,
+  Pressable,
 } from "react-native";
 import * as Linking from "expo-linking";
 import Slider from "@react-native-community/slider";
@@ -40,6 +41,7 @@ import * as ngeohash from "ngeohash";
 import algoliasearch from "algoliasearch";
 import QRCode from "react-native-qrcode-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Clipboard from "expo-clipboard";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -77,6 +79,7 @@ import {
   documentId,
 } from "firebase/firestore";
 import { StripeProvider, usePaymentSheet } from "@stripe/stripe-react-native";
+import { Circle, Svg } from "react-native-svg";
 // #endregion
 
 // CONSTANTS
@@ -99,39 +102,78 @@ export var myCoords = {
   latitude: 35.66526085,
   longitude: 139.69219744,
 };
+// Config
+const firebaseConfig = {
+  apiKey: "AIzaSyAMkZs0qvSSYVfA4pOMzSkXl-Nkut7raqw",
+  authDomain: "iic-appline-template.firebaseapp.com",
+  projectId: "iic-appline-template",
+  storageBucket: "iic-appline-template.appspot.com",
+  messagingSenderId: "957439211423",
+  appId: "1:957439211423:web:57d7872b6486b922102faa",
+  measurementId: "G-D2Y4Q8QLJW",
+};
 
 // APP INFO
 export var appName = "Happy Code Dev";
 
+// EXTRAS
+export const themedTextColor = (theme) => {
+  if (theme === "light") {
+    return "#000000"; // LIGHT THEME TEXT COLOR
+  } else {
+    return "#F4F4F4"; // DARK THEME TEXT COLOR
+  }
+};
+export const secondaryThemedTextColor = (theme) => {
+  if (theme === "light") {
+    return "#55595B"; // LIGHT THEME TEXT COLOR
+  } else {
+    return "#65666B"; // DARK THEME TEXT COLOR
+  }
+};
+export const themedBackgroundColor = (theme) => {
+  if (theme === "light") {
+    return "#ffffff"; // LIGHT THEME BACKGROUND COLOR
+  } else {
+    return "#0E0F13"; // DARK THEME BACKGROUND COLOR
+  }
+};
+export const secondaryThemedBackgroundColor = (theme) => {
+  if (theme === "light") {
+    return "#F2F3F5"; // LIGHT THEME BACKGROUND COLOR
+  } else {
+    return "#1C1E25"; // DARK THEME BACKGROUND COLOR
+  }
+};
+export const themedButtonColor = (theme) => {
+  if (theme === "light") {
+    return "#0E0F13";
+  } else {
+    return "#ffffff";
+  }
+};
+export const themedButtonTextColor = (theme) => {
+  if (theme === "light") {
+    return "#ffffff";
+  } else {
+    return "#0E0F13";
+  }
+};
+
 // COMPONENTS
-export function SafeArea({
-  statusBar,
-  loading,
-  children,
-  backgroundColor,
-  imageBackground,
-  blurIntensity,
-  styles,
-}) {
+export function SafeArea({ loading, children, theme, styles }) {
   return (
     <View
       style={[
         {
           flex: 1,
-          backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "white",
+          backgroundColor: themedBackgroundColor(theme),
         },
         styles,
       ]}
     >
-      <StatusBar style={statusBar === "light" ? "light" : "dark"}></StatusBar>
+      <StatusBar style={theme === "light" ? "dark" : "light"}></StatusBar>
       {loading && <Loading />}
-      {imageBackground !== undefined && (
-        <ImageBackground
-          blurIntensity={blurIntensity}
-          image={imageBackground}
-        />
-      )}
       <View
         style={[
           {
@@ -166,10 +208,7 @@ export function Grid({ columns, children, styles, gap }) {
 
   return (
     <View
-      style={[
-        { flex: 1, flexDirection: "column", flexWrap: "wrap", gap },
-        styles,
-      ]}
+      style={[{ flex: 1, flexDirection: "column", flexWrap: "wrap" }, styles]}
     >
       {Array.from({ length: rows }).map((_, rowIndex) => (
         <View key={rowIndex} style={{ flexDirection: "row" }}>
@@ -178,7 +217,11 @@ export function Grid({ columns, children, styles, gap }) {
             .map((child, colIndex) => (
               <View
                 key={colIndex}
-                style={[{ flex: 1 / columns, marginRight: gap }]}
+                style={[
+                  { flex: 1 / columns },
+                  colIndex !== 0 && { marginLeft: gap }, // Add left margin for items after the first in a row
+                  rowIndex !== rows - 1 && { marginBottom: gap }, // Add bottom margin for all items except the last row
+                ]}
               >
                 {child}
               </View>
@@ -218,7 +261,8 @@ export function Loading() {
           left: 0,
           right: 0,
           zIndex: 10000,
-          height: height,
+          minHeight: height,
+          flex: 1,
         },
       ]}
     >
@@ -253,10 +297,13 @@ export function Loading() {
 }
 export function RoundedCorners({
   children,
-  topRight = 0,
-  topLeft = 0,
-  bottomRight = 0,
-  bottomLeft = 0,
+  topRight = 12,
+  topLeft = 12,
+  bottomRight = 12,
+  bottomLeft = 12,
+  lightBackground,
+  darkBackground,
+  theme,
   styles,
 }) {
   return (
@@ -268,6 +315,12 @@ export function RoundedCorners({
           borderTopLeftRadius: topLeft,
           borderBottomRightRadius: bottomRight,
           borderBottomLeftRadius: bottomLeft,
+          backgroundColor:
+            lightBackground !== undefined && darkBackground !== undefined
+              ? theme === "light"
+                ? lightBackground
+                : darkBackground
+              : secondaryThemedBackgroundColor(theme),
         },
       ]}
     >
@@ -335,9 +388,12 @@ export function BlurWrapper({ intensity, tint, radius, children, styles }) {
 }
 export function SlideWrapper({
   mainContent,
-  mainContentBackground,
+  mainLightContentBackground,
+  mainDarkContentBackground,
   sideContent,
-  sideContentBackground,
+  sideLightContentBackground,
+  sideDarkContentBackground,
+  theme,
   height,
 }) {
   return (
@@ -346,22 +402,28 @@ export function SlideWrapper({
         <View
           style={{
             width: width,
-            height: height !== undefined ? height : 60,
+            height: height !== undefined ? height : "auto",
             backgroundColor:
-              mainContentBackground !== undefined
-                ? mainContentBackground
-                : "white",
+              mainLightContentBackground !== undefined &&
+              mainDarkContentBackground !== undefined
+                ? theme === "light"
+                  ? mainLightContentBackground
+                  : mainDarkContentBackground
+                : secondaryThemedBackgroundColor(theme),
           }}
         >
           {mainContent}
         </View>
         <View
           style={{
-            height: height !== undefined ? height : 60,
+            height: height !== undefined ? height : "auto",
             backgroundColor:
-              sideContentBackground !== undefined
-                ? sideContentBackground
-                : "white",
+              sideLightContentBackground !== undefined &&
+              sideDarkContentBackground !== undefined
+                ? theme === "light"
+                  ? sideLightContentBackground
+                  : sideDarkContentBackground
+                : secondaryThemedBackgroundColor(theme),
           }}
         >
           {sideContent}
@@ -370,7 +432,7 @@ export function SlideWrapper({
     </View>
   );
 }
-export function ShowMoreView({ height, children }) {
+export function ShowMoreView({ height, children, theme }) {
   const [showMore, setShowMore] = useState(false);
 
   return (
@@ -384,7 +446,14 @@ export function ShowMoreView({ height, children }) {
         {children}
         {!showMore && (
           <LinearGradient
-            colors={["rgba(255, 255, 255, 0)", "rgba(255, 255, 255, 1)"]}
+            colors={[
+              `rgba(${hexToRgbObj(themedBackgroundColor(theme)).r},${
+                hexToRgbObj(themedBackgroundColor(theme)).g
+              },${hexToRgbObj(themedBackgroundColor(theme)).b}, 0)`,
+              `rgba(${hexToRgbObj(themedBackgroundColor(theme)).r},${
+                hexToRgbObj(themedBackgroundColor(theme)).g
+              },${hexToRgbObj(themedBackgroundColor(theme)).b}, 1)`,
+            ]}
             style={{
               position: "absolute",
               bottom: 0,
@@ -411,7 +480,7 @@ export function ShowMoreView({ height, children }) {
                 fontSize: 12,
                 textAlign: "center",
                 marginRight: 15,
-                color: "gray",
+                color: secondaryThemedTextColor(theme),
               },
             ]}
           >
@@ -446,62 +515,93 @@ export function GradientView({ colors, children, styles }) {
     </LinearGradient>
   );
 }
+export function GradientThemedView({
+  lightColors,
+  darkColors,
+  children,
+  styles,
+  theme,
+}) {
+  return (
+    <LinearGradient
+      colors={theme === "light" ? lightColors : darkColors}
+      start={{ x: 0, y: 0.5 }}
+      end={{ x: 1, y: 0.5 }}
+      style={[styles]}
+    >
+      {children}
+    </LinearGradient>
+  );
+}
 export function MenuBar({
   options,
   iconSize,
   color,
-  backgroundColor,
-  padding,
+  selectedColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  paddingV,
+  paddingH,
   radius,
   navigation,
   route,
-  styles,
+  theme,
 }) {
   return (
-    <View
-      style={[
-        styles,
-        {
-          justifyContent: "space-around",
-          position: "absolute",
-          bottom: 0,
-          width: "100%",
-          backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0.1)",
-          paddingVertical: padding !== undefined ? padding : 5,
-          borderRadius: radius !== undefined ? radius : 10,
-        },
-        layout.horizontal,
-      ]}
-    >
-      {options.map((opt, i) => {
-        return (
-          <TouchableOpacity
-            key={i}
-            onPress={() => {
-              navigation.navigate(`${opt.route}`);
-            }}
-          >
-            <Icon
-              name={route.name === opt.route ? opt.icon : `${opt.icon}-outline`}
-              size={iconSize !== undefined ? iconSize : 24}
-              color={color !== undefined ? color : "black"}
-            />
-            {opt.text && (
-              <Text
-                style={[
-                  {
-                    fontSize: 12,
-                    color: color !== undefined ? color : "black",
-                  },
-                ]}
-              >
-                {opt.text}
-              </Text>
-            )}
-          </TouchableOpacity>
-        );
-      })}
+    <View style={[layout.absolute, { bottom: 20, right: 0, left: 0 }]}>
+      <View
+        style={[
+          layout.fit_width,
+          layout.center,
+          layout.horizontal,
+          { alignItems: "center" },
+          {
+            justifyContent: "space-around",
+            backgroundColor:
+              lightBackgroundColor !== undefined &&
+              darkBackgroundColor !== undefined
+                ? theme === "light"
+                  ? lightBackgroundColor
+                  : darkBackgroundColor
+                : secondaryThemedBackgroundColor(theme),
+            paddingVertical: paddingV !== undefined ? paddingV : 10,
+            paddingHorizontal: paddingH !== undefined ? paddingH : 14,
+            borderRadius: radius !== undefined ? radius : 100,
+          },
+        ]}
+      >
+        {options.map((opt, i) => {
+          return (
+            <TouchableOpacity
+              key={i}
+              onPress={() => {
+                navigation.navigate(`${opt.Route}`);
+              }}
+            >
+              <Icon
+                name={`${opt.Icon}-outline`}
+                size={iconSize !== undefined ? iconSize : 22}
+                color={color !== undefined ? color : themedTextColor(theme)}
+                styles={[layout.center]}
+              />
+
+              {opt.Route === route.name && (
+                <View>
+                  <Spacer height={2} />
+                  <Icon
+                    name={"ellipse"}
+                    size={7}
+                    color={
+                      selectedColor !== undefined ? selectedColor : "#1BA8FF"
+                    }
+                    styles={[layout.center]}
+                  />
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -654,42 +754,40 @@ export function CSVtoJSONConverterView({ func }) {
     </View>
   );
 }
-export function ImageBackground({ image, blurIntensity }) {
+export function SideBySide({ children, gap }) {
   return (
-    <BlurWrapper
-      radius={0}
-      intensity={blurIntensity !== undefined ? blurIntensity : 0}
-      styles={[
-        {
-          position: "absolute",
-          top: 0,
-          right: 0,
-          left: 0,
-          bottom: 0,
-          zIndex: -5,
-          height: height,
-          width: width,
-        },
+    <View
+      style={[
+        layout.horizontal,
+        { alignItems: "center", gap: gap !== undefined ? gap : 10 },
       ]}
     >
-      <View style={[{ zIndex: -10 }]}>
-        <Image
-          source={image}
-          style={[
-            {
-              zIndex: -10,
-              height: height,
-              width: width,
-            },
-            layout.image_cover,
-          ]}
-        />
-      </View>
-    </BlurWrapper>
+      {children}
+    </View>
+  );
+}
+export function SeparatedView({ children }) {
+  return (
+    <View style={[layout.separate_horizontal, { gap: 10 }]}>{children}</View>
   );
 }
 
 //
+export function TextView({ children, color, theme, size, styles }) {
+  return (
+    <Text
+      style={[
+        {
+          color: color !== undefined ? color : themedTextColor(theme),
+          fontSize: size !== undefined ? size : 14,
+        },
+        styles,
+      ]}
+    >
+      {children}
+    </Text>
+  );
+}
 export function ButtonOne({
   children,
   backgroundColor,
@@ -748,15 +846,20 @@ export function ButtonTwo({
 export function SelectedButton({
   children,
   func,
-  color,
+  borderColor,
   backgroundColor,
   selectedBackgroundColor,
+  selectedTextColor,
   styles,
 }) {
   const [selected, setSelected] = useState(false);
   function selectFunc() {
     setSelected((prev) => !prev);
-    func();
+    if (func !== undefined) {
+      func();
+    } else {
+      console.log("PRESSED");
+    }
   }
   return (
     <TouchableOpacity
@@ -764,7 +867,6 @@ export function SelectedButton({
         selectFunc();
       }}
       style={[
-        styles,
         {
           backgroundColor: selected
             ? selectedBackgroundColor !== undefined
@@ -775,8 +877,8 @@ export function SelectedButton({
             : "rgba(0,0,0,0.05)",
           borderWidth: selected ? 1 : 0,
           borderColor: selected
-            ? color !== undefined
-              ? color
+            ? borderColor !== undefined
+              ? borderColor
               : "rgba(0,0,0,0.8)"
             : "rgba(0,0,0,0)",
         },
@@ -789,19 +891,54 @@ export function SelectedButton({
 export function IconButtonOne({
   name,
   size,
-  padding,
-  background,
-  color,
+  lightColor,
+  darkColor,
   onPress,
   styles,
+  theme,
+}) {
+  return (
+    <TouchableOpacity style={[styles]} onPress={onPress}>
+      <Ionicons
+        name={name !== undefined ? name : "flash"}
+        size={size !== undefined ? size : 24}
+        style={[
+          {
+            color:
+              lightColor !== undefined && darkColor !== undefined
+                ? theme === "light"
+                  ? lightColor
+                  : darkColor
+                : themedTextColor(theme),
+          },
+        ]}
+      />
+    </TouchableOpacity>
+  );
+}
+export function IconButtonTwo({
+  name,
+  size,
+  padding,
+  lightBackground,
+  darkBackground,
+  lightColor,
+  darkColor,
+  onPress,
+  styles,
+  theme,
 }) {
   return (
     <TouchableOpacity
       style={[
         {
-          padding: padding !== undefined ? padding : 10,
+          padding: padding !== undefined ? padding : 8,
           backgroundColor:
-            background !== undefined ? background : "rgba(0,0,0,0.2)",
+            lightBackground !== undefined && darkBackground !== undefined
+              ? theme === "light"
+                ? lightBackground
+                : darkBackground
+              : secondaryThemedBackgroundColor(theme),
           borderRadius: 100,
           alignSelf: "flex-start",
         },
@@ -810,22 +947,16 @@ export function IconButtonOne({
       onPress={onPress}
     >
       <Ionicons
-        name={name}
-        size={size}
-        style={[{ color: color !== undefined ? color : "black" }]}
-      />
-    </TouchableOpacity>
-  );
-}
-export function IconButtonTwo({ name, size, color, onPress, styles }) {
-  return (
-    <TouchableOpacity style={[styles]} onPress={onPress}>
-      <Ionicons
-        name={name}
-        size={size}
+        name={name !== undefined ? name : "flash"}
+        size={size !== undefined ? size : 24}
         style={[
           {
-            color: color !== undefined ? color : "black",
+            color:
+              lightColor !== undefined && darkColor !== undefined
+                ? theme === "light"
+                  ? lightColor
+                  : darkColor
+                : themedTextColor(theme),
           },
         ]}
       />
@@ -835,12 +966,15 @@ export function IconButtonTwo({ name, size, color, onPress, styles }) {
 export function IconButtonThree({
   name,
   size,
-  color,
-  borderColor,
+  lightColor,
+  darkColor,
+  lightBorderColor,
+  darkBorderColor,
   radius,
   padding,
   onPress,
   styles,
+  theme,
 }) {
   return (
     <TouchableOpacity
@@ -849,71 +983,60 @@ export function IconButtonThree({
         styles,
         {
           borderWidth: 1,
-          borderColor: borderColor !== undefined ? borderColor : "black",
-          padding: padding !== undefined ? padding : 12,
+          borderColor:
+            lightBorderColor !== undefined && darkBorderColor !== undefined
+              ? theme === "light"
+                ? lightBorderColor
+                : darkBorderColor
+              : themedTextColor(theme),
+          padding: padding !== undefined ? padding : 8,
           borderRadius: radius !== undefined ? radius : 100,
           alignSelf: "flex-start",
         },
       ]}
     >
       <Ionicons
-        name={name}
-        size={size}
-        style={{ color: color !== undefined ? color : "black" }}
+        name={name !== undefined ? name : "flash"}
+        size={size !== undefined ? size : 24}
+        style={{
+          color:
+            lightColor !== undefined && darkColor !== undefined
+              ? theme === "light"
+                ? lightColor
+                : darkColor
+              : themedTextColor(theme),
+        }}
       />
     </TouchableOpacity>
   );
 }
-export function TextIconButton({
-  text,
-  textSize,
-  icon,
-  iconSize,
-  backgroundColor,
-  radius,
-  paddingH,
-  paddingV,
-  onPress,
-}) {
-  function onThing() {
-    onPress();
-  }
-  return (
-    <TouchableOpacity onPress={onThing}>
-      <View
-        style={[
-          layout.horizontal,
-          {
-            alignItems: "center",
-            backgroundColor:
-              backgroundColor !== undefined
-                ? backgroundColor
-                : "rgba(0,0,0,0.1)",
-            borderRadius: radius !== undefined ? radius : 10,
-            alignSelf: "flex-start",
-            paddingHorizontal: paddingH !== undefined ? paddingH : 20,
-            paddingVertical: paddingV !== undefined ? paddingV : 10,
-          },
-        ]}
-      >
-        <Text style={[{ fontSize: textSize !== undefined ? textSize : 16 }]}>
-          {text}
-        </Text>
-        <Icon size={iconSize !== undefined ? iconSize : 22} name={icon} />
-      </View>
-    </TouchableOpacity>
-  );
-}
-export function Icon({ name, size, color, styles }) {
+export function Icon({ name, size, lightColor, darkColor, styles, theme }) {
   return (
     <Ionicons
-      name={name}
-      size={size}
-      style={[{ color: color !== undefined ? color : "black" }, styles]}
+      name={name !== undefined ? name : "flash"}
+      size={size !== undefined ? size : 24}
+      style={[
+        {
+          color:
+            lightColor !== undefined && darkColor !== undefined
+              ? theme === "light"
+                ? lightColor
+                : darkColor
+              : themedTextColor(theme),
+        },
+        styles,
+      ]}
     />
   );
 }
-export function LinkOne({ children, underlineColor, onPress, styles }) {
+export function LinkOne({
+  children,
+  lightUnderlineColor,
+  darkUnderlineColor,
+  onPress,
+  styles,
+  theme,
+}) {
   return (
     <TouchableOpacity onPress={onPress}>
       <View
@@ -921,7 +1044,12 @@ export function LinkOne({ children, underlineColor, onPress, styles }) {
           {
             borderBottomWidth: 1,
             borderBottomColor:
-              underlineColor !== undefined ? underlineColor : "black",
+              lightUnderlineColor !== undefined &&
+              darkUnderlineColor !== undefined
+                ? theme === "light"
+                  ? lightUnderlineColor
+                  : darkUnderlineColor
+                : themedTextColor(theme),
             alignSelf: "flex-start",
           },
           styles,
@@ -934,51 +1062,73 @@ export function LinkOne({ children, underlineColor, onPress, styles }) {
 }
 export function TextFieldOne({
   placeholder,
-  placeholderColor,
-  backgroundColor,
+  lightPlaceholderColor,
+  darkPlaceholderColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
   borderBottomWidth,
-  borderBottomColor,
+  lightBorderColor,
+  darkBorderColor,
   paddingH,
   paddingV,
   textSize,
-  textColor,
+  lightTextColor,
+  darkTextColor,
   radius,
-  onTyping,
   isPassword,
   autoCap,
   isNum,
   value,
+  setter,
   styles,
+  theme,
 }) {
   function onType(text) {
-    onTyping(text);
+    setter(text);
   }
   return (
     <TextInput
-      placeholder={placeholder}
+      placeholder={placeholder !== undefined ? placeholder : "Type here.."}
       placeholderTextColor={
-        placeholderColor !== undefined ? placeholderColor : "rgba(0,0,0,0.5)"
+        lightPlaceholderColor !== undefined &&
+        darkPlaceholderColor !== undefined
+          ? theme === "light"
+            ? lightPlaceholderColor
+            : darkPlaceholderColor
+          : secondaryThemedTextColor(theme)
       }
       onChangeText={onType}
       value={value}
-      secureTextEntry={isPassword}
-      autoCapitalize={autoCap ? "sentences" : "none"}
-      keyboardType={isNum ? "decimal-pad" : "default"}
+      secureTextEntry={isPassword !== undefined ? isPassword : false}
+      autoCapitalize={autoCap !== undefined ? "sentences" : "none"}
+      keyboardType={isNum !== undefined ? "decimal-pad" : "default"}
       style={[
         {
           paddingHorizontal: paddingH !== undefined ? paddingH : 14,
           paddingVertical: paddingV !== undefined ? paddingV : 14,
           backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "#dae0e3",
+            lightBackgroundColor !== undefined &&
+            darkBackgroundColor !== undefined
+              ? theme === "light"
+                ? lightBackgroundColor
+                : darkBackgroundColor
+              : secondaryThemedBackgroundColor(theme),
           fontSize: textSize !== undefined ? textSize : 16,
           borderRadius: radius !== undefined ? radius : 6,
           borderBottomColor:
-            borderBottomColor !== undefined
-              ? borderBottomColor
-              : "rgba(0,0,0,0)",
+            lightBorderColor !== undefined && darkBorderColor !== undefined
+              ? theme === "light"
+                ? lightBorderColor
+                : darkBorderColor
+              : secondaryThemedTextColor(theme),
           borderBottomWidth:
             borderBottomWidth !== undefined ? borderBottomWidth : 0,
-          color: textColor !== undefined ? textColor : "black",
+          color:
+            lightTextColor !== undefined && darkTextColor !== undefined
+              ? theme === "light"
+                ? lightTextColor
+                : darkTextColor
+              : themedTextColor(theme),
         },
         styles,
       ]}
@@ -987,18 +1137,25 @@ export function TextFieldOne({
 }
 export function TextAreaOne({
   placeholder,
-  placeholderColor,
-  backgroundColor,
+  lightPlaceholderColor,
+  darkPlaceholderColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
   textSize,
-  textColor,
+  lightTextColor,
+  darkTextColor,
   radius,
-  onTyping,
+  paddingV,
+  paddingH,
+  autoCap,
   value,
+  setter,
   styles,
+  theme,
 }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   function onType(text) {
-    onTyping(text);
+    setter(text);
   }
 
   useEffect(() => {
@@ -1028,26 +1185,41 @@ export function TextAreaOne({
         style={[
           {
             backgroundColor:
-              backgroundColor !== undefined ? backgroundColor : "#dae0e3",
-            padding: 14,
+              lightBackgroundColor !== undefined &&
+              darkBackgroundColor !== undefined
+                ? theme === "light"
+                  ? lightBackgroundColor
+                  : darkBackgroundColor
+                : secondaryThemedBackgroundColor(theme),
+            paddingVertical: paddingV !== undefined ? paddingV : 10,
+            paddingHorizontal: paddingH !== undefined ? paddingH : 12,
             borderRadius: radius !== undefined ? radius : 6,
           },
         ]}
       >
         <TextInput
           multiline={true}
-          placeholder={placeholder}
+          autoCapitalize={autoCap !== undefined ? "sentences" : "none"}
+          placeholder={placeholder !== undefined ? placeholder : "Type here.."}
           placeholderTextColor={
-            placeholderColor !== undefined
-              ? placeholderColor
-              : "rgba(0,0,0,0.5)"
+            lightPlaceholderColor !== undefined &&
+            darkPlaceholderColor !== undefined
+              ? theme === "light"
+                ? lightPlaceholderColor
+                : darkPlaceholderColor
+              : secondaryThemedTextColor(theme)
           }
           onChangeText={onType}
           value={value}
           style={[
             {
               fontSize: textSize !== undefined ? textSize : 16,
-              color: textColor !== undefined ? textColor : "black",
+              color:
+                lightTextColor !== undefined && darkTextColor !== undefined
+                  ? theme === "light"
+                    ? lightTextColor
+                    : darkTextColor
+                  : themedTextColor(theme),
             },
             styles,
           ]}
@@ -1060,7 +1232,14 @@ export function TextAreaOne({
           }}
         >
           <Text
-            style={[{ textAlign: "right", paddingVertical: 6, fontSize: 16 }]}
+            style={[
+              {
+                textAlign: "right",
+                paddingVertical: 6,
+                fontSize: 16,
+                color: themedTextColor(theme),
+              },
+            ]}
           >
             Done
           </Text>
@@ -1074,12 +1253,16 @@ export function DropdownOne({
   radius,
   value,
   setter,
-  backgroundColor,
-  textColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  lightColor,
+  darkColor,
   textSize,
   iconSize,
   padding,
   styles,
+  onChange,
+  theme,
 }) {
   const [toggle, setToggle] = useState(false);
   return (
@@ -1093,7 +1276,12 @@ export function DropdownOne({
           style={[
             {
               backgroundColor:
-                backgroundColor !== undefined ? backgroundColor : "#dae0e3",
+                lightBackgroundColor !== undefined &&
+                darkBackgroundColor !== undefined
+                  ? theme === "light"
+                    ? lightBackgroundColor
+                    : darkBackgroundColor
+                  : secondaryThemedBackgroundColor(theme),
               padding: padding !== undefined ? padding : 12,
               borderRadius: radius !== undefined ? radius : 10,
             },
@@ -1104,7 +1292,12 @@ export function DropdownOne({
           <Text
             style={[
               {
-                color: textColor !== undefined ? textColor : "black",
+                color:
+                  lightColor !== undefined && darkColor !== undefined
+                    ? theme === "light"
+                      ? lightColor
+                      : darkColor
+                    : themedTextColor(theme),
                 fontSize: textSize !== undefined ? textSize : 14,
               },
             ]}
@@ -1114,7 +1307,13 @@ export function DropdownOne({
           <Ionicons
             name="chevron-down-outline"
             size={iconSize !== undefined ? iconSize : 16}
-            color={textColor !== undefined ? textColor : "black"}
+            color={
+              lightColor !== undefined && darkColor !== undefined
+                ? theme === "light"
+                  ? lightColor
+                  : darkColor
+                : themedTextColor(theme)
+            }
           />
         </View>
       </TouchableOpacity>
@@ -1125,8 +1324,13 @@ export function DropdownOne({
             return (
               <TouchableOpacity
                 key={i}
-                style={[{ padding: 10 }, layout.separate_horizontal]}
+                style={[{ padding: 10, gap: 6 }, layout.separate_horizontal]}
                 onPress={() => {
+                  if (onChange !== undefined) {
+                    onChange(option);
+                  } else {
+                    console.log(option);
+                  }
                   setter(option);
                   setToggle(false);
                 }}
@@ -1134,7 +1338,12 @@ export function DropdownOne({
                 <Text
                   style={[
                     {
-                      color: textColor !== undefined ? textColor : "black",
+                      color:
+                        lightColor !== undefined && darkColor !== undefined
+                          ? theme === "light"
+                            ? lightColor
+                            : darkColor
+                          : themedTextColor(theme),
                       fontSize: textSize !== undefined ? textSize : 14,
                     },
                   ]}
@@ -1145,7 +1354,8 @@ export function DropdownOne({
                   <Icon
                     name={"ellipse"}
                     size={iconSize !== undefined ? iconSize - 6 : 12}
-                    color={"#1BA8FF"}
+                    lightColor={"#1BA8FF"}
+                    darkColor={"#1BA8FF"}
                   />
                 )}
               </TouchableOpacity>
@@ -1156,17 +1366,51 @@ export function DropdownOne({
     </View>
   );
 }
-export function CheckboxOne({ value, setter, text, textColor }) {
+export function CheckboxOne({
+  value,
+  setter,
+  text,
+  textSize,
+  lightColor,
+  darkColor,
+  checkSize,
+  radius,
+  backgroundColor,
+  gap,
+  theme,
+}) {
   function onCheck() {
     setter(!value);
   }
   return (
-    <View style={[layout.horizontal]}>
-      <CheckBox value={value} onValueChange={onCheck} />
+    <View
+      style={[
+        layout.horizontal,
+        { alignItems: "center", gap: gap !== undefined ? gap : 10 },
+      ]}
+    >
+      <CheckBox
+        value={value}
+        onValueChange={onCheck}
+        style={[
+          {
+            borderRadius: radius !== undefined ? radius : 6,
+            padding: checkSize !== undefined ? checkSize : 10,
+          },
+        ]}
+        color={backgroundColor !== undefined ? backgroundColor : "#1BA8FF"}
+      />
       <Text
         style={[
-          sizes.medium_text,
-          { color: textColor !== undefined ? textColor : "black" },
+          {
+            color:
+              lightColor !== undefined && darkColor !== undefined
+                ? theme === "light"
+                  ? lightColor
+                  : darkColor
+                : themedTextColor(theme),
+            fontSize: textSize !== undefined ? textSize : 16,
+          },
         ]}
       >
         {text}
@@ -1174,110 +1418,397 @@ export function CheckboxOne({ value, setter, text, textColor }) {
     </View>
   );
 }
-export function DatePicker({ date, setDate, backgroundColor }) {
-  const onDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setDate(currentDate);
-  };
+export function SwitchOne({
+  toggledOnColor,
+  toggledOffColor,
+  thumbColor,
+  value,
+  setter,
+  func,
+  theme,
+}) {
+  return (
+    <Switch
+      trackColor={{
+        false:
+          toggledOffColor !== undefined
+            ? toggledOffColor
+            : secondaryThemedBackgroundColor(theme),
+        true: toggledOnColor !== undefined ? toggledOnColor : "#1BA8FF",
+      }}
+      thumbColor={thumbColor !== undefined ? thumbColor : "#F8F8F8"}
+      value={value}
+      onValueChange={(value) => {
+        setter(value);
+        if (func !== undefined) {
+          func();
+        } else {
+          console.log("TOGGLED");
+        }
+      }}
+    />
+  );
+}
+export function DatePicker({
+  date,
+  setDate,
+  padding,
+  radius,
+  lightTextColor,
+  darkTextColor,
+  textSize,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  textStyles,
+  theme,
+}) {
+  const [showPicker, setShowPicker] = useState(false);
 
+  return (
+    <View>
+      {showPicker && (
+        <View
+          style={[
+            {
+              backgroundColor:
+                lightBackgroundColor !== undefined &&
+                darkBackgroundColor !== undefined
+                  ? theme === "light"
+                    ? lightBackgroundColor
+                    : darkBackgroundColor
+                  : secondaryThemedBackgroundColor(theme),
+              borderRadius: radius !== undefined ? radius : 12,
+            },
+          ]}
+        >
+          <DateTimePicker
+            textColor={
+              lightTextColor !== undefined && darkTextColor !== undefined
+                ? theme === "light"
+                  ? lightTextColor
+                  : darkTextColor
+                : themedTextColor(theme)
+            }
+            testID="datePicker"
+            value={date}
+            onChange={(event, selected) => {
+              setShowPicker(false);
+              if (event.type === "set") {
+                const currentDate = selected || new Date(); // Use current time if selectedTime is null
+                setDate(currentDate);
+              }
+            }}
+            mode="date"
+            display="spinner"
+          />
+        </View>
+      )}
+      {!showPicker && (
+        <ButtonOne
+          padding={padding !== undefined ? padding : 12}
+          backgroundColor={
+            lightBackgroundColor !== undefined &&
+            darkBackgroundColor !== undefined
+              ? theme === "light"
+                ? lightBackgroundColor
+                : darkBackgroundColor
+              : secondaryThemedBackgroundColor(theme)
+          }
+          radius={radius !== undefined ? radius : 12}
+          onPress={() => {
+            setShowPicker(true);
+          }}
+        >
+          <Text
+            style={[
+              format.center_text,
+              {
+                color:
+                  lightTextColor !== undefined && darkTextColor !== undefined
+                    ? theme === "light"
+                      ? lightTextColor
+                      : darkTextColor
+                    : themedTextColor(theme),
+                fontSize: textSize !== undefined ? textSize : 14,
+              },
+              textStyles,
+            ]}
+          >
+            {formatDate(date)}
+          </Text>
+        </ButtonOne>
+      )}
+    </View>
+  );
+}
+export function TimePicker({
+  time,
+  setTime,
+  padding,
+  radius,
+  lightTextColor,
+  darkTextColor,
+  textSize,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  textStyles,
+  theme,
+}) {
+  const [showPicker, setShowPicker] = useState(false);
+
+  return (
+    <View>
+      {showPicker && (
+        <View
+          style={[
+            {
+              backgroundColor:
+                lightBackgroundColor !== undefined &&
+                darkBackgroundColor !== undefined
+                  ? theme === "light"
+                    ? lightBackgroundColor
+                    : darkBackgroundColor
+                  : secondaryThemedBackgroundColor(theme),
+              borderRadius: radius !== undefined ? radius : 12,
+            },
+          ]}
+        >
+          <DateTimePicker
+            textColor={
+              lightTextColor !== undefined && darkTextColor !== undefined
+                ? theme === "light"
+                  ? lightTextColor
+                  : darkTextColor
+                : themedTextColor(theme)
+            }
+            testID="timePicker"
+            value={time}
+            onChange={(event, selected) => {
+              setShowPicker(false);
+              if (event.type === "set") {
+                const currentTime = selected || new Date(); // Use current time if selectedTime is null
+                setTime(currentTime);
+              }
+            }}
+            mode="time"
+            display="spinner"
+          />
+        </View>
+      )}
+      {!showPicker && (
+        <ButtonOne
+          padding={padding !== undefined ? padding : 12}
+          backgroundColor={
+            lightBackgroundColor !== undefined &&
+            darkBackgroundColor !== undefined
+              ? theme === "light"
+                ? lightBackgroundColor
+                : darkBackgroundColor
+              : secondaryThemedBackgroundColor(theme)
+          }
+          radius={radius !== undefined ? radius : 12}
+          onPress={() => {
+            setShowPicker(true);
+          }}
+        >
+          <Text
+            style={[
+              format.center_text,
+              {
+                color:
+                  lightTextColor !== undefined && darkTextColor !== undefined
+                    ? theme === "light"
+                      ? lightTextColor
+                      : darkTextColor
+                    : themedTextColor(theme),
+                fontSize: textSize !== undefined ? textSize : 14,
+              },
+              textStyles,
+            ]}
+          >
+            {formatTime(time)}
+          </Text>
+        </ButtonOne>
+      )}
+    </View>
+  );
+}
+export function TextPill({
+  text,
+  lightColor,
+  darkColor,
+  textSize,
+  paddingV,
+  paddingH,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  radius,
+  theme,
+}) {
+  return (
+    <View
+      style={[
+        layout.fit_width,
+        {
+          backgroundColor:
+            lightBackgroundColor !== undefined &&
+            darkBackgroundColor !== undefined
+              ? theme === "light"
+                ? lightBackgroundColor
+                : darkBackgroundColor
+              : secondaryThemedBackgroundColor(theme),
+          borderRadius: radius !== undefined ? radius : 100,
+          paddingVertical: paddingV !== undefined ? paddingV : 10,
+          paddingHorizontal: paddingH !== undefined ? paddingH : 14,
+        },
+      ]}
+    >
+      <Text
+        style={[
+          {
+            color:
+              lightColor !== undefined && darkColor !== undefined
+                ? theme === "light"
+                  ? lightColor
+                  : darkColor
+                : themedTextColor(theme),
+            fontSize: textSize !== undefined ? textSize : 12,
+          },
+        ]}
+      >
+        {text !== undefined ? text : "Hello, Bagel."}
+      </Text>
+    </View>
+  );
+}
+export function TextIconPill({
+  icon,
+  lightIconColor,
+  darkIconColor,
+  iconSize,
+  text,
+  lightTextColor,
+  darkTextColor,
+  textSize,
+  paddingV,
+  paddingH,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  radius,
+  theme,
+}) {
   return (
     <View
       style={[
         layout.horizontal,
+        { alignItems: "center" },
+        layout.fit_width,
         {
           backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0)",
+            lightBackgroundColor !== undefined &&
+            darkBackgroundColor !== undefined
+              ? theme === "light"
+                ? lightBackgroundColor
+                : darkBackgroundColor
+              : secondaryThemedBackgroundColor(theme),
+          borderRadius: radius !== undefined ? radius : 100,
+          paddingVertical: paddingV !== undefined ? paddingV : 10,
+          paddingHorizontal: paddingH !== undefined ? paddingH : 14,
         },
-        format.radius,
-        layout.padding_small,
-        { width: "100%" },
       ]}
     >
-      <DateTimePicker
-        testID="datePicker"
-        value={date}
-        mode="date"
-        is24Hour={true}
-        display="calendar"
-        onChange={onDateChange}
+      <Ionicons
+        name={icon !== undefined ? icon : "flash-outline"}
+        color={
+          lightIconColor !== undefined && darkIconColor !== undefined
+            ? theme === "light"
+              ? lightIconColor
+              : darkIconColor
+            : "#1BA8FF"
+        }
+        size={iconSize !== undefined ? iconSize : 16}
       />
+      <Text
+        style={[
+          {
+            color:
+              lightTextColor !== undefined && darkTextColor !== undefined
+                ? theme === "light"
+                  ? lightTextColor
+                  : darkTextColor
+                : themedTextColor(theme),
+            fontSize: textSize !== undefined ? textSize : 12,
+          },
+        ]}
+      >
+        {text !== undefined ? text : "Hello, Bagel."}
+      </Text>
     </View>
   );
 }
-export function TimePicker({ time, setTime, backgroundColor }) {
-  const onTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || time;
-    setTime(currentTime);
-  };
-
+export function BorderPill({
+  children,
+  lightBorderColor,
+  darkBorderColor,
+  paddingV,
+  paddingH,
+  radius,
+  theme,
+}) {
   return (
     <View
       style={[
-        layout.horizontal,
+        layout.fit_width,
         {
-          backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0)",
+          borderRadius: radius !== undefined ? radius : 100,
+          paddingVertical: paddingV !== undefined ? paddingV : 10,
+          paddingHorizontal: paddingH !== undefined ? paddingH : 14,
+          borderColor:
+            lightBorderColor !== undefined && darkBorderColor !== undefined
+              ? theme === "light"
+                ? lightBorderColor
+                : darkBorderColor
+              : themedTextColor(theme),
+          borderWidth: 1,
         },
-        format.radius,
-        layout.padding_small,
-        { width: "100%" },
       ]}
     >
-      <DateTimePicker
-        testID="timePicker"
-        value={time}
-        mode="time"
-        is24Hour={true}
-        display="default"
-        onChange={onTimeChange}
-      />
+      {children}
     </View>
   );
 }
-export function DateTime({ date, time, setDate, setTime, backgroundColor }) {
-  const onDateChange = (event, selectedDate) => {
-    const currentDate = selectedDate || date;
-    setDate(currentDate);
-  };
-
-  const onTimeChange = (event, selectedTime) => {
-    const currentTime = selectedTime || time;
-    setTime(currentTime);
-  };
-
+export function Divider(color, marginV, theme) {
   return (
     <View
       style={[
-        layout.horizontal,
         {
-          backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0)",
+          borderTopColor:
+            color !== undefined
+              ? color
+              : `rgba(${hexToRgbObj(themedTextColor(theme)).r},${
+                  hexToRgbObj(themedTextColor(theme)).g
+                }, ${hexToRgbObj(themedTextColor(theme)).b}, 0.5)`,
+          borderTopWidth: 1,
+          marginVertical: marginV !== undefined ? marginV : 15,
         },
-        format.radius,
-        layout.padding_small,
-        { width: "100%" },
       ]}
-    >
-      <DateTimePicker
-        testID="datePicker"
-        value={date}
-        mode="date"
-        is24Hour={true}
-        display="calendar"
-        onChange={onDateChange}
-      />
-      <DateTimePicker
-        testID="timePicker"
-        value={time}
-        mode="time"
-        is24Hour={true}
-        display="default"
-        onChange={onTimeChange}
-      />
-    </View>
+    ></View>
   );
 }
-export function SegmentedPicker({ options, value, setter, backgroundColor }) {
+export function SegmentedPicker({
+  options,
+  value,
+  setter,
+  textSize,
+  selectedTextColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  selectedBackgroundColor,
+  paddingV,
+  paddingH,
+  radius,
+  theme,
+}) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
       <View style={[layout.horizontal]}>
@@ -1287,15 +1818,20 @@ export function SegmentedPicker({ options, value, setter, backgroundColor }) {
               key={i}
               style={[
                 {
-                  paddingVertical: 12,
-                  paddingHorizontal: 16,
-                  borderRadius: 50,
+                  paddingVertical: paddingV !== undefined ? paddingV : 10,
+                  paddingHorizontal: paddingH !== undefined ? paddingH : 16,
+                  borderRadius: radius !== undefined ? radius : 100,
                   backgroundColor:
                     value === option
-                      ? backgroundColor !== undefined
-                        ? backgroundColor
-                        : "black"
-                      : "rgba(0,0,0,0.2)",
+                      ? selectedBackgroundColor !== undefined
+                        ? selectedBackgroundColor
+                        : "#1BA8FF"
+                      : lightBackgroundColor !== undefined &&
+                        darkBackgroundColor !== undefined
+                      ? theme === "light"
+                        ? lightBackgroundColor
+                        : darkBackgroundColor
+                      : secondaryThemedBackgroundColor(theme),
                 },
               ]}
               onPress={() => {
@@ -1304,8 +1840,15 @@ export function SegmentedPicker({ options, value, setter, backgroundColor }) {
             >
               <Text
                 style={[
-                  { color: value === option ? "white" : "black" },
-                  sizes.medium_text,
+                  {
+                    color:
+                      value === option
+                        ? selectedTextColor !== undefined
+                          ? selectedTextColor
+                          : "white"
+                        : themedTextColor(theme),
+                    fontSize: textSize !== undefined ? textSize : 14,
+                  },
                 ]}
               >
                 {option}
@@ -1321,12 +1864,13 @@ export function SegmentedPickerTwo({
   options,
   value,
   setter,
-  borderBottomColor,
+  borderColor,
+  borderWidth,
   selectedColor,
-  color,
-  fontSize,
+  textSize,
   paddingV,
-  paddingH
+  paddingH,
+  theme,
 }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false}>
@@ -1337,15 +1881,16 @@ export function SegmentedPickerTwo({
               key={i}
               style={[
                 {
-                  paddingVertical: paddingV !== undefined ? paddingV : 12,
-                  paddingHorizontal: paddingH !== undefined ? paddingH : 6,
+                  paddingVertical: paddingV !== undefined ? paddingV : 10,
+                  paddingHorizontal: paddingH !== undefined ? paddingH : 12,
                   borderRadius: 0,
-                  borderBottomWidth: 2,
+                  borderBottomWidth:
+                    borderWidth !== undefined ? borderWidth : 2,
                   borderBottomColor:
                     value === option
-                      ? borderBottomColor !== undefined
-                        ? borderBottomColor
-                        : "black"
+                      ? borderColor !== undefined
+                        ? borderColor
+                        : "#1BA8FF"
                       : "rgba(0,0,0,0.0)",
                 },
               ]}
@@ -1360,11 +1905,9 @@ export function SegmentedPickerTwo({
                       value === option
                         ? selectedColor !== undefined
                           ? selectedColor
-                          : "black"
-                        : color !== undefined
-                        ? color
-                        : "black",
-                    fontSize: fontSize !== undefined ? fontSize : 18,
+                          : themedTextColor(theme)
+                        : themedTextColor(theme),
+                    fontSize: textSize !== undefined ? textSize : 14,
                   },
                 ]}
               >
@@ -1377,48 +1920,7 @@ export function SegmentedPickerTwo({
     </ScrollView>
   );
 }
-export function IconSegmentedPicker({
-  icons,
-  backgroundColor,
-  radius,
-  setter,
-  value,
-}) {
-  return (
-    <View
-      style={[
-        {
-          backgroundColor:
-            backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0.1)",
-          borderRadius: radius !== undefined ? radius : 10,
-          paddingHorizontal: 8,
-        },
-        layout.horizontal,
-        layout.no_gap,
-        layout.fit_width,
-      ]}
-    >
-      {icons.map((icon, i) => {
-        return (
-          <TouchableOpacity
-            style={[{ padding: 8 }]}
-            key={i}
-            onPress={() => {
-              setter(icon.Value);
-            }}
-          >
-            <Icon
-              name={value === icon.Value ? icon.Icon : `${icon.Icon}-outline`}
-              size={25}
-              color={icon.Color !== undefined ? icon.Color : "black"}
-            />
-          </TouchableOpacity>
-        );
-      })}
-    </View>
-  );
-}
-export function Accordion({ children, top, func }) {
+export function Accordion({ children, top, gap, func }) {
   const [toggle, setToggle] = useState(false);
   return (
     <TouchableOpacity
@@ -1430,11 +1932,16 @@ export function Accordion({ children, top, func }) {
       }}
     >
       <View>{top}</View>
-      {toggle && <View>{children}</View>}
+      {toggle && (
+        <View>
+          <Spacer height={gap !== undefined ? gap : 8} />
+          {children}
+        </View>
+      )}
     </TouchableOpacity>
   );
 }
-export function CameraView({ setToggle, setLoading, func }) {
+export function CameraView({ setToggle, func, theme }) {
   const [type, setType] = useState(CameraType.back);
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -1449,15 +1956,14 @@ export function CameraView({ setToggle, setLoading, func }) {
   async function takePicture() {
     if (cameraRef.current && isCameraReady && !capturing) {
       setCapturing(true);
-      setLoading(true);
       try {
         const photo = await cameraRef.current.takePictureAsync();
-        func(photo.uri);
-        setLoading(false);
+        if (func !== undefined) {
+          func(photo.uri);
+        }
         setToggle(false);
       } finally {
         setCapturing(false);
-        setLoading(false);
         setToggle(false);
       }
     }
@@ -1476,16 +1982,24 @@ export function CameraView({ setToggle, setLoading, func }) {
           layout.absolute,
           layout.full_height,
           layout.full_width,
-          { top: 0, bottom: 0, left: 0, right: 0 },
-          backgrounds.white,
+          {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 10000,
+            minHeight: height,
+            flex: 1,
+          },
+          themedBackgroundColor(theme),
           layout.separate_vertical,
         ]}
       >
         <View></View>
         <View style={[layout.vertical]}>
-          <Text style={{ textAlign: "center" }}>
+          <TextView theme={theme} styles={{ textAlign: "center" }}>
             We need your permission to show the camera
-          </Text>
+          </TextView>
           <TouchableOpacity
             onPress={() => {
               requestPermission();
@@ -1508,14 +2022,21 @@ export function CameraView({ setToggle, setLoading, func }) {
       style={[
         backgrounds.black,
         layout.absolute,
-        { top: 0, right: 0, left: 0, bottom: 0 },
-        layout.full_height,
         layout.full_width,
-        { paddingVertical: 55 },
+        {
+          paddingVertical: 55,
+          top: 0,
+          right: 0,
+          left: 0,
+          bottom: 0,
+          zIndex: 10000,
+          flex: 1,
+          minHeight: height,
+        },
       ]}
     >
       <Camera
-        style={[{ height: "100%", width: "100%" }]}
+        style={[{ height: "100%", width: "100%", flex: 1 }]}
         type={type}
         ref={(ref) => {
           cameraRef.current = ref;
@@ -1527,10 +2048,15 @@ export function CameraView({ setToggle, setLoading, func }) {
             layout.separate_horizontal,
             layout.padding,
             layout.absolute,
-            { top: 0, right: 0, left: 0, bottom: 0 },
             layout.full_width,
-            layout.fit_height,
             layout.align_bottom,
+            {
+              right: 0,
+              left: 0,
+              bottom: 0,
+              zIndex: 10000,
+              flex: 1,
+            },
           ]}
         >
           <View style={[layout.separate_horizontal]}>
@@ -1788,7 +2314,11 @@ export function Map({
         {coordsArray.map((coords, index) => (
           <TouchableOpacity
             onPress={() => {
-              func({ latitude: coords.latitude, longitude: coords.longitude });
+              if (func !== undefined) {
+                func(coords);
+              } else {
+                console.log(coords);
+              }
             }}
           >
             <Marker
@@ -1816,11 +2346,13 @@ export function LocalNotification({
   icon,
   title,
   message,
-  color,
+  iconColor,
   setToggle,
   radius,
   seconds,
-  backgroundColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  theme,
 }) {
   useEffect(() => {
     console.log("NOTIFICATION START");
@@ -1832,53 +2364,59 @@ export function LocalNotification({
 
   return (
     <View style={[{ zIndex: 2000 }]}>
-      <TouchableOpacity
-        style={[
-          layout.absolute,
-          layout.margin_horizontal,
-          layout.padding,
-          {
-            top: Platform.OS === "ios" ? 25 : 35,
-            right: 0,
-            left: 0,
-            borderColor: "rgba(0,0,0,0.1)",
-            borderWidth: 1,
-            borderRadius: radius !== undefined ? radius : 10,
-            backgroundColor:
-              backgroundColor !== undefined ? backgroundColor : "white",
-          },
-        ]}
-        onPress={() => {
-          setToggle(false);
-        }}
-      >
-        <View style={[backgrounds.white, format.radius, layout.horizontal]}>
-          <Icon
-            name={icon !== undefined ? icon : "close-outline"}
-            size={35}
-            color={color !== undefined ? color : "red"}
-          />
-          <View>
-            <Text style={[format.bold, sizes.small_text]}>
-              {title !== undefined ? title : "Everything Bagel"}
-            </Text>
-            <Text style={[sizes.small_text, { width: "85%" }]}>
-              {message !== undefined
-                ? message
-                : "There are many things to know about the bagel."}
-            </Text>
+      <FadeWrapper seconds={1}>
+        <TouchableOpacity
+          style={[
+            layout.absolute,
+            layout.margin_horizontal,
+            layout.padding,
+            {
+              top: Platform.OS === "ios" ? 25 : 35,
+              right: 0,
+              left: 0,
+              borderRadius: radius !== undefined ? radius : 10,
+              backgroundColor:
+                lightBackgroundColor !== undefined &&
+                darkBackgroundColor !== undefined
+                  ? theme === "light"
+                    ? lightBackgroundColor
+                    : darkBackgroundColor
+                  : secondaryThemedBackgroundColor(theme),
+            },
+          ]}
+          onPress={() => {
+            setToggle(false);
+          }}
+        >
+          <View style={[layout.horizontal, { alignItems: "center" }]}>
+            <Ionicons
+              name={icon !== undefined ? icon : "flash-outline"}
+              size={26}
+              color={iconColor !== undefined ? iconColor : "red"}
+            />
+            <View>
+              <TextView theme={theme} styles={[format.bold, sizes.small_text]}>
+                {title !== undefined ? title : "Everything Bagel"}
+              </TextView>
+              <TextView theme={theme} styles={[{ width: "85%", fontSize: 14 }]}>
+                {message !== undefined
+                  ? message
+                  : "There are many things to know about the bagel."}
+              </TextView>
+            </View>
           </View>
-        </View>
-      </TouchableOpacity>
+        </TouchableOpacity>
+      </FadeWrapper>
     </View>
   );
 }
-export function AudioPlayer({ audioName, audioPath }) {
+export function AudioPlayer({ audioName, audioPath, sliderColor, theme }) {
   const [sound, setSound] = useState();
   const [isPlaying, setIsPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const path = audioPath || require("../../assets/AUDIO/sample.mp3");
+
   function formatTime(milliseconds) {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -1932,6 +2470,13 @@ export function AudioPlayer({ audioName, audioPath }) {
       setIsPlaying(false);
     }
   }
+  const onSliderValueChange = (value) => {
+    if (sound) {
+      sound.setPositionAsync(value);
+      setPosition(value);
+    }
+  };
+  //
   useEffect(() => {
     return () => {
       if (sound) {
@@ -1940,34 +2485,47 @@ export function AudioPlayer({ audioName, audioPath }) {
       }
     };
   }, [sound]);
-  const onSliderValueChange = (value) => {
-    if (sound) {
-      sound.setPositionAsync(value);
-      setPosition(value);
-    }
-  };
 
   return (
-    <View style={[layout.padding, backgrounds.white, format.radius]}>
-      <View style={[layout.horizontal]}>
+    <View
+      style={[
+        layout.padding,
+        secondaryThemedBackgroundColor(theme),
+        format.radius,
+      ]}
+    >
+      <View style={[layout.horizontal, { alignItems: "center" }]}>
         <IconButtonTwo
+          theme={theme}
           name={isPlaying ? "pause" : "play"}
           onPress={playPauseSound}
-          size={30}
+          size={24}
         />
-        <IconButtonTwo name="stop" onPress={stopSound} size={30} />
-        <Text style={[sizes.medium_text]}>{audioName}</Text>
+        <IconButtonTwo
+          name="stop"
+          onPress={stopSound}
+          size={24}
+          theme={theme}
+        />
+        <TextView theme={theme} styles={[sizes.small_text]}>
+          {audioName !== undefined ? audioName : "Hello, Bagel"}
+        </TextView>
       </View>
-      <View style={[layout.horizontal]}>
+      <Spacer height={5} />
+      <View style={[layout.horizontal, { alignItems: "center" }]}>
         <Slider
           style={{ width: "75%", height: 10 }}
           minimumValue={0}
           maximumValue={duration}
           value={position}
           onValueChange={onSliderValueChange}
-          minimumTrackTintColor="black"
+          minimumTrackTintColor={
+            sliderColor !== undefined ? sliderColor : "#1BA8FF"
+          }
         />
-        <Text>{`${formatTime(position)} / ${formatTime(duration)}`}</Text>
+        <TextView theme={theme}>{`${formatTime(position)} / ${formatTime(
+          duration
+        )}`}</TextView>
       </View>
     </View>
   );
@@ -1982,60 +2540,18 @@ export function VideoPlayer({
   height = 300,
 }) {
   const video = useRef(null);
-  const [status, setStatus] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const [position, setPosition] = useState(0);
-  const [duration, setDuration] = useState(0);
-
+  //
   const handleLoadStart = () => {
     setIsLoading(true);
   };
-
-  const handleLoad = async (loadStatus) => {
+  const handleLoad = async () => {
     setIsLoading(false);
-    setStatus(loadStatus);
-    setDuration(loadStatus.durationMillis);
     if (autoPlay) {
       await video.current.playAsync();
     }
   };
-
-  const seekBackward = async () => {
-    if (video.current) {
-      const newPosition = Math.max(0, status.positionMillis - 10000); // Go back 10 seconds
-      await video.current.setPositionAsync(newPosition);
-    }
-  };
-
-  const seekForward = async () => {
-    if (video.current) {
-      const newPosition = Math.min(
-        status.durationMillis,
-        status.positionMillis + 10000
-      ); // Go forward 10 seconds
-      await video.current.setPositionAsync(newPosition);
-    }
-  };
-
-  const onSliderValueChange = (value) => {
-    if (video.current) {
-      setPosition(value);
-    }
-  };
-
-  const onSlidingComplete = async (value) => {
-    if (video.current) {
-      await video.current.setPositionAsync(value);
-    }
-  };
-
-  function formatTime(milliseconds) {
-    const totalSeconds = Math.floor(milliseconds / 1000);
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  }
-
+  //
   useEffect(() => {
     console.log("Video Path:", videoPath);
 
@@ -2068,10 +2584,6 @@ export function VideoPlayer({
         useNativeControls={!noControls}
         resizeMode="contain"
         isLooping={autoLoop}
-        onPlaybackStatusUpdate={(newStatus) => {
-          setStatus(newStatus);
-          setPosition(newStatus.positionMillis);
-        }}
         onLoadStart={handleLoadStart}
         onLoad={handleLoad}
       />
@@ -2095,7 +2607,14 @@ export function VideoPlayer({
     </View>
   );
 }
-export function TimerView({ isActive, setSeconds, seconds, textSize, styles }) {
+export function TimerView({
+  isActive,
+  setSeconds,
+  seconds,
+  textSize,
+  styles,
+  theme,
+}) {
   const timerRef = useRef(null);
 
   useEffect(() => {
@@ -2123,11 +2642,12 @@ export function TimerView({ isActive, setSeconds, seconds, textSize, styles }) {
 
   return (
     <View>
-      <Text
-        style={[styles, { fontSize: textSize !== undefined ? textSize : 18 }]}
+      <TextView
+        theme={theme}
+        styles={[styles, { fontSize: textSize !== undefined ? textSize : 14 }]}
       >
         {formatTime(seconds)}
-      </Text>
+      </TextView>
     </View>
   );
 }
@@ -2140,6 +2660,7 @@ export function BarGraphView({
   showHeading = true,
   textSize,
   gap,
+  theme,
 }) {
   const maxValue = Math.max(...stats.map((stat) => stat.Value));
 
@@ -2150,33 +2671,40 @@ export function BarGraphView({
           flexDirection: "row",
           padding: 16,
           height: graphHeight !== undefined ? graphHeight : height * 0.3,
-          gap: gap !== undefined ? gap : 4,
+          gap: gap !== undefined ? gap : 8,
         }}
       >
         {stats.map((stat, index) => (
           <View key={index} style={{ alignItems: "center" }}>
-            <Text style={{ fontSize: 12, marginBottom: 4 }}>
+            <TextView
+              theme={theme}
+              styles={{
+                fontSize: textSize !== undefined ? textSize : 14,
+                marginBottom: 4,
+              }}
+            >
               {showValue ? stat.Value : ""}
-            </Text>
+            </TextView>
             <View
               style={{
                 backgroundColor: `${
-                  stat.Color !== undefined ? stat.Color : "black"
+                  stat.Color !== undefined ? stat.Color : "#1BA8FF"
                 }`,
-                width: barWidth !== undefined ? barWidth : "100%",
+                width: barWidth !== undefined ? barWidth : 40,
                 height: (stat.Value / maxValue) * 70 + "%",
                 marginTop: "auto", // Align at the bottom
-                borderRadius: barRadius !== undefined ? barRadius : 10,
+                borderRadius: barRadius !== undefined ? barRadius : 8,
               }}
             />
-            <Text
-              style={{
+            <TextView
+              theme={theme}
+              styles={{
                 fontSize: textSize !== undefined ? textSize : 14,
                 marginTop: 8,
               }}
             >
               {showHeading ? stat.Heading : ""}
-            </Text>
+            </TextView>
           </View>
         ))}
       </View>
@@ -2187,9 +2715,11 @@ export function ProgressBar({
   progress,
   radius,
   color,
-  backgroundColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
   height,
   limit,
+  theme,
 }) {
   const normalizedProgress = Math.min(100, Math.max(0, progress)); // Ensure progress is within the range 0-100
 
@@ -2199,10 +2729,15 @@ export function ProgressBar({
   return (
     <View
       style={{
-        height: height !== undefined ? height : 20,
+        height: height !== undefined ? height : 8,
         width: "100%",
         backgroundColor:
-          backgroundColor !== undefined ? backgroundColor : "rgba(0,0,0,0.1)",
+          lightBackgroundColor !== undefined &&
+          darkBackgroundColor !== undefined
+            ? theme === "light"
+              ? lightBackgroundColor
+              : darkBackgroundColor
+            : secondaryThemedBackgroundColor(theme),
         borderRadius: radius !== undefined ? radius : 6,
         overflow: "hidden",
       }}
@@ -2211,10 +2746,59 @@ export function ProgressBar({
         style={{
           height: "100%",
           width: `${normalizedWidth}%`,
-          backgroundColor: color !== undefined ? color : "blue",
+          backgroundColor: color !== undefined ? color : "#1BA8FF",
           borderRadius: radius !== undefined ? radius : 6,
         }}
       ></View>
+    </View>
+  );
+}
+export function ProgressCircle({
+  progress,
+  limit,
+  color,
+  strokeWidth,
+  width,
+  theme,
+}) {
+  const normalizedProgress = Math.min(100, Math.max(0, progress)); // Ensure progress is within the range 0-100
+  const radius = width !== undefined ? width / 2 - (width / 2) * 0.2 : 15; // Fixed radius assuming default width of 40
+  const circumference = 2 * Math.PI * radius;
+  const progressOffset =
+    (((limit !== undefined ? limit : 100) - normalizedProgress) /
+      (limit !== undefined ? limit : 100)) *
+    circumference;
+
+  const svgWidth = width !== undefined ? width : 40;
+  const center = svgWidth / 2;
+
+  return (
+    <View style={[layout.padding]}>
+      <Svg
+        width={svgWidth}
+        height={svgWidth}
+        viewBox={`0 0 ${svgWidth} ${svgWidth}`}
+        style={{ transform: [{ rotate: "-90deg" }] }}
+      >
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={secondaryThemedBackgroundColor(theme)}
+          strokeWidth={strokeWidth !== undefined ? strokeWidth : 6}
+        />
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke={color !== undefined ? color : "#1BA8FF"}
+          strokeWidth={strokeWidth !== undefined ? strokeWidth : 6}
+          strokeDasharray={circumference}
+          strokeDashoffset={progressOffset}
+        />
+      </Svg>
     </View>
   );
 }
@@ -2225,7 +2809,7 @@ export function ImagesView({ images, styles, onPageSelected }) {
   const handlePageSelected = (event) => {
     const { position } = event.nativeEvent;
     setCurrentPage(position);
-    if (onPageSelected) {
+    if (onPageSelected !== undefined) {
       onPageSelected(position);
     }
   };
@@ -2260,7 +2844,14 @@ export function ImagesView({ images, styles, onPageSelected }) {
     </View>
   );
 }
-export function NotificationCircle({ text, textSize, color, children }) {
+export function NotificationCircle({
+  text,
+  textSize,
+  backgroundColor,
+  paddingV,
+  paddingH,
+  children,
+}) {
   return (
     <View style={[{ position: "relative" }, layout.fit_width]}>
       <View
@@ -2269,9 +2860,10 @@ export function NotificationCircle({ text, textSize, color, children }) {
             position: "absolute",
             top: -14,
             right: -16,
-            paddingVertical: 4,
-            paddingHorizontal: 8,
-            backgroundColor: color !== undefined ? color : "#F40202",
+            paddingVertical: paddingV !== undefined ? paddingV : 4,
+            paddingHorizontal: paddingH !== undefined ? paddingH : 6,
+            backgroundColor:
+              backgroundColor !== undefined ? backgroundColor : "#F40202",
             zIndex: 800,
           },
           format.radius_full,
@@ -2279,7 +2871,7 @@ export function NotificationCircle({ text, textSize, color, children }) {
       >
         <Text
           style={[
-            { fontSize: textSize !== undefined ? textSize : 10},
+            { fontSize: textSize !== undefined ? textSize : 12 },
             colors.white,
           ]}
         >
@@ -2290,11 +2882,23 @@ export function NotificationCircle({ text, textSize, color, children }) {
     </View>
   );
 }
-export function SliderView({ func, padding, icon, text, textSize }) {
+export function SliderCircleView({
+  func,
+  padding,
+  icon,
+  iconColor,
+  iconSize,
+  text,
+  textSize,
+  circleSize = 40,
+  circleColor,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  theme,
+}) {
   const [screenWidth, setScreenWidth] = useState(
     Dimensions.get("window").width
   );
-  const circleSize = 50; // Adjust this based on the desired size of the circle
 
   useEffect(() => {
     const handleScreenResize = () => {
@@ -2320,7 +2924,11 @@ export function SliderView({ func, padding, icon, text, textSize }) {
       const endPositionX = screenWidth - circleSize;
       if (gesture.moveX >= endPositionX) {
         // Trigger the function when the circle reaches the end
-        func();
+        if (func !== undefined) {
+          func();
+        } else {
+          console.log("TRIGGERED");
+        }
       }
 
       // Reset the position of the circle to the starting position
@@ -2337,15 +2945,24 @@ export function SliderView({ func, padding, icon, text, textSize }) {
         justifyContent: "center",
         alignItems: "center",
         height: circleSize + (padding !== undefined ? padding : 10), // Set the height of the container to the size of the circle
-        backgroundColor: "black",
-        borderRadius: 100,
+        backgroundColor:
+          lightBackgroundColor !== undefined &&
+          darkBackgroundColor !== undefined
+            ? theme === "light"
+              ? lightBackgroundColor
+              : darkBackgroundColor
+            : secondaryThemedBackgroundColor(theme),
+        borderRadius: 100, // Set borderRadius based on circleSize
         position: "relative", // Added to position the icon relative to the container
       }}
     >
       <View style={[layout.absolute, format.center_text]}>
-        <Text style={[colors.white, {fontSize: textSize !== undefined ? textSize : 16}]}>
+        <TextView
+          theme={theme}
+          styles={[{ fontSize: textSize !== undefined ? textSize : 16 }]}
+        >
           {text !== undefined ? text : "Everything Bagel"}
-        </Text>
+        </TextView>
       </View>
       <Animated.View
         {...panResponder.panHandlers}
@@ -2354,8 +2971,8 @@ export function SliderView({ func, padding, icon, text, textSize }) {
           left: 0,
           width: circleSize,
           height: circleSize,
-          borderRadius: circleSize / 2,
-          backgroundColor: "white",
+          borderRadius: 100,
+          backgroundColor: circleColor !== undefined ? circleColor : "white",
           transform: [{ translateX: pan.x }],
           marginLeft: padding !== undefined ? padding / 2 : 5,
         }}
@@ -2364,17 +2981,18 @@ export function SliderView({ func, padding, icon, text, textSize }) {
           style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
         >
           {/* Use your preferred icon component here */}
-          <Icon
-            name={icon !== undefined ? icon : "cart-outline"}
-            size={25}
-            color={"black"}
+          <Ionicons
+            name={icon !== undefined ? icon : "flash-outline"}
+            size={iconSize !== undefined ? iconSize : 24}
+            color={iconColor !== undefined ? iconColor : "black"}
           />
         </View>
       </Animated.View>
     </View>
   );
 }
-export function NumberPad({ setter, value, text }) {
+export function NumberPad({ setter, value, text, theme, func }) {
+  //
   function onTypeNum(num) {
     const thing = `${num}`;
     if (thing !== "back") {
@@ -2387,22 +3005,31 @@ export function NumberPad({ setter, value, text }) {
     }
   }
   return (
-    <View style={[{ flex: 1 }]}>
+    <View
+      style={[
+        layout.absolute,
+        {
+          bottom: 20,
+          right: 0,
+          left: 0,
+          backgroundColor: themedBackgroundColor(theme),
+        },
+      ]}
+    >
       <View
         style={[
           layout.padding_horizontal,
           layout.padding_vertical_small,
-          { backgroundColor: "#F7F8FC" },
+          { backgroundColor: secondaryThemedBackgroundColor(theme) },
         ]}
       >
-        <Text style={[sizes.small_text, { color: "gray" }]}>
-          {text !== undefined ? text : "Price"}
-        </Text>
-        <Text style={[sizes.xlarge_text, format.bold]}>{value}</Text>
+        <TextView theme={theme} styles={[sizes.small_text]}>
+          {text !== undefined ? text : "Enter Number"}
+        </TextView>
+        <TextView theme={theme} styles={[sizes.xlarge_text, format.bold]}>
+          {value}
+        </TextView>
       </View>
-      <View
-        style={[{ borderBottomColor: "rgba(0,0,0,0.1)", borderBottomWidth: 1 }]}
-      ></View>
       <Grid columns={3}>
         <TouchableOpacity
           onPress={() => {
@@ -2410,9 +3037,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               1
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2421,9 +3051,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               2
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2432,9 +3065,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               3
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2443,9 +3079,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               4
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2454,9 +3093,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               5
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2465,9 +3107,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               6
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2476,9 +3121,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               7
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2487,9 +3135,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               8
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2498,9 +3149,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               9
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2509,9 +3163,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               .
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2520,9 +3177,12 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Text style={[sizes.xlarge_text, format.bold, format.center_text]}>
+            <TextView
+              theme={theme}
+              styles={[sizes.xlarge_text, format.bold, format.center_text]}
+            >
               0
-            </Text>
+            </TextView>
           </View>
         </TouchableOpacity>
         <TouchableOpacity
@@ -2531,23 +3191,37 @@ export function NumberPad({ setter, value, text }) {
           }}
         >
           <View style={[{ padding: 20 }]}>
-            <Icon
-              styles={[layout.center]}
+            <Ionicons
+              style={[layout.center]}
               name={"backspace-outline"}
               size={40}
+              color={themedTextColor(theme)}
             />
           </View>
         </TouchableOpacity>
       </Grid>
       <View style={[layout.padding_horizontal]}>
-        <ButtonOne backgroundColor={"#F5F7FD"} radius={14} padding={10}>
-          <Text style={[format.center_text, format.bold]}>Done</Text>
+        <ButtonOne
+          backgroundColor={secondaryThemedBackgroundColor(theme)}
+          radius={14}
+          padding={10}
+          onPress={() => {
+            if (func !== undefined) {
+              func();
+            } else {
+              console.log("DONE");
+            }
+          }}
+        >
+          <TextView theme={theme} styles={[format.center_text, format.bold]}>
+            Done
+          </TextView>
         </ButtonOne>
       </View>
     </View>
   );
 }
-export function QRCodeView({ value, background, color, size }) {
+export function QRCodeView({ value, backgroundColor, color, size, theme }) {
   return (
     <View style={{ justifyContent: "center", alignItems: "center" }}>
       <QRCode
@@ -2557,13 +3231,17 @@ export function QRCodeView({ value, background, color, size }) {
             : "https://innovativeinternetcreations.com"
         }
         size={size !== undefined ? size : 200}
-        bgColor={background !== undefined ? background : "black"}
+        bgColor={
+          backgroundColor !== undefined
+            ? backgroundColor
+            : secondaryThemedBackgroundColor(theme)
+        }
         fgColor={color !== undefined ? color : "white"}
       />
     </View>
   );
 }
-export function QRReader({ func }) {
+export function QRReader({ func, theme }) {
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [scanning, setScanning] = useState(false);
   const [qrValue, setQrValue] = useState(null);
@@ -2578,7 +3256,11 @@ export function QRReader({ func }) {
   const handleBarCodeScanned = ({ type, data }) => {
     setScanning(false);
     setQrValue(data);
-    func(data);
+    if (func !== undefined) {
+      func(data);
+    } else {
+      Alert.alert(data);
+    }
   };
 
   if (!permission) {
@@ -2593,13 +3275,16 @@ export function QRReader({ func }) {
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
+          backgroundColor: themedBackgroundColor(theme),
         }}
       >
-        <Text>We need your permission to show the camera</Text>
+        <TextView theme={theme}>
+          We need your permission to show the camera
+        </TextView>
         <ButtonTwo borderColor={"#2F70D5"}>
-          <Text style={[sizes.small_text, { color: "#2F70D5" }]}>
+          <TextView theme={theme} styles={[sizes.small_text, colors.blue]}>
             Grant Permission
-          </Text>
+          </TextView>
         </ButtonTwo>
         <TouchableOpacity
           onPress={() => {
@@ -2625,7 +3310,7 @@ export function QRReader({ func }) {
           style={[
             backgrounds.black,
             layout.absolute,
-            { top: 0, right: 0, left: 0, bottom: 0 },
+            { top: 30, right: 0, left: 0, bottom: 0 },
             layout.full_height,
             layout.full_width,
             layout.padding_vertical,
@@ -2646,7 +3331,7 @@ export function QRReader({ func }) {
     </View>
   );
 }
-export function PaymentView({ children, showPayButton, total, successFunc }) {
+export function PaymentView({ children, total, currency, successFunc, theme }) {
   const [pi, setPi] = useState("");
   const [stripeLoading, setStripeLoading] = useState(false);
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
@@ -2661,7 +3346,8 @@ export function PaymentView({ children, showPayButton, total, successFunc }) {
       },
       body: JSON.stringify({
         customerId: customerID,
-        total: newTotal, // Pass existing CustomerID if available
+        total: newTotal,
+        currency: currency !== undefined ? currency : "usd", // Pass existing CustomerID if available
       }),
     });
 
@@ -2721,26 +3407,362 @@ export function PaymentView({ children, showPayButton, total, successFunc }) {
       publishableKey={stripePublishableKey}
       merchantIdentifier={`iicdev.com.${appName}`}
     >
-      <View>{children}</View>
-      <View style={[layout.absolute, { bottom: 25, right: 0, left: 0 }]}>
-        {showPayButton && stripeLoading && (
-          <ButtonOne
-            backgroundColor={"#117DFA"}
-            radius={0}
-            onPress={openPaymentSheet}
-          >
-            <View style={[layout.separate_horizontal]}>
-              <Text style={[colors.white, sizes.small_text]}>Pay Now</Text>
-              <Icon name={"arrow-forward-outline"} size={20} color={"white"} />
+      <View>
+        {stripeLoading &&
+          (children === undefined ? (
+            <View style={[layout.absolute, { bottom: 10, right: 0, left: 0 }]}>
+              <ButtonOne
+                backgroundColor={"#117DFA"}
+                radius={0}
+                onPress={openPaymentSheet}
+              >
+                <View style={[layout.separate_horizontal]}>
+                  <Text style={[colors.white, sizes.small_text]}>Pay Now</Text>
+                  <Icon
+                    name={"arrow-forward-outline"}
+                    size={20}
+                    color={"white"}
+                  />
+                </View>
+              </ButtonOne>
             </View>
-          </ButtonOne>
-        )}
+          ) : (
+            <ButtonOne
+              backgroundColor={"rgba(0,0,0,0)"}
+              radius={0}
+              onPress={openPaymentSheet}
+              padding={0}
+            >
+              {children}
+            </ButtonOne>
+          ))}
+        {!stripeLoading && <ActivityIndicator color={themedTextColor(theme)} />}
       </View>
     </StripeProvider>
   );
 }
+export function ModalView({ children, radius, width, setToggle, theme }) {
+  return (
+    <View
+      style={[
+        layout.separate_vertical,
+        layout.absolute,
+        {
+          top: 0,
+          right: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          flex: 1,
+          backgroundColor: "rgba(0,0,0,0.6)",
+        },
+      ]}
+    >
+      <View style={[layout.absolute, { top: 40, right: 10 }]}>
+        <IconButtonOne
+          theme={theme}
+          lightColor={"white"}
+          darkColor={"white"}
+          name={"close-outline"}
+          onPress={() => {
+            setToggle(false);
+          }}
+          size={40}
+        />
+      </View>
+      <View></View>
+      <View style={[layout.separate_horizontal]}>
+        <View></View>
+        <View
+          style={[
+            {
+              borderRadius: radius !== undefined ? radius : 14,
+              width: width !== undefined ? width : "80%",
+              backgroundColor: themedBackgroundColor(theme),
+            },
+          ]}
+        >
+          {children}
+        </View>
+        <View></View>
+      </View>
+      <View></View>
+    </View>
+  );
+}
+export function SmallBubble({
+  icon,
+  iconSize,
+  text,
+  textSize,
+  paddingV,
+  paddingH,
+  seconds,
+  setToggle,
+  theme,
+}) {
+  useEffect(() => {
+    setTimeout(
+      () => {
+        setToggle(false);
+      },
+      seconds !== undefined ? seconds * 1000 : 5000
+    );
+  }, []);
+
+  return (
+    <TouchableOpacity
+      style={[layout.absolute_bottom_full, { marginBottom: 30 }]}
+      onPress={() => {
+        setToggle(false);
+      }}
+    >
+      <View
+        style={[
+          layout.center,
+          {
+            backgroundColor: secondaryThemedBackgroundColor(theme),
+            paddingVertical: paddingV !== undefined ? paddingV : 8,
+            paddingHorizontal: paddingH !== undefined ? paddingH : 14,
+          },
+          format.radius_full,
+        ]}
+      >
+        <SideBySide>
+          {icon !== undefined && (
+            <Icon
+              name={icon}
+              size={iconSize !== undefined ? iconSize : 24}
+              theme={theme}
+            />
+          )}
+          <TextView theme={theme} size={textSize !== undefined ? textSize : 14}>
+            {text !== undefined ? text : "Hello, Bagel"}
+          </TextView>
+        </SideBySide>
+      </View>
+    </TouchableOpacity>
+  );
+}
+export function OptionsView({ options, setToggle, theme }) {
+  return (
+    <View
+      style={[
+        layout.absolute,
+        {
+          top: 0,
+          bottom: 0,
+          left: 0,
+          right: 0,
+          backgroundColor: "rgba(0,0,0,0.5)",
+        },
+        layout.separate_vertical,
+      ]}
+    >
+      <View></View>
+      <View>
+        <View
+          style={[
+            { backgroundColor: secondaryThemedBackgroundColor(theme) },
+            format.radius,
+            layout.margin_horizontal,
+          ]}
+        >
+          {/* OPTIONS HERE */}
+          {options.map((opt, i) => (
+            <React.Fragment key={i}>
+              <TouchableOpacity style={[layout.padding]}>
+                <SideBySide gap={20}>
+                  <Icon
+                    theme={theme}
+                    name={opt.Icon !== undefined ? opt.Icon : "flash-outline"}
+                    size={20}
+                    lightColor={
+                      opt.Color !== undefined
+                        ? opt.Color
+                        : themedTextColor(theme)
+                    }
+                    darkColor={
+                      opt.Color !== undefined
+                        ? opt.Color
+                        : themedTextColor(theme)
+                    }
+                  />
+                  <View>
+                    <TextView
+                      size={15}
+                      theme={theme}
+                      color={
+                        opt.Color !== undefined
+                          ? opt.Color
+                          : themedTextColor(theme)
+                      }
+                    >
+                      {opt.Option}
+                    </TextView>
+                    {opt.Text !== undefined && (
+                      <TextView
+                        size={13}
+                        color={secondaryThemedTextColor(theme)}
+                        theme={theme}
+                      >
+                        {opt.Text}
+                      </TextView>
+                    )}
+                  </View>
+                </SideBySide>
+              </TouchableOpacity>
+              {i !== options.length - 1 && (
+                <View
+                  style={{
+                    borderBottomWidth: 1,
+                    borderBottomColor: "rgba(0,0,0,0.1)",
+                  }}
+                />
+              )}
+            </React.Fragment>
+          ))}
+        </View>
+
+        <Spacer height={15} />
+        <Pressable
+          onPress={() => {
+            setToggle(false);
+          }}
+          style={[layout.center]}
+        >
+          <TextPill theme={theme} paddingH={22} paddingV={8} text={"Cancel"} />
+        </Pressable>
+        <Spacer height={30} />
+      </View>
+    </View>
+  );
+}
+export function CalendarView({
+  year,
+  radius,
+  weekdays,
+  isAllDays = true,
+  includeToday = true,
+  disabledFunc,
+  theme,
+}) {
+  const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = currentDate.getMonth() + 1;
+
+  let filteredMonths = [...months]; // Copy the original months array
+
+  if (year === currentYear) {
+    filteredMonths = months.filter((month) => {
+      const monthNumber = months.indexOf(month) + 1;
+      return monthNumber >= currentMonth;
+    });
+  }
+
+  return (
+    <ScrollView showsVerticalScrollIndicator={true}>
+      <View style={[]}>
+        {filteredMonths.map((month, i) => (
+          <View key={i} style={[layout.padding_vertical_small]}>
+            <TextPill theme={theme} text={monthNumToLong(month)} />
+            <View style={[layout.padding_vertical_small]}>
+              <View style={[layout.padding_vertical_small]}>
+                <Grid columns={7}>
+                  {["S", "M", "T", "W", "T", "F", "S"]
+                    .slice(0, 7)
+                    .map((day, index) => (
+                      <TextView
+                        key={index}
+                        theme={theme}
+                        color={secondaryThemedTextColor(theme)}
+                        size={12}
+                        styles={[format.center_text]}
+                      >
+                        {day}
+                      </TextView>
+                    ))}
+                </Grid>
+              </View>
+              <Grid columns={7}>
+                {emptyArray(getFirstDateOfMonth(month, year)).map(
+                  (thing, t) => {
+                    return <View key={t}></View>;
+                  }
+                )}
+                {getDaysOfMonth(month, year).map((day, j) => {
+                  //  #region LOGIC
+                  const date = createDate(month, day, year);
+                  const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ...
+                  // HIGHLIGHTED TRUTH ************************************************
+                  const isHighlighted =
+                    (weekdays === undefined &&
+                      (!isAllDays ? compareDates(date, new Date()) : true) &&
+                      (disabledFunc !== undefined
+                        ? disabledFunc(date)
+                        : true)) ||
+                    (weekdays !== undefined &&
+                      weekdays.includes(dayOfWeek) &&
+                      (!isAllDays ? compareDates(date, new Date()) : true) &&
+                      (disabledFunc !== undefined
+                        ? disabledFunc(date)
+                        : true)) ||
+                    (checkDate(date, new Date()) &&
+                      (includeToday ? true : false));
+                  //  #endregion
+                  return (
+                    <TouchableOpacity
+                      key={j}
+                      disabled={isHighlighted ? false : true}
+                      style={[
+                        layout.padding,
+                        {
+                          backgroundColor: isHighlighted
+                            ? secondaryThemedBackgroundColor(theme)
+                            : "transparent",
+                          borderRadius: radius !== undefined ? radius : 0,
+                        },
+                      ]}
+                    >
+                      <TextView
+                        theme={theme}
+                        size={16}
+                        color={
+                          isHighlighted
+                            ? themedTextColor(theme)
+                            : secondaryThemedTextColor(theme)
+                        }
+                        styles={[format.center_text]}
+                      >
+                        {day}
+                      </TextView>
+                    </TouchableOpacity>
+                  );
+                })}
+              </Grid>
+            </View>
+          </View>
+        ))}
+      </View>
+    </ScrollView>
+  );
+}
 
 // BASIC FUNCTIONS
+export async function copyToClipboard(text, func) {
+  await Clipboard.setStringAsync(text).then(() => {
+    if (func !== undefined) {
+      func();
+    } else {
+      console.log("COPIED");
+    }
+  });
+}
+export async function pasteFromClipboard() {
+  const text = await Clipboard.getStringAsync();
+  return text;
+}
 export function randomString(length) {
   let result = "";
   const characters =
@@ -2753,10 +3775,50 @@ export function randomString(length) {
   }
   return result;
 }
+export function shuffleString(str) {
+  const array = str.split("");
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array.join("");
+}
+export function getRandomNumber(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+export function getRandomNumberWithLength(length) {
+  let min = Math.pow(10, length - 1);
+  let max = Math.pow(10, length) - 1;
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+export function getRandomColor() {
+  const letters = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+}
+export function emptyArray(length) {
+  return Array.from({ length });
+}
+export function getMaxArr(arr) {
+  return Math.max(...arr);
+}
+export function getMaxArrObj(arr, property) {
+  return Math.max(...arr.map((obj) => obj[property]));
+}
+export function getMinArr(arr) {
+  return Math.min(...arr);
+}
+export function getMinArrObj(arr, property) {
+  return Math.min(...arr.map((obj) => obj[property]));
+}
 export function filterArr(array, property, value) {
   return array.filter((item) => item[property] === value);
 }
 export function filterArrayMultiple(array, filters) {
+  // property, value
   return array.filter((item) =>
     filters.every((filter) => item[filter.property] === filter.value)
   );
@@ -2790,6 +3852,52 @@ export function removeDuplicatesByProperty(array, property) {
     }
   });
 }
+export function shuffleArray(array) {
+  let currentIndex = array.length,
+    temporaryValue,
+    randomIndex;
+
+  // While there remain elements to shuffle...
+  while (0 !== currentIndex) {
+    // Pick a remaining element...
+    randomIndex = Math.floor(Math.random() * currentIndex);
+    currentIndex -= 1;
+
+    // And swap it with the current element.
+    temporaryValue = array[currentIndex];
+    array[currentIndex] = array[randomIndex];
+    array[randomIndex] = temporaryValue;
+  }
+
+  return array;
+}
+export function sortArray(arr, order) {
+  if (order === "asc") {
+    return arr.slice().sort((a, b) => a - b);
+  } else if (order === "desc") {
+    return arr.slice().sort((a, b) => b - a);
+  } else {
+    throw new Error('Invalid sort order. Use "asc" or "desc".');
+  }
+}
+export function sortObjectArray(arr, order, property) {
+  return arr.sort((a, b) => {
+    if (order === "asc") {
+      if (a[property] < b[property]) return -1;
+      if (a[property] > b[property]) return 1;
+      return 0;
+    } else if (order === "desc") {
+      if (a[property] > b[property]) return -1;
+      if (a[property] < b[property]) return 1;
+      return 0;
+    } else {
+      throw new Error('Invalid sort order. Use "asc" or "desc".');
+    }
+  });
+}
+export function createDate(month, day, year) {
+  return new Date(year, month - 1, day);
+}
 export function formatDate(date) {
   const tempDate = date;
 
@@ -2800,6 +3908,14 @@ export function formatDate(date) {
   });
 
   return formattedDate;
+}
+export function formatTime(date) {
+  const hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, "0"); // Ensure two digits for minutes
+  const period = hours >= 12 ? "PM" : "AM";
+  const formattedHours = (hours % 12 || 12).toString().padStart(2, "0"); // Convert to 12-hour format
+
+  return `${formattedHours}:${minutes} ${period}`;
 }
 export function formatLongDate(date) {
   const tempDate = date;
@@ -2827,6 +3943,23 @@ export function formatDateTime(date) {
 
   return formattedDateTime;
 }
+export function createDateFromMonthDayYear(longMonth, day, year) {
+  const monthIndex = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ].indexOf(longMonth);
+  return new Date(year, monthIndex, day);
+}
 export function compareDates(date1, date2) {
   const timestamp1 = date1 instanceof Date ? date1.getTime() : NaN;
   const timestamp2 = date2 instanceof Date ? date2.getTime() : NaN;
@@ -2837,6 +3970,16 @@ export function compareDates(date1, date2) {
 
   return timestamp1 > timestamp2;
 }
+export function compareHours(date1, date2) {
+  const hours1 = date1 instanceof Date ? date1.getHours() : NaN;
+  const hours2 = date2 instanceof Date ? date2.getHours() : NaN;
+
+  if (isNaN(hours1) || isNaN(hours2)) {
+    throw new Error("Invalid date format");
+  }
+
+  return hours1 > hours2;
+}
 export function checkDate(date, checkedDate) {
   const startOfDay = new Date(date);
   startOfDay.setHours(0, 0, 0, 0); // Set to 00:00:00.000
@@ -2845,6 +3988,91 @@ export function checkDate(date, checkedDate) {
   endOfDay.setHours(23, 59, 59, 999); // Set to 23:59:59.999
 
   return checkedDate >= startOfDay && checkedDate <= endOfDay;
+}
+export function checkHours(hour, startHour, endHour) {
+  return hour >= startHour && hour <= endHour;
+}
+export function checkTime(time, startTime, endTime) {
+  const [startHour, startMinute] = startTime.split(":").map(Number);
+  const [endHour, endMinute] = endTime.split(":").map(Number);
+  const [hour, minute] = time.split(":").map(Number);
+
+  const startTotalMinutes = startHour * 60 + startMinute;
+  const endTotalMinutes = endHour * 60 + endMinute;
+  const totalMinutes = hour * 60 + minute;
+
+  return totalMinutes >= startTotalMinutes && totalMinutes <= endTotalMinutes;
+}
+export function getDaysOfMonth(monthNum, year) {
+  const daysInMonth = new Date(year, monthNum, 0).getDate();
+  return Array.from({ length: daysInMonth }, (_, i) => i + 1);
+}
+export function monthNumToLong(monthNum) {
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  return monthNames[monthNum - 1];
+}
+export function monthLongtoNum(monthStr) {
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+  return monthNames.indexOf(monthStr) + 1;
+}
+export function getFirstDateOfMonth(monthNum, year) {
+  const firstDate = new Date(year, monthNum - 1, 1);
+  const dayOfWeek = firstDate.getDay();
+  return dayOfWeek;
+}
+export function dateToHHMM(date) {
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+export function dateToTime24(date) {
+  const hours = date.getHours();
+  const minutes = date.getMinutes();
+
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
+}
+export function HHMMtoDate(timeString) {
+  const [time, period] = timeString.split(" "); // Split the time string into time and period (AM/PM)
+  let [hours, minutes] = time.split(":"); // Split the time into hours and minutes
+  hours = parseInt(hours, 10); // Parse hours as an integer
+  minutes = parseInt(minutes, 10); // Parse minutes as an integer
+
+  // Adjust hours for PM if necessary
+  if (period === "PM" && hours < 12) {
+    hours += 12;
+  }
+
+  // Create a new Date object with the adjusted hours and minutes
+  const date = new Date();
+  date.setHours(hours, minutes, 0, 0);
+
+  return date;
 }
 export async function getDistanceInMiles(coords1, coords2) {
   const apiKey = c_googleMapsAPI;
@@ -2930,35 +4158,6 @@ export function createGeohash(latitude, longitude) {
 
   return geohash;
 }
-export async function addRecordToAlgolia(args, indexName) {
-  const index = searchClient.initIndex(`${indexName}`);
-  try {
-    const objectID = `${args.id}`; // Provide a unique object ID for each record
-    const record = {
-      objectID,
-      ...args,
-    };
-
-    // Add the record to Algolia index
-    const result = await index.saveObject(record);
-
-    console.log("Record added to Algolia:", result);
-  } catch (error) {
-    console.error("Error adding record to Algolia:", error);
-  }
-}
-export async function removeRecordFromAlgolia(objectID, indexName) {
-  try {
-    const index = client.initIndex(indexName);
-
-    // Remove the record from Algolia index
-    const result = await index.deleteObject(objectID);
-
-    console.log("Record removed from Algolia:", result);
-  } catch (error) {
-    console.error("Error removing record from Algolia:", error);
-  }
-}
 export function convertToPrecision10(geohash) {
   // Ensure the geohash is at least 10 characters long
   while (geohash.length < 10) {
@@ -2994,7 +4193,7 @@ export function haversineDistance(lat1, lon1, lat2, lon2) {
 
   return distance;
 }
-export async function storeInDevice(key, value) {
+export async function setInDevice(key, value) {
   try {
     await AsyncStorage.setItem(key, JSON.stringify(value));
   } catch (error) {
@@ -3017,12 +4216,44 @@ export async function removeInDevice(key) {
     console.error("Error removing data:", error);
   }
 }
+export function hexToRgb(hex) {
+  // Remove the '#' at the beginning, if it exists
+  hex = hex.replace("#", "");
 
-// LOCAL FUNCTIONS
-function milesToLat(miles) {
+  // Convert the hex color to RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Return the RGB color as a string
+  return `rgb(${r}, ${g}, ${b})`;
+}
+export function hexToRgbObj(hex) {
+  // Remove the '#' at the beginning, if it exists
+  hex = hex.replace("#", "");
+
+  // Convert the hex color to RGB
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+
+  // Return the RGB color as an object
+  return { r, g, b };
+}
+export function rgbToHex(r, g, b) {
+  // Convert each component to hexadecimal and concatenate them
+  const hexR = r.toString(16).padStart(2, "0");
+  const hexG = g.toString(16).padStart(2, "0");
+  const hexB = b.toString(16).padStart(2, "0");
+
+  return `#${hexR}${hexG}${hexB}`;
+}
+
+// CONVERSION FUNCTIONS
+export function milesToLat(miles) {
   return miles / 69.172; // Approximate degrees of latitude per mile
 }
-function milesToLon(miles, longitude) {
+export function milesToLon(miles, longitude) {
   const milesPerDegreeLon = 69.172 * Math.cos(longitude * (Math.PI / 180));
   return miles / milesPerDegreeLon;
 }
@@ -3033,104 +4264,14 @@ export function kmToLon(km, latitude) {
   const kmPerDegreeLon = 111.32 * Math.cos(latitude * (Math.PI / 180));
   return km / kmPerDegreeLon;
 }
+export function fahrenheitToCelsius(fahrenheit) {
+  return (5 / 9) * (fahrenheit - 32);
+}
+export function celsiusToFahrenheit(celsius) {
+  return (9 / 5) * celsius + 32;
+}
 
 // FUNCTIONS
-export async function function_PickImage(setLoading, setImage, func) {
-  // No permissions request is necessary for launching the image library
-  let result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.All,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-  });
-
-  console.log(result);
-
-  if (!result.canceled) {
-    setLoading(false);
-    setImage(result.assets[0].uri);
-    func(result.assets[0].uri);
-  }
-}
-export async function function_PickImageWithParams(
-  setLoading,
-  setImage,
-  func,
-  returnParams
-) {
-  // No permissions request is necessary for launching the image library
-  let result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.All,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-  });
-
-  console.log(result);
-
-  if (!result.canceled) {
-    setLoading(false);
-    setImage(result.assets[0].uri);
-    func(result.assets[0].uri, returnParams);
-  }
-}
-export async function function_PickImageToArr(
-  setLoading,
-  setImages,
-  setImage,
-  func
-) {
-  // No permissions request is necessary for launching the image library
-  let result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.All,
-    allowsEditing: true,
-    aspect: [4, 3],
-    quality: 1,
-  });
-
-  console.log(result);
-
-  if (!result.canceled) {
-    setLoading(false);
-    setImage(result.assets[0].uri);
-    setImages((prev) => {
-      const newUri = result.assets[0].uri;
-
-      // Check if the newUri already exists in the array
-      if (!prev.includes(newUri)) {
-        // Add the newUri to the array
-        return [...prev, newUri];
-      }
-
-      // If it already exists, return the current array without changes
-      return prev;
-    });
-    // console.log(result.assets[0].uri)
-    func(result.assets[0].uri);
-  }
-}
-export async function function_GetLocation(setLoading, setLocation) {
-  try {
-    let { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") {
-      Alert.alert(
-        "Permission Denied",
-        "Permission to access location was denied."
-      );
-      return;
-    }
-
-    let userLocation = await Location.getCurrentPositionAsync({});
-    setLocation(userLocation);
-    setLoading(false);
-    console.log(status);
-    console.log(userLocation.coords);
-    myCoords = userLocation.coords;
-  } catch (error) {
-    console.error("Error getting location:", error);
-    setLoading(false);
-  }
-}
 export async function function_NotificationsSetup(userID) {
   try {
     // Always request notification permissions
@@ -3192,6 +4333,94 @@ export function sendPushNotification(token, title, body) {
     }),
   });
 }
+export async function function_PickImage(setLoading, setImage, func) {
+  // No permissions request is necessary for launching the image library
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  console.log(result);
+
+  if (!result.canceled) {
+    setLoading(false);
+    setImage(result.assets[0].uri);
+    func(result.assets[0].uri);
+  }
+}
+export async function function_PickImageWithParams(
+  setLoading,
+  setImage,
+  func,
+  returnParams
+) {
+  // No permissions request is necessary for launching the image library
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsEditing: true,
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  console.log(result);
+
+  if (!result.canceled) {
+    setLoading(false);
+    setImage(result.assets[0].uri);
+    func(result.assets[0].uri, returnParams);
+  }
+}
+export async function function_PickImageToArr(
+  setLoading,
+  setImages,
+  setImage,
+  multiple,
+  func
+) {
+  // No permissions request is necessary for launching the image library
+  let result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.All,
+    allowsMultipleSelection: multiple !== undefined ? multiple : false, // Allow picking multiple images
+    aspect: [4, 3],
+    quality: 1,
+  });
+
+  console.log(result);
+
+  if (!result.cancelled) {
+    setLoading(false);
+    const newUris = result.assets.map((asset) => asset.uri);
+    setImages((prev) => {
+      const uniqueUris = newUris.filter((uri) => !prev.includes(uri));
+      return [...prev, ...uniqueUris];
+    });
+    func(newUris);
+  }
+}
+export async function function_GetLocation(setLoading, setLocation) {
+  try {
+    let { status } = await Location.requestForegroundPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission Denied",
+        "Permission to access location was denied."
+      );
+      return;
+    }
+
+    let userLocation = await Location.getCurrentPositionAsync({});
+    setLocation(userLocation);
+    setLoading(false);
+    console.log(status);
+    console.log(userLocation.coords);
+    myCoords = userLocation.coords;
+  } catch (error) {
+    console.error("Error getting location:", error);
+    setLoading(false);
+  }
+}
 export function function_GetDirections(lat, lon) {
   const destination = `${lat},${lon}`;
   console.log(destination);
@@ -3244,16 +4473,6 @@ export async function function_SendEmail(toEmails, subject, HTML) {
   } catch (error) {
     console.error("Error opening email composer:", error);
     Alert.alert("Error", "Failed to open email composer");
-  }
-}
-export async function function_AsyncString(asyncFunction, setter) {
-  try {
-    const result = await asyncFunction();
-    console.log(result);
-    return result.toString(); // Convert the result to a string
-  } catch (error) {
-    console.error("Error:", error);
-    // You might want to set an error state here or handle the error differently
   }
 }
 export async function function_PlaySound(audio) {
@@ -3414,6 +4633,32 @@ export async function function_AlgoliaDeleteRecord(index, objectID) {
       );
     });
 }
+export async function function_Refund(
+  paymentIntentID,
+  amount,
+  successFunc
+) {
+  const newTotal = amount;
+  const paymentIntentId = paymentIntentID;
+  try {
+    const response = await fetch(`${serverURL}/refund`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ paymentIntentId, total: newTotal }),
+    });
+
+    if (response.ok) {
+      successFunc();
+      Alert.alert("Refund successful!");
+    } else {
+      Alert.alert("Refund failed. Please try again.");
+    }
+  } catch (error) {
+    console.error("Error refunding payment:", error);
+  }
+}
 
 // STYLES
 export const format = StyleSheet.create({
@@ -3553,8 +4798,43 @@ export const layout = StyleSheet.create({
     position: "absolute",
     zIndex: 1000,
   },
-  bottom: {
+  absolute_top_full: {
+    position: "absolute",
+    zIndex: 1000,
+    top: 0,
+    right: 0,
+    left: 0,
+  },
+  absolute_bottom_full: {
+    position: "absolute",
+    zIndex: 1000,
     bottom: 0,
+    right: 0,
+    left: 0,
+  },
+  absolute_top_left: {
+    position: "absolute",
+    zIndex: 1000,
+    top: 0,
+    left: 0,
+  },
+  absolute_top_right: {
+    position: "absolute",
+    zIndex: 1000,
+    top: 0,
+    right: 0,
+  },
+  absolute_bottom_left: {
+    position: "absolute",
+    zIndex: 1000,
+    bottom: 0,
+    left: 0,
+  },
+  absolute_bottom_right: {
+    position: "absolute",
+    zIndex: 1000,
+    bottom: 0,
+    right: 0,
   },
   full_height: {
     flex: 1,
@@ -3579,6 +4859,9 @@ export const layout = StyleSheet.create({
   },
   align_top: {
     alignItems: "flex-start",
+  },
+  align_center: {
+    alignItems: "center",
   },
   image_cover: {
     objectFit: "cover",
@@ -3610,16 +4893,7 @@ export const backgrounds = StyleSheet.create({
 });
 
 // AUTH
-// Config
-const firebaseConfig = {
-  apiKey: "AIzaSyAMkZs0qvSSYVfA4pOMzSkXl-Nkut7raqw",
-  authDomain: "iic-appline-template.firebaseapp.com",
-  projectId: "iic-appline-template",
-  storageBucket: "iic-appline-template.appspot.com",
-  messagingSenderId: "957439211423",
-  appId: "1:957439211423:web:57d7872b6486b922102faa",
-  measurementId: "G-D2Y4Q8QLJW",
-};
+
 // Initializations
 const app = initializeApp(firebaseConfig);
 const auth = initializeAuth(app, {
@@ -3745,20 +5019,27 @@ export function auth_CreateUser(
     });
 }
 export function auth_ResetPassword(email) {
-  sendPasswordResetEmail(auth, email)
-    .then(() => {
-      // Password reset email sent!
-      // ..
-      Alert.alert(
-        "Email Sent",
-        "Please check your email for a reset password link."
-      );
-    })
-    .catch((error) => {
-      const errorMessage = error.message;
-      Alert.alert("Error", errorMessage);
-      // ..
-    });
+  if (email !== "") {
+    sendPasswordResetEmail(auth, email)
+      .then(() => {
+        // Password reset email sent!
+        // ..
+        Alert.alert(
+          "Email Sent",
+          "Please check your email for a reset password link."
+        );
+      })
+      .catch((error) => {
+        const errorMessage = error.message;
+        Alert.alert("Error", errorMessage);
+        // ..
+      });
+  } else {
+    Alert.alert(
+      "Missing Email",
+      "Please type the email that you used to create this account."
+    );
+  }
 }
 export function auth_DeleteUser() {
   const user = auth.currentUser;
@@ -4112,7 +5393,6 @@ export function firebase_GetAllDocumentsListenerByDistance(
     baseQuery,
     where("geohash", ">=", minGeohash),
     where("geohash", "<=", maxGeohash),
-    where("Active", "==", true),
     orderBy("geohash", order)
   );
 
