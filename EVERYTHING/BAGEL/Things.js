@@ -42,6 +42,7 @@ import algoliasearch from "algoliasearch";
 import QRCode from "react-native-qrcode-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
+import * as Sharing from "expo-sharing";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -96,6 +97,7 @@ export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
+
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var myCoords = {
@@ -438,10 +440,7 @@ export function ShowMoreView({ height, children, theme }) {
   return (
     <View>
       <View
-        style={[
-          { overflow: "hidden", height: showMore ? undefined : height },
-          layout.padding,
-        ]}
+        style={[{ overflow: "hidden", height: showMore ? undefined : height }]}
       >
         {children}
         {!showMore && (
@@ -1091,10 +1090,14 @@ export function TextFieldOne({
   value,
   setter,
   styles,
+  onChange,
   theme,
 }) {
   function onType(text) {
     setter(text);
+    if (onChange !== undefined) {
+      onChange(text);
+    }
   }
   return (
     <TextInput
@@ -1161,11 +1164,15 @@ export function TextAreaOne({
   value,
   setter,
   styles,
+  onChange,
   theme,
 }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   function onType(text) {
     setter(text);
+    if (onChange !== undefined) {
+      onChange(text);
+    }
   }
 
   useEffect(() => {
@@ -2352,6 +2359,47 @@ export function Map({
     </View>
   );
 }
+export function InteractiveMap({
+  onMarkerPress,
+  height = 300,
+  initialLat = 47.92165474151632,
+  initialLon = 106.91706877201796,
+}) {
+  const [markerCoords, setMarkerCoords] = useState(null);
+
+  const handleMapPress = (event) => {
+    const { latitude, longitude } = event.nativeEvent.coordinate;
+    setMarkerCoords({ latitude, longitude });
+    onMarkerPress({ latitude, longitude });
+  };
+
+  return (
+    <View style={{ height }}>
+      <MapView
+        style={{ width: "100%", height }}
+        onPress={handleMapPress}
+        initialRegion={{
+          latitude: initialLat, // Default latitude for Ulaanbaatar, Mongolia
+          longitude: initialLon, // Default longitude
+          latitudeDelta: 0.0722,
+          longitudeDelta: 0.0721,
+        }}
+      >
+        {markerCoords && (
+          <Marker
+            coordinate={markerCoords}
+            onPress={() => console.log(markerCoords)}
+          >
+            <Image
+              source={require("../../assets/marker.png")}
+              style={{ width: 45, height: 45 }}
+            />
+          </Marker>
+        )}
+      </MapView>
+    </View>
+  );
+}
 export function LocalNotification({
   icon,
   title,
@@ -2549,22 +2597,31 @@ export function VideoPlayer({
   width = "100%",
   height = 300,
 }) {
-  const video = useRef(null);
   const [isLoading, setIsLoading] = useState(true);
-  //
+  const video = useRef(null);
   const handleLoadStart = () => {
     setIsLoading(true);
   };
+
   const handleLoad = async () => {
+    console.log("THE VIDEO IS LOADED");
     setIsLoading(false);
     if (autoPlay) {
       await video.current.playAsync();
     }
+    if (startTime !== "00:00") {
+      await video.current.setPositionAsync(parseTime(startTime) * 1000);
+    }
   };
-  //
-  useEffect(() => {
-    console.log("Video Path:", videoPath);
 
+  const parseTime = (timeString) => {
+    const [minutes, seconds] = timeString
+      .split(":")
+      .map((str) => parseInt(str, 10));
+    return minutes * 60 + seconds;
+  };
+
+  useEffect(() => {
     const loadVideo = async () => {
       try {
         if (typeof videoPath === "string") {
@@ -2590,7 +2647,7 @@ export function VideoPlayer({
           height: height,
           borderRadius: radius !== undefined ? radius : 10,
         }}
-        ref={video}
+        ref={videoRef}
         useNativeControls={!noControls}
         resizeMode="contain"
         isLooping={autoLoop}
@@ -2617,7 +2674,7 @@ export function VideoPlayer({
     </View>
   );
 }
-export function TimerView({
+export function ClockView({
   isActive,
   setSeconds,
   seconds,
@@ -2658,6 +2715,118 @@ export function TimerView({
       >
         {formatTime(seconds)}
       </TextView>
+    </View>
+  );
+}
+export function TimerView({
+  textSize,
+  iconSize,
+  theme,
+  startHour = 0,
+  startMinute = 1,
+  startSecond = 0,
+  onTimerEnd = () => {
+    console.log("FINISHED");
+  },
+}) {
+  let adjustedStartHour = startHour;
+  let adjustedStartMinute = startMinute;
+
+  if (adjustedStartMinute >= 60) {
+    adjustedStartHour += Math.floor(adjustedStartMinute / 60);
+    adjustedStartMinute %= 60;
+  }
+
+  const [currentHour, setCurrentHour] = useState(adjustedStartHour);
+  const [currentMinute, setCurrentMinute] = useState(adjustedStartMinute);
+  const [currentSecond, setCurrentSecond] = useState(startSecond);
+  const [isActive, setIsActive] = useState(false);
+  const timerRef = useRef(null);
+
+  const resetTimer = () => {
+    setCurrentHour(adjustedStartHour);
+    setCurrentMinute(adjustedStartMinute);
+    setCurrentSecond(startSecond);
+    clearInterval(timerRef.current);
+  };
+
+  useEffect(() => {
+    if (isActive) {
+      timerRef.current = setInterval(() => {
+        if (currentSecond > 0) {
+          setCurrentSecond((prevSecond) => prevSecond - 1);
+        } else {
+          if (currentMinute > 0) {
+            setCurrentMinute((prevMinute) => prevMinute - 1);
+            setCurrentSecond(59);
+          } else {
+            if (currentHour > 0) {
+              setCurrentHour((prevHour) => prevHour - 1);
+              setCurrentMinute(59);
+              setCurrentSecond(59);
+            } else {
+              clearInterval(timerRef.current);
+              onTimerEnd();
+            }
+          }
+        }
+      }, 1000);
+    } else {
+      clearInterval(timerRef.current);
+    }
+
+    return () => clearInterval(timerRef.current);
+  }, [isActive, currentHour, currentMinute, currentSecond, onTimerEnd]);
+
+  const formatTime = (hours, minutes, seconds) => {
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+      2,
+      "0"
+    )}:${String(seconds).padStart(2, "0")}`;
+  };
+
+  return (
+    <View>
+      <TextView
+        size={textSize !== undefined ? textSize : 26}
+        theme={theme}
+        center={true}
+      >
+        {formatTime(currentHour, currentMinute, currentSecond)}
+      </TextView>
+      <View style={[layout.center]}>
+        <SideBySide>
+          {!isActive && (
+            <IconButtonOne
+              name={"play"}
+              theme={theme}
+              size={iconSize !== undefined ? iconSize : 26}
+              onPress={() => {
+                setIsActive(true);
+              }}
+            />
+          )}
+          {isActive && (
+            <IconButtonOne
+              name={"pause"}
+              theme={theme}
+              size={iconSize !== undefined ? iconSize : 26}
+              onPress={() => {
+                setIsActive(false);
+              }}
+            />
+          )}
+          <IconButtonOne
+            name={"square"}
+            theme={theme}
+            size={iconSize !== undefined ? iconSize : 26}
+            onPress={() => {
+              resetTimer();
+              setIsActive(false);
+            }}
+          />
+        </SideBySide>
+      </View>
     </View>
   );
 }
@@ -2809,6 +2978,55 @@ export function ProgressCircle({
           strokeDashoffset={progressOffset}
         />
       </Svg>
+    </View>
+  );
+}
+export function FullProgressBar({ progress, text, color, theme }) {
+  return (
+    <View
+      style={[
+        layout.absolute,
+        {
+          top: 0,
+          right: 0,
+          left: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0,0,0,0.6)",
+          zIndex: 4000,
+        },
+        layout.separate_vertical,
+      ]}
+    >
+      <View></View>
+      <View style={[layout.separate_horizontal]}>
+        <View></View>
+        <View
+          style={[
+            {
+              width: width * 0.4,
+              backgroundColor: secondaryThemedBackgroundColor(theme),
+            },
+            format.radius,
+            layout.padding,
+          ]}
+        >
+          {text !== undefined && (
+            <View>
+              <TextView theme={theme} center={true}>
+                {text}
+              </TextView>
+              <Spacer height={6} />
+            </View>
+          )}
+          <ProgressBar
+            progress={progress}
+            color={color !== undefined ? color : "#117DFA"}
+            theme={theme}
+          />
+        </View>
+        <View></View>
+      </View>
+      <View></View>
     </View>
   );
 }
@@ -3343,13 +3561,13 @@ export function QRReader({ func, theme }) {
 }
 export function PaymentView({ children, total, currency, successFunc, theme }) {
   const [pi, setPi] = useState("");
-  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(true);
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
   const newTotal = total !== undefined ? total : 1000;
   //
   const fetchPaymentSheetParams = async () => {
     const customerID = me.CustomerID !== undefined ? me.CustomerID : null;
-    const response = await fetch(`${serverURL}/payment-sheet`, {
+    const response = await fetch(`${serverURL}/test-payment-sheet`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -3390,15 +3608,15 @@ export function PaymentView({ children, total, currency, successFunc, theme }) {
     });
     if (!error) {
       if (me.CustomerID === undefined) {
-        console.log(ephemeralKey);
         firebase_UpdateDocument(setStripeLoading, "Users", me.id, {
           CustomerID: customer,
         });
       }
-      setStripeLoading(true);
+      setStripeLoading(false);
     }
   };
   const openPaymentSheet = async () => {
+    console.log("HERE");
     const { error } = await presentPaymentSheet();
 
     if (error) {
@@ -3418,35 +3636,10 @@ export function PaymentView({ children, total, currency, successFunc, theme }) {
       merchantIdentifier={`iicdev.com.${appName}`}
     >
       <View>
-        {stripeLoading &&
-          (children === undefined ? (
-            <View style={[layout.absolute, { bottom: 10, right: 0, left: 0 }]}>
-              <ButtonOne
-                backgroundColor={"#117DFA"}
-                radius={0}
-                onPress={openPaymentSheet}
-              >
-                <View style={[layout.separate_horizontal]}>
-                  <Text style={[colors.white, sizes.small_text]}>Pay Now</Text>
-                  <Icon
-                    name={"arrow-forward-outline"}
-                    size={20}
-                    color={"white"}
-                  />
-                </View>
-              </ButtonOne>
-            </View>
-          ) : (
-            <ButtonOne
-              backgroundColor={"rgba(0,0,0,0)"}
-              radius={0}
-              onPress={openPaymentSheet}
-              padding={0}
-            >
-              {children}
-            </ButtonOne>
-          ))}
-        {!stripeLoading && <ActivityIndicator color={themedTextColor(theme)} />}
+        {!stripeLoading && (
+          <Pressable onPress={openPaymentSheet}>{children}</Pressable>
+        )}
+        {stripeLoading && <ActivityIndicator color={themedTextColor(theme)} />}
       </View>
     </StripeProvider>
   );
@@ -3564,7 +3757,7 @@ export function OptionsView({ options, setToggle, theme }) {
           bottom: 0,
           left: 0,
           right: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.8)",
         },
         layout.separate_vertical,
       ]}
@@ -3576,12 +3769,14 @@ export function OptionsView({ options, setToggle, theme }) {
             { backgroundColor: secondaryThemedBackgroundColor(theme) },
             format.radius,
             layout.margin_horizontal,
+            layout.center,
+            { maxWidth: 500 },
           ]}
         >
           {/* OPTIONS HERE */}
           {options.map((opt, i) => (
             <React.Fragment key={i}>
-              <TouchableOpacity style={[layout.padding]}>
+              <TouchableOpacity style={[layout.padding]} onPress={opt.Func}>
                 <SideBySide gap={20}>
                   <Icon
                     theme={theme}
@@ -3655,6 +3850,7 @@ export function CalendarView({
   isAllDays = true,
   includeToday = true,
   disabledFunc,
+  func,
   theme,
 }) {
   const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -3734,6 +3930,14 @@ export function CalendarView({
                           borderRadius: radius !== undefined ? radius : 0,
                         },
                       ]}
+                      onPress={() => {
+                        const otherThing = createDateFromMonthDayYear(
+                          monthNumToLong(month),
+                          day,
+                          year
+                        );
+                        func(otherThing);
+                      }}
                     >
                       <TextView
                         theme={theme}
@@ -3859,6 +4063,20 @@ export function removeDuplicatesByProperty(array, property) {
     } else {
       seen.add(value);
       return true;
+    }
+  });
+}
+export function replaceObjectByProperty(
+  array,
+  property,
+  propertyValue,
+  newObj
+) {
+  return array.map((obj) => {
+    if (obj[property] === propertyValue) {
+      return newObj;
+    } else {
+      return obj;
     }
   });
 }
@@ -4055,6 +4273,18 @@ export function getFirstDateOfMonth(monthNum, year) {
   const firstDate = new Date(year, monthNum - 1, 1);
   const dayOfWeek = firstDate.getDay();
   return dayOfWeek;
+}
+export function getDayOfWeekName(dayNumber) {
+  const daysOfWeek = [
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+  ];
+  return daysOfWeek[dayNumber];
 }
 export function dateToHHMM(date) {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -4665,6 +4895,37 @@ export async function function_Refund(paymentIntentID, amount, successFunc) {
     console.error("Error refunding payment:", error);
   }
 }
+export async function function_DownloadFileToDevice(fileUri) {
+  try {
+    const fileUriParts = fileUri.split(".");
+    const fileExtension = fileUriParts[fileUriParts.length - 1];
+    const downloadDest = `${
+      FileSystem.documentDirectory
+    }PhotoOPphoto-${randomString(20)}.${fileExtension}`;
+
+    const { uri } = await FileSystem.downloadAsync(fileUri, downloadDest);
+    console.log("File downloaded to:", uri);
+    return uri;
+  } catch (error) {
+    console.error("Error downloading file:", error);
+    return null;
+  }
+}
+export async function function_ShareFile(fileUri) {
+  try {
+    const isAvailable = await Sharing.isAvailableAsync();
+    if (!isAvailable) {
+      console.log("Sharing is not available on this device");
+      return;
+    }
+
+    await Sharing.shareAsync(fileUri);
+
+    console.log("File shared successfully");
+  } catch (error) {
+    console.error("Error sharing file:", error);
+  }
+}
 
 // STYLES
 export const format = StyleSheet.create({
@@ -5126,10 +5387,7 @@ export async function firebase_GetAllDocuments(
     }
   } else {
     if (whereField !== "" && whereField !== null && whereField !== undefined) {
-      queryRef = query(
-        queryRef,
-        where(whereField, whereCondition, whereValue),
-      );
+      queryRef = query(queryRef, where(whereField, whereCondition, whereValue));
     } else {
       queryRef = query(queryRef);
     }
@@ -5636,7 +5894,8 @@ export async function storage_UploadImage(
   setLoading,
   image,
   path,
-  setProgress
+  setProgress,
+  finished = false
 ) {
   setLoading(true);
   try {
@@ -5665,6 +5924,7 @@ export async function storage_UploadImage(
       },
       async () => {
         // Handle successful completion
+        finished(true);
         setProgress(0);
         setLoading(false); // Update loading state
       }
@@ -5674,7 +5934,13 @@ export async function storage_UploadImage(
     setLoading(false); // Update loading state in case of an error
   }
 }
-export async function storage_UploadFile(setLoading, file, path, setProgress) {
+export async function storage_UploadFile(
+  setLoading,
+  file,
+  path,
+  setProgress,
+  finished = false
+) {
   setLoading(true);
 
   try {
@@ -5703,6 +5969,7 @@ export async function storage_UploadFile(setLoading, file, path, setProgress) {
       },
       async () => {
         // Handle successful completion
+        finished(true);
         setLoading(false); // Update loading state
       }
     );
@@ -5765,3 +6032,7 @@ export async function storage_DeleteImage(setLoading, path) {
     setLoading(false);
   }
 }
+//
+
+// SHOPIFY
+export async function shopify_GetAllInventoryItems() {}
