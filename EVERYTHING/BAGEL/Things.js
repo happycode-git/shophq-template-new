@@ -1090,14 +1090,10 @@ export function TextFieldOne({
   value,
   setter,
   styles,
-  onChange,
   theme,
 }) {
   function onType(text) {
     setter(text);
-    if (onChange !== undefined) {
-      onChange(text);
-    }
   }
   return (
     <TextInput
@@ -1164,15 +1160,11 @@ export function TextAreaOne({
   value,
   setter,
   styles,
-  onChange,
   theme,
 }) {
   const [isKeyboardVisible, setKeyboardVisible] = useState(false);
   function onType(text) {
     setter(text);
-    if (onChange !== undefined) {
-      onChange(text);
-    }
   }
 
   useEffect(() => {
@@ -2364,8 +2356,34 @@ export function InteractiveMap({
   height = 300,
   initialLat = 47.92165474151632,
   initialLon = 106.91706877201796,
+  lightBackgroundColor,
+  darkBackgroundColor,
+  lightIconColor,
+  darkIconColor,
+  theme,
 }) {
   const [markerCoords, setMarkerCoords] = useState(null);
+  const [searchText, setSearchText] = useState("");
+  const mapViewRef = useRef(null); // Create a ref for the MapView component
+
+  function onPressSearch() {
+    Geocoder.init(c_googleMapsAPI); // Replace YOUR_API_KEY_HERE with your actual Google Maps API key
+
+    Geocoder.from(searchText)
+      .then((json) => {
+        const { lat, lng } = json.results[0].geometry.location;
+        // Update the marker coordinates to the new coordinates
+        setMarkerCoords({ latitude: lat, longitude: lng });
+        // Update the map's region to center on the new coordinates
+        mapViewRef.current.animateToRegion({
+          latitude: lat,
+          longitude: lng,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        });
+      })
+      .catch((error) => console.warn(error));
+  }
 
   const handleMapPress = (event) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -2375,12 +2393,53 @@ export function InteractiveMap({
 
   return (
     <View style={{ height }}>
+      <View style={[layout.padding_vertical, layout.padding_horizontal_small]}>
+        <SideBySide>
+          <View style={[layout.full_width]}>
+            <TextFieldOne
+              theme={theme}
+              paddingV={8}
+              radius={14}
+              placeholder={"Search by keywords or address.."}
+              value={searchText}
+              setter={setSearchText}
+              styles={[layout.full_width]}
+            />
+          </View>
+          <IconButtonTwo
+            theme={theme}
+            lightBackground={
+              lightBackgroundColor !== undefined
+                ? lightBackgroundColor
+                : secondaryThemedBackgroundColor(theme)
+            }
+            darkBackground={
+              darkBackgroundColor !== undefined
+                ? darkBackgroundColor
+                : secondaryThemedBackgroundColor(theme)
+            }
+            lightColor={
+              lightIconColor !== undefined
+                ? lightIconColor
+                : themedTextColor(theme)
+            }
+            darkColor={
+              darkIconColor !== undefined
+                ? darkIconColor
+                : themedTextColor(theme)
+            }
+            name={"search"}
+            onPress={onPressSearch}
+          />
+        </SideBySide>
+      </View>
       <MapView
+        ref={mapViewRef} // Assign the ref to the MapView component
         style={{ width: "100%", height }}
         onPress={handleMapPress}
         initialRegion={{
-          latitude: initialLat, // Default latitude for Ulaanbaatar, Mongolia
-          longitude: initialLon, // Default longitude
+          latitude: initialLat,
+          longitude: initialLon,
           latitudeDelta: 0.0722,
           longitudeDelta: 0.0721,
         }}
@@ -4250,7 +4309,7 @@ export function monthNumToLong(monthNum) {
     "November",
     "December",
   ];
-  return monthNames[monthNum - 1];
+  return monthNames[monthNum];
 }
 export function monthLongtoNum(monthStr) {
   const monthNames = [
@@ -4267,7 +4326,7 @@ export function monthLongtoNum(monthStr) {
     "November",
     "December",
   ];
-  return monthNames.indexOf(monthStr) + 1;
+  return monthNames.indexOf(monthStr);
 }
 export function getFirstDateOfMonth(monthNum, year) {
   const firstDate = new Date(year, monthNum - 1, 1);
