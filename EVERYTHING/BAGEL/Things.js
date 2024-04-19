@@ -779,10 +779,12 @@ export function TextView({
   center,
   theme,
   size,
+  lineLimit,
   styles,
 }) {
   return (
     <Text
+      numberOfLines={lineLimit !== undefined ? lineLimit : null}
       style={[
         {
           color: color !== undefined ? color : themedTextColor(theme),
@@ -1786,7 +1788,7 @@ export function BorderPill({
     </View>
   );
 }
-export function Divider(color, marginV, theme) {
+export function Divider({color, marginV, theme}) {
   return (
     <View
       style={[
@@ -2263,13 +2265,10 @@ export function Map({
   func,
   scrollEnabled = true,
 }) {
-  // Default location for the app's headquarters
   const defaultLocation = {
-    latitude: 37.7749, // Default latitude
-    longitude: -122.4194, // Default longitude
+    latitude: 37.7749,
+    longitude: -122.4194,
   };
-
-  useEffect(() => {}, []);
 
   const getMapRegion = () => {
     if (coordsArray.length === 0) {
@@ -2281,31 +2280,25 @@ export function Map({
       };
     }
 
-    let minX = coordsArray[0].latitude;
-    let maxX = coordsArray[0].latitude;
-    let minY = coordsArray[0].longitude;
-    let maxY = coordsArray[0].longitude;
+    const latitudes = coordsArray.map((coord) => coord.latitude);
+    const longitudes = coordsArray.map((coord) => coord.longitude);
 
-    coordsArray.forEach((coord) => {
-      minX = Math.min(minX, coord.latitude);
-      maxX = Math.max(maxX, coord.latitude);
-      minY = Math.min(minY, coord.longitude);
-      maxY = Math.max(maxY, coord.longitude);
-    });
+    const minX = Math.min(...latitudes);
+    const maxX = Math.max(...latitudes);
+    const minY = Math.min(...longitudes);
+    const maxY = Math.max(...longitudes);
 
     const midX = (minX + maxX) / 2;
     const midY = (minY + maxY) / 2;
-    const latitudeDistance = maxX - minX;
-    const longitudeDistance = maxY - minY;
-    const padding = Math.max(latitudeDistance, longitudeDistance) * 0.2; // 10% of the larger distance as padding
-    const deltaX = latitudeDistance + padding; // Add padding to latitudeDelta
-    const deltaY = longitudeDistance + padding; // Add padding to longitudeDelta
+
+    const latitudeDelta = delta !== undefined ? delta : (maxX - minX) * 1.2;
+    const longitudeDelta = delta !== undefined ? delta : (maxY - minY) * 1.2;
 
     return {
       latitude: midX,
       longitude: midY,
-      latitudeDelta: deltaX,
-      longitudeDelta: deltaY,
+      latitudeDelta,
+      longitudeDelta,
     };
   };
 
@@ -2315,13 +2308,14 @@ export function Map({
         style={{
           width: "100%",
           height: height !== undefined ? height : 125,
-          borderRadius: radius !== undefined ? radius : 10,
+          borderRadius: radius !== undefined ? radius : 10
         }}
         region={getMapRegion()}
         scrollEnabled={scrollEnabled}
       >
         {coordsArray.map((coords, index) => (
           <TouchableOpacity
+            key={index}
             onPress={() => {
               if (func !== undefined) {
                 func(coords);
@@ -2331,7 +2325,6 @@ export function Map({
             }}
           >
             <Marker
-              key={index}
               coordinate={{
                 latitude: coords.latitude,
                 longitude: coords.longitude,
@@ -3835,7 +3828,13 @@ export function OptionsView({ options, setToggle, theme }) {
           {/* OPTIONS HERE */}
           {options.map((opt, i) => (
             <React.Fragment key={i}>
-              <TouchableOpacity style={[layout.padding]} onPress={opt.Func}>
+              <TouchableOpacity style={[layout.padding]} onPress={() => {
+                if (opt.Func !== undefined) {
+                  opt.Func()
+                } else {
+                  console.log("PRESSED")
+                }
+              }}>
                 <SideBySide gap={20}>
                   <Icon
                     theme={theme}
@@ -4456,6 +4455,10 @@ export function createGeohash(latitude, longitude) {
   const geohash = ngeohash.encode(latitude, longitude, 10);
 
   return geohash;
+}
+export function geohashToCoords(geohash) {
+  const { latitude, longitude } = ngeohash.decode(geohash);
+  return { latitude, longitude };
 }
 export function convertToPrecision10(geohash) {
   // Ensure the geohash is at least 10 characters long
