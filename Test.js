@@ -157,7 +157,6 @@ function Test({ navigation, route }) {
 
   return (
     <SafeArea loading={loading} theme={theme}>
-      <IconButtonOne onPress={() => {console.log(shopifyKey)}} theme={theme} />
     </SafeArea>
   );
 }
