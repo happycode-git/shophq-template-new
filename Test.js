@@ -125,6 +125,7 @@ import {
   removeDuplicatesByProperty,
   setInDevice,
   setupSound,
+  shopifyKey,
   sizes,
   storage_DownloadFile,
   storage_UploadFile,
@@ -156,7 +157,7 @@ function Test({ navigation, route }) {
 
   return (
     <SafeArea loading={loading} theme={theme}>
-      <GetStarted theme={theme} caption={"As easy as 1, 2, 3.."}/>
+      <IconButtonOne onPress={() => {console.log(shopifyKey)}} theme={theme} />
     </SafeArea>
   );
 }
