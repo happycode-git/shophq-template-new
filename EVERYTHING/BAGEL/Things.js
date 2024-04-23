@@ -43,6 +43,7 @@ import QRCode from "react-native-qrcode-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
+import { createStorefrontApiClient } from "@shopify/storefront-api-client";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -97,7 +98,7 @@ export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
-
+export const shopifyURL = `https://75c8dc-41.myshopify.com`;
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var myCoords = {
@@ -1788,7 +1789,7 @@ export function BorderPill({
     </View>
   );
 }
-export function Divider({color, marginV, theme}) {
+export function Divider({ color, marginV, theme }) {
   return (
     <View
       style={[
@@ -2308,7 +2309,7 @@ export function Map({
         style={{
           width: "100%",
           height: height !== undefined ? height : 125,
-          borderRadius: radius !== undefined ? radius : 10
+          borderRadius: radius !== undefined ? radius : 10,
         }}
         region={getMapRegion()}
         scrollEnabled={scrollEnabled}
@@ -3828,13 +3829,16 @@ export function OptionsView({ options, setToggle, theme }) {
           {/* OPTIONS HERE */}
           {options.map((opt, i) => (
             <React.Fragment key={i}>
-              <TouchableOpacity style={[layout.padding]} onPress={() => {
-                if (opt.Func !== undefined) {
-                  opt.Func()
-                } else {
-                  console.log("PRESSED")
-                }
-              }}>
+              <TouchableOpacity
+                style={[layout.padding]}
+                onPress={() => {
+                  if (opt.Func !== undefined) {
+                    opt.Func();
+                  } else {
+                    console.log("PRESSED");
+                  }
+                }}
+              >
                 <SideBySide gap={20}>
                   <Icon
                     theme={theme}
@@ -6097,4 +6101,133 @@ export async function storage_DeleteImage(setLoading, path) {
 //
 
 // SHOPIFY
-export async function shopify_GetAllInventoryItems() {}
+export function shopify_GetStorefrontKey(setKey) {
+  fetch(`${serverURL}/get-shopify-storefront`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch key");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      const key = data.key; // Assuming the response is a JSON object with a 'key' property
+      setKey(key);
+    })
+    .catch((error) => {
+      console.error("Error fetching key:", error);
+    });
+}
+export async function shopify_GetAllProducts(accessToken, setProducts) {
+  const response = await fetch(
+    `${shopifyURL}/admin/api/2024-04/products.json`,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken,
+      },
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch products: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  setProducts(data.products);
+}
+export async function shopify_UpdateProduct(
+  accessToken,
+  productID,
+  newQuantity
+) {
+  const response = await fetch(
+    `${shopifyURL}/admin/api/2024-04/products/${productID}.json`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken,
+      },
+      body: JSON.stringify({
+        product: {
+          id: productID,
+          variants: [
+            {
+              inventory_quantity: newQuantity,
+            },
+          ],
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      `Failed to update product quantity: ${response.statusText}`
+    );
+  }
+
+  const data = await response.json();
+  console.log(data.product);
+}
+export async function shopify_CreateOrder(
+  accessToken,
+  product,
+  quantity,
+  firstName,
+  lastName,
+  email,
+  address1,
+  city,
+  province,
+  zip,
+  country,
+  successFunc
+) {
+  const orderDetails = {
+    financial_status: "paid",
+    line_items: [
+      {
+        variant_id: product.variants[0].id, 
+        quantity: quantity,
+        title: product.title, // Add a title for the product
+        name: product.variants[0].title, // Add a name for the product
+        price: product.variants[0].price,
+      },
+    ],
+    customer: {
+      first_name: firstName,
+      last_name: lastName,
+      email: email,
+    },
+    billing_address: {
+      address1: address1,
+      city: city,
+      province: province,
+      zip: zip,
+      country: country,
+    },
+  };
+
+  const response = await fetch(`${shopifyURL}/admin/api/2024-04/orders.json`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Shopify-Access-Token": accessToken,
+    },
+    body: JSON.stringify({ order: orderDetails }),
+  });
+
+  console.log("Response status:", response.status);
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    console.error("Error creating order:", errorData);
+    throw new Error(`Failed to create order: ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  shopify_UpdateProduct(accessToken, product.id, product.variants[0].inventory_quantity - quantity)
+  successFunc(data);
+}

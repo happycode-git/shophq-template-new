@@ -125,7 +125,10 @@ import {
   removeDuplicatesByProperty,
   setInDevice,
   setupSound,
-  shopifyKey,
+  shopify_CreateOrder,
+  shopify_GetAllProducts,
+  shopify_GetStorefrontKey,
+  shopify_UpdateProduct,
   sizes,
   storage_DownloadFile,
   storage_UploadFile,
@@ -149,14 +152,48 @@ function Test({ navigation, route }) {
   const [thing, setThing] = useState("");
   const [toggle, setToggle] = useState(false);
   const [theme, setTheme] = useState("light");
+  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     setInDevice("theme", "dark");
     getInDevice("theme", setTheme);
+    shopify_GetStorefrontKey(setThing);
   }, []);
 
   return (
     <SafeArea loading={loading} theme={theme}>
+      <Spacer height={100} />
+      <IconButtonTwo
+        theme={theme}
+        onPress={() => {
+          shopify_GetAllProducts(thing, (things) => {
+            setProducts(things);
+            console.log(things[0].variants)
+          });
+        }}
+      />
+      <IconButtonTwo
+        name={"document-text"}
+        onPress={() => {
+          shopify_CreateOrder(
+            thing,
+            products[0],
+            10,
+            "Jesus",
+            "Jimenez",
+            "happycode.inbox@gmail.com",
+            "1024 E 4th St.",
+            "National City",
+            "CA",
+            "91950",
+            "US",
+            (data) => {
+              // console.log(data);
+            }
+          );
+        }}
+        theme={theme}
+      />
     </SafeArea>
   );
 }
