@@ -171,28 +171,15 @@ function Test({ navigation, route }) {
   const [thing, setThing] = useState("");
   const [toggle, setToggle] = useState(true);
   const [theme, setTheme] = useState("light");
-  const [key, setKey] = useState("");
-  const [products, setProducts] = useState([]);
-  const [checkout, setCheckout] = useState({});
 
   useEffect(() => {
     setInDevice("theme", "dark");
     getInDevice("theme", setTheme);
-    shopify_GetAdminKey(setKey);
   }, []);
 
   return (
     <SafeArea loading={loading} theme={theme}>
-      <Spacer height={100} />
-      <IconButtonTwo
-        name="flash"
-        size={26}
-        padding={8}
-        onPress={() => {
-          shopify_GetOrders(key)
-        }}
-        theme={theme}
-      />
+      
     </SafeArea>
   );
 }
