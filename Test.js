@@ -1,4 +1,4 @@
-import { Alert, Button, Image, Text, View } from "react-native";
+import { Alert, Button, Image, Linking, Pressable, Text, View } from "react-native";
 import {
   Accordion,
   AsyncImage,
@@ -16,6 +16,7 @@ import {
   CameraView,
   ChangeOrderView,
   CheckboxOne,
+  ClockView,
   ConfettiView,
   CreditCardScanner,
   DatePicker,
@@ -24,6 +25,7 @@ import {
   Divider,
   DropdownOne,
   FadeWrapper,
+  FullProgressBar,
   GradientView,
   Grid,
   HHMMtoDate,
@@ -34,6 +36,7 @@ import {
   IconSegmentedPicker,
   ImageBackground,
   ImagesView,
+  InteractiveMap,
   LinkOne,
   Loading,
   LocalNotification,
@@ -115,6 +118,7 @@ import {
   getDistanceInMiles,
   getFirstDateOfMonth,
   getInDevice,
+  height,
   layout,
   monthLongtoNum,
   monthNumToLong,
@@ -123,16 +127,31 @@ import {
   reduceArray,
   removeDuplicates,
   removeDuplicatesByProperty,
+  secondaryThemedBackgroundColor,
+  secondaryThemedTextColor,
   setInDevice,
   setupSound,
-  shopify_CreateOrder,
+  shopify_AddDiscountItemCheckout,
+  shopify_AddItemCheckout,
+  shopify_CreateCheckout,
+  shopify_GetAdminKey,
+  shopify_GetAllCollections,
   shopify_GetAllProducts,
+  shopify_GetCheckOut,
+  shopify_GetCollection,
+  shopify_GetOrders,
+  shopify_GetProduct,
   shopify_GetStorefrontKey,
-  shopify_UpdateProduct,
+  shopify_RemoveDiscountItemCheckout,
+  shopify_RemoveItemCheckout,
+  shopify_UpdateAddressCheckout,
+  shopify_UpdateItemCheckout,
   sizes,
   storage_DownloadFile,
   storage_UploadFile,
   storage_UploadImage,
+  themedBackgroundColor,
+  themedTextColor,
   width,
 } from "./EVERYTHING/BAGEL/Things";
 import { useEffect, useState } from "react";
@@ -150,47 +169,27 @@ import { GetStarted } from "./SCREENS/GetStarted";
 function Test({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [thing, setThing] = useState("");
-  const [toggle, setToggle] = useState(false);
+  const [toggle, setToggle] = useState(true);
   const [theme, setTheme] = useState("light");
+  const [key, setKey] = useState("");
   const [products, setProducts] = useState([]);
+  const [checkout, setCheckout] = useState({});
 
   useEffect(() => {
     setInDevice("theme", "dark");
     getInDevice("theme", setTheme);
-    shopify_GetStorefrontKey(setThing);
+    shopify_GetAdminKey(setKey);
   }, []);
 
   return (
     <SafeArea loading={loading} theme={theme}>
       <Spacer height={100} />
       <IconButtonTwo
-        theme={theme}
+        name="flash"
+        size={26}
+        padding={8}
         onPress={() => {
-          shopify_GetAllProducts(thing, (things) => {
-            setProducts(things);
-            console.log(things[0].variants)
-          });
-        }}
-      />
-      <IconButtonTwo
-        name={"document-text"}
-        onPress={() => {
-          shopify_CreateOrder(
-            thing,
-            products[0],
-            10,
-            "Jesus",
-            "Jimenez",
-            "happycode.inbox@gmail.com",
-            "1024 E 4th St.",
-            "National City",
-            "CA",
-            "91950",
-            "US",
-            (data) => {
-              // console.log(data);
-            }
-          );
+          shopify_GetOrders(key)
         }}
         theme={theme}
       />

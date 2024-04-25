@@ -1,0 +1,742 @@
+{
+  "Starter React Component": {
+    "prefix": "starter",
+    "body": [
+      "import { useEffect, useState } from 'react';",
+      "import { SafeArea, getInDevice } from './EVERYTHING/BAGEL/Things';",
+      "",
+      "export function ${1:ComponentName}({ navigation, route }) {",
+      "  const [loading, setLoading] = useState(false);",
+      "  const [fakeLoading, setFakeLoading] = useState(false);",
+      "  const [theme, setTheme] = useState('');",
+      "",
+      "  useEffect(() => {",
+      "    getInDevice('theme', setTheme);",
+      "  }, []);",
+      "",
+      "  return <SafeArea loading={loading} theme={theme}>${2:Content}</SafeArea>;",
+      "}"
+    ],
+    "description": "Create a starter React component with imports and basic structure"
+  },
+  "SplitView Component": {
+    "prefix": "split",
+    "body": [
+      "<SplitView leftSize={${1:1}} rightSize={${2:1}}>",
+      "  $4",
+      "</SplitView>"
+    ],
+    "description": "Create a SplitView component with placeholders for leftSize, rightSize, styles, and content"
+  },
+  "Grid Component": {
+    "prefix": "grid",
+    "body": ["<Grid columns={${1:2}} gap={${2:10}}>", "  $4", "</Grid>"],
+    "description": "Create a Grid component with placeholders for columns, gap, styles, and content"
+  },
+  "FadeWrapper Component": {
+    "prefix": "fadewrapper",
+    "body": ["<FadeWrapper seconds={${1:5}}>", "  $2", "</FadeWrapper>"],
+    "description": "Create a FadeWrapper component with placeholders for seconds and content"
+  },
+  "Spacer Usage": {
+    "prefix": "spacer",
+    "body": ["<Spacer height={${1:heightValue}} />"],
+    "description": "Use the Spacer component with a dynamic height"
+  },
+  "RoundedCorners Usage": {
+    "prefix": "roundedcorners",
+    "body": [
+      "<RoundedCorners",
+      "  topRight={${1:12}}",
+      "  topLeft={${2:12}}",
+      "  bottomRight={${3:12}}",
+      "  bottomLeft={${4:12}}",
+      "  theme={theme}",
+      "  styles={${8:[]}}",
+      ">",
+      "  $0",
+      "</RoundedCorners>"
+    ],
+    "description": "Use the RoundedCorners component with customizable options"
+  },
+  "PulsingView Usage": {
+    "prefix": "pulsingview",
+    "body": [
+      "<PulsingView speed={${1:1}} scale={${2:1.5}}>",
+      "  $0",
+      "</PulsingView>"
+    ],
+    "description": "Use the PulsingView component with customizable options"
+  },
+  "BlurWrapper Usage": {
+    "prefix": "blurwrapper",
+    "body": [
+      "<BlurWrapper intensity={${1:50}} tint={${2:'dark'}} radius={${3:0}}>",
+      "  $0",
+      "</BlurWrapper>"
+    ],
+    "description": "Use the BlurWrapper component with customizable options"
+  },
+  "SlideWrapper Usage": {
+    "prefix": "slidewrapper",
+    "body": [
+      "<SlideWrapper",
+      "  mainContent={${1:component}}",
+      "  sideContent={${2:component}}",
+      "  theme={theme}",
+      "  height={'auto'}",
+      "/>"
+    ],
+    "description": "Use the SlideWrapper component with customizable options"
+  },
+  "ShowMoreView Usage": {
+    "prefix": "showmoreview",
+    "body": [
+      "<ShowMoreView height={${1:120}} theme={theme}>",
+      "  $0",
+      "</ShowMoreView>"
+    ],
+    "description": "Use the ShowMoreView component with customizable options"
+  },
+  "TimedView Usage": {
+    "prefix": "timedview",
+    "body": ["<TimedView seconds={${1:5}}>", "  $0", "</TimedView>"],
+    "description": "Use the TimedView component with customizable options"
+  },
+  "GradientView Usage": {
+    "prefix": "gradientview",
+    "body": [
+      "<GradientView colors={${1:['#FF0000', '#0000FF']}}>",
+      "  $0",
+      "</GradientView>"
+    ],
+    "description": "Use the GradientView component with customizable options"
+  },
+  "GradientThemedView Usage": {
+    "prefix": "gradientthemedview",
+    "body": [
+      "<GradientThemedView lightColors={[${1:colors}]} darkColors={[${2:colors}]} theme={theme}>",
+      "  $0",
+      "</GradientThemedView>"
+    ],
+    "description": "Use the GradientThemedView component with customizable options"
+  },
+  "MenuBar Usage": {
+    "prefix": "menubar",
+    "body": [
+      "<MenuBar navigation={navigation} route={route} options={[{ Icon: \"${1:}\", Route: \"${2:}\" }]} />"
+    ],
+    "description": "Use the MenuBar component with predefined options"
+  },
+  "SideBySide Usage": {
+    "prefix": "sidebyside",
+    "body": ["<SideBySide gap={${1:10}}>", "  $0", "</SideBySide>"],
+    "description": "Use the SideBySide component to display children side by side"
+  },
+  "SeparatedView Usage": {
+    "prefix": "separatedview",
+    "body": ["<SeparatedView>", "  $0", "</SeparatedView>"],
+    "description": "Use the SeparatedView component to display separated children"
+  },
+  "View Usage": {
+    "prefix": "view",
+    "body": ["<View style={[$1]}>", "  $0", "</View>"],
+    "description": "Use the View component to wrap other components"
+  },
+  "TextView Usage": {
+    "prefix": "text",
+    "body": [
+      "<TextView",
+      "  color={${1:themedTextColor(theme)}}",
+      "  size={${2:18}}",
+      "  theme={theme}",
+      ">",
+      "  $0",
+      "</TextView>"
+    ],
+    "description": "Use the TextView component to display styled text"
+  },
+  "ButtonOne Usage": {
+    "prefix": "buttonone",
+    "body": [
+      "<ButtonOne",
+      "  backgroundColor={${1:secondaryThemedBackgroundColor(theme)}}",
+      "  radius={${2:100}}",
+      "  padding={${3:10}}",
+      "  onPress={() => {$4}}",
+      ">",
+      "  $0",
+      "</ButtonOne>"
+    ],
+    "description": "Use the ButtonOne component to create a customizable button"
+  },
+  "IconButtonOne Usage": {
+    "prefix": "iconbuttonone",
+    "body": [
+      "<IconButtonOne",
+      "  name=\"${1:flash}\"",
+      "  size={${2:26}}",
+      "  onPress={() => {$3}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the IconButtonOne component to display an icon with customizations"
+  },
+  "IconButtonTwo Usage": {
+    "prefix": "iconbuttontwo",
+    "body": [
+      "<IconButtonTwo",
+      "  name=\"${1:flash}\"",
+      "  size={${2:26}}",
+      "  padding={${3:8}}",
+      "  onPress={() => {$4}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the IconButtonTwo component to display an icon with customizations"
+  },
+  "IconButtonThree Usage": {
+    "prefix": "iconbuttonthree",
+    "body": [
+      "<IconButtonThree",
+      "  name=\"${1:flash}\"",
+      "  size={${2:24}}",
+      "  radius={${3:100}}",
+      "  padding={${4:8}}",
+      "  onPress={() => {$5}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the IconButtonThree component to display an icon with border and customizations"
+  },
+  "Icon Usage": {
+    "prefix": "icon",
+    "body": [
+      "<Icon",
+      "  name=\"${1:flash}\"",
+      "  size={${2:26}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the Icon component to display an icon with customizations"
+  },
+  "LinkOne Usage": {
+    "prefix": "linkone",
+    "body": [
+      "<LinkOne",
+      "  onPress={() => {$1}}",
+      "  theme={theme}",
+      ">",
+      "  $0",
+      "</LinkOne>"
+    ],
+    "description": "Use the LinkOne component to create a customizable link"
+  },
+  "TextFieldOne Usage": {
+    "prefix": "textfieldone",
+    "body": [
+      "<TextFieldOne",
+      "  placeholder=\"${1:Type here..}\"",
+      "  value={$2}",
+      "  setter={$3}",
+      "  radius={8}",
+      "  autoCap={true}",
+      "  isPassword={false}",
+      "  isNum={false}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the TextFieldOne component to create a customizable text input field"
+  },
+  "TextAreaOne Usage": {
+    "prefix": "textareaone",
+    "body": [
+      "<TextAreaOne",
+      "  placeholder=\"${1:Type here..}\"",
+      "  value={$2}",
+      "  setter={$3}",
+      "  radius={8}",
+      "  autoCap={true}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the TextAreaOne component to create a customizable text area"
+  },
+  "DropdownOne Usage": {
+    "prefix": "dropdownone",
+    "body": [
+      "<DropdownOne",
+      "  options={[$1]}",
+      "  value={$2}",
+      "  setter={$3}",
+      "  radius={8}",
+      "  textSize={${4:16}}",
+      "  iconSize={${5:18}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the DropdownOne component to create a customizable dropdown menu"
+  },
+  "CheckboxOne Usage": {
+    "prefix": "checkboxone",
+    "body": [
+      "<CheckboxOne",
+      "  value={$1}",
+      "  setter={$2}",
+      "  text=\"${3:Thing 1}\"",
+      "  textSize={${4:18}}",
+      "  checkSize={${5:8}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the CheckboxOne component to create a customizable checkbox"
+  },
+  "SwitchOne Usage": {
+    "prefix": "switchone",
+    "body": [
+      "<SwitchOne",
+      "  value={$1}",
+      "  setter={$2}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the SwitchOne component to create a customizable switch"
+  },
+  "DatePicker Usage": {
+    "prefix": "datepicker",
+    "body": [
+      "<DatePicker",
+      "  date={$1}",
+      "  setDate={$2}",
+      "  padding={${3:10}}",
+      "  textSize={${4:18}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the DatePicker component to create a customizable date picker"
+  },
+  "TimePicker Usage": {
+    "prefix": "timepicker",
+    "body": [
+      "<TimePicker",
+      "  time={$1}",
+      "  setTime={$2}",
+      "  padding={${3:10}}",
+      "  textSize={${4:18}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the TimePicker component to create a customizable time picker"
+  },
+  "TextPill Usage": {
+    "prefix": "textpill",
+    "body": [
+      "<TextPill",
+      "  text={${1:\"Hello, Bagel!\"}}",
+      "  textSize={${2:16}}",
+      "  paddingV={${3:8}}",
+      "  paddingH={${4:18}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the TextPill component to create a customizable pill-shaped text view"
+  },
+  "TextIconPill Usage": {
+    "prefix": "texticonpill",
+    "body": [
+      "<TextIconPill",
+      "  icon=\"${1:flash}\"",
+      "  text=\"${2:Hello, Bagel!}\"",
+      "  textSize={${3:16}}",
+      "  paddingV={${4:10}}",
+      "  paddingH={${5:18}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the TextIconPill component to create a customizable pill-shaped view with an icon and text"
+  },
+  "BorderPill Usage": {
+    "prefix": "borderpill",
+    "body": [
+      "<BorderPill",
+      "  paddingV={${1:8}}",
+      "  paddingH={${2:18}}",
+      "  theme={theme}",
+      ">",
+      "  $0",
+      "</BorderPill>"
+    ],
+    "description": "Use the BorderPill component to create a pill-shaped view with a border around its content"
+  },
+  "Divider Usage": {
+    "prefix": "divider",
+    "body": [
+      "<Divider",
+      "  color={${1:secondaryThemedTextColor(theme)}}",
+      "  marginV={${2:10}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the Divider component to create a horizontal line to visually separate content"
+  },
+  "SegmentedPicker Usage": {
+    "prefix": "segmentedpicker",
+    "body": [
+      "<SegmentedPicker",
+      "  options={[$1]}",
+      "  value={$2}",
+      "  setter={$3}",
+      "  textSize={${4:16}}",
+      "  selectedTextColor=\"${5:white}\"",
+      "  selectedBackgroundColor=\"${6:#1BA8FF}\"",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the SegmentedPicker component to create a horizontal scrollable picker with segmented options"
+  },
+  "SegmentedPickerTwo Usage": {
+    "prefix": "segmentedpickertwo",
+    "body": [
+      "<SegmentedPickerTwo",
+      "  options={[$1]}",
+      "  value={$2}",
+      "  setter={$3}",
+      "  textSize={${4:16}}",
+      "  borderColor=\"${5:#1BA8FF}\"",
+      "  selectedColor=\"${7:#1BA8FF}\"",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "Use the SegmentedPickerTwo component to create a horizontal scrollable picker with segmented options and a bottom border for the selected option"
+  },
+  "Accordion Usage": {
+    "prefix": "accordion",
+    "body": [
+      "<Accordion",
+      "  top={$1}",
+      "  gap={${2:8}}",
+      "  func={() => {$3}}",
+      ">",
+      "  $4",
+      "</Accordion>"
+    ],
+    "description": "Use the Accordion component to create collapsible content"
+  },
+  "CameraView with Conditional Rendering": {
+    "prefix": "camera",
+    "body": [
+      "{${1:toggle} && <CameraView setToggle={${2:setToggle}} func={() => {$3}} theme={theme} />}"
+    ],
+    "description": "CameraView with Conditional Rendering"
+  },
+  "AsyncImage Usage": {
+    "prefix": "asyncimage",
+    "body": [
+      "<AsyncImage",
+      "  path=\"${1:path}\"",
+      "  width={${2:\"100%\"}}",
+      "  height={$3}",
+      "  radius={${4:8}}",
+      "/>"
+    ],
+    "description": "Use the AsyncImage component to display an image loaded asynchronously from Firebase Storage"
+  },
+  "AsyncImagesView Usage": {
+    "prefix": "asyncimagesview",
+    "body": ["<AsyncImagesView", "  paths={[$1]}", "  radius={${2:8}}", "/>"],
+    "description": "Use the AsyncImagesView component to display a list of images asynchronously"
+  },
+  "Map": {
+    "prefix": "map",
+    "body": [
+      "<Map",
+      "  coordsArray={[$1]}",
+      "  delta={${2:0.005}}",
+      "  height={${3:125}}",
+      "  markerSize={${4:45}}",
+      "  func={(coords) => { ${5:console.log(coords)} }}",
+      "/>"
+    ],
+    "description": "Map component with placeholders for each prop"
+  },
+  "InteractiveMap": {
+    "prefix": "interactivemap",
+    "body": [
+      "<InteractiveMap",
+      "  onMarkerPress={(coords) => { ${1:console.log(coords)} }}",
+      "  height={${2:300}}",
+      "  initialLat={${3:35.669051}}",
+      "  initialLon={${4:139.67972}}",
+      "  delta={${5:0.006}}",
+      "  theme={$theme}",
+      "/>"
+    ],
+    "description": "InteractiveMap component with placeholders for each prop"
+  },
+  "LocalNotification": {
+    "prefix": "localnotification",
+    "body": [
+      "<LocalNotification",
+      "  setToggle={$1}",
+      "  icon={\"${2:flash}\"}",
+      "  title={\"$3\"}",
+      "  message={\"$4\"}",
+      "  seconds={${5:5}}",
+      "  iconColor={${6:themedTextColor(theme)}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "LocalNotification component with placeholders for each prop"
+  },
+  "AudioPlayer": {
+    "prefix": "audioplayer",
+    "body": [
+      "<AudioPlayer",
+      "  audioName={\"$1\"}",
+      "  audioPath={$2}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "AudioPlayer component with placeholders for each prop"
+  },
+  "VideoPlayer": {
+    "prefix": "videoplayer",
+    "body": [
+      "<VideoPlayer",
+      "  videoPath={$1}",
+      "  autoPlay={${2:false}}",
+      "  autoLoop={${3:false}}",
+      "  noControls={${4:false}}",
+      "  height={${5:300}}",
+      "/>"
+    ],
+    "description": "VideoPlayer component with placeholders for each prop"
+  },
+  "ClockView": {
+    "prefix": "clockview",
+    "body": [
+      "<ClockView",
+      "  isActive={$1}",
+      "  setSeconds={$2}",
+      "  seconds={$3}",
+      "  textSize={${4:16}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "ClockView component with placeholders for each prop"
+  },
+  "TimerView": {
+    "prefix": "timerview",
+    "body": [
+      "<TimerView",
+      "  startHour={${1:0}}",
+      "  startMinute={${2:1}}",
+      "  startSecond={${3:0}}",
+      "  onTimerEnd={() => { ${4:console.log(\"FINISHED\")} }}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "TimerView component with placeholders for each prop"
+  },
+  "BarGraphView": {
+    "prefix": "bargraphview",
+    "body": [
+      "<BarGraphView",
+      "  stats={[$1]}",
+      "  // Heading, Value, Color",
+      "  barWidth={${2:20}}",
+      "  barRadius={${3:6}}",
+      "  graphHeight={${4:300}}",
+      "  showValue={${5:true}}",
+      "  showHeading={${6:true}}",
+      "  gap={${7:12}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "BarGraphView component with placeholders for each prop"
+  },
+  "ProgressBar": {
+    "prefix": "progressbar",
+    "body": [
+      "<ProgressBar",
+      "  progress={$1}",
+      "  limit={$2}",
+      "  color={${3:\"#117DFA\"}}",
+      "  height={${4:10}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "ProgressBar component with placeholders for each prop"
+  },
+  "ProgressCircle": {
+    "prefix": "progresscircle",
+    "body": [
+      "<ProgressCircle",
+      "  progress={$1}",
+      "  limit={$2}",
+      "  color={${3:\"#117DFA\"}}",
+      "  strokeWidth={${4:3}}",
+      "  width={${5:50}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "ProgressCircle component with placeholders for each prop"
+  },
+  "FullProgressBar": {
+    "prefix": "fullprogressbar",
+    "body": [
+      "<FullProgressBar",
+      "  progress={$1}",
+      "  text={${2:\"Hello, Bagel!\"}}",
+      "  color={${3:\"#117DFA\"}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "FullProgressBar component with placeholders for each prop"
+  },
+  "NotificationCircle": {
+    "prefix": "notificationcircle",
+    "body": [
+      "<NotificationCircle",
+      "  text={${1:\"bagel\"}}",
+      "  textSize={${2:12}}",
+      "  backgroundColor={${3:\"red\"}}",
+      ">",
+      "  $0",
+      "</NotificationCircle>"
+    ],
+    "description": "NotificationCircle component with placeholders for each prop"
+  },
+  "SliderCircleView": {
+    "prefix": "slidercircleview",
+    "body": [
+      "<SliderCircleView",
+      "  func={() => {$1}}",
+      "  icon={\"${2:flash}\"}",
+      "  iconColor={\"${3:#117DFA}\"}",
+      "  text={\"${4:Hello, Bagel!}\"}",
+      "  textSize={${5:18}}",
+      "  circleSize={${6:40}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "SliderCircleView component with placeholders for each prop"
+  },
+  "NumberPad": {
+    "prefix": "numberpad",
+    "body": [
+      "<NumberPad",
+      "  value={$1}",
+      "  setter={$2}",
+      "  text={\"${3:Enter number:}\"}",
+      "  func={() => {${4:console.log(\"Done\")}}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "NumberPad component with placeholders for each prop"
+  },
+  "QRCodeView": {
+    "prefix": "qrcodeview",
+    "body": [
+      "<QRCodeView",
+      "  value={$1}",
+      "  size={${2:200}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "QRCodeView component with placeholders for each prop"
+  },
+  "QRReader": {
+    "prefix": "qrreader",
+    "body": [
+      "<QRReader",
+      "  func={() => {${1:console.log(\"SCANNED\")}}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "QRReader component with placeholders for each prop"
+  },
+  "PaymentView": {
+    "prefix": "paymentview",
+    "body": [
+      "<PaymentView",
+      "  total={$1}",
+      "  currency={\"${2:usd}\"}",
+      "  successFunc={() => {${3:console.log(\"SUCCESS\")}}}",
+      "  theme={theme}",
+      ">",
+      "  $0",
+      "</PaymentView>"
+    ],
+    "description": "PaymentView component with placeholders for each prop"
+  },
+  "ModalView": {
+    "prefix": "modal",
+    "body": [
+      "{${1:toggle} && <ModalView",
+      "  setToggle={$2}",
+      "  theme={theme}",
+      ">",
+      "  $0", // Nested content
+      "</ModalView>}"
+    ],
+    "description": "ModalView component with properties in separate lines"
+  },
+  "SmallBubble Usage": {
+    "prefix": "smallbubble",
+    "body": [
+      "{${1:toggle} && <SmallBubble",
+      "  setToggle={$2}",
+      "  icon=\"${3:flash}\"",
+      "  text={\"${4:Hello, Bagel!}\"}",
+      "  seconds={${5:10}}",
+      "  theme={theme}",
+      "/>}"
+    ],
+    "description": "SmallBubble component usage with placeholders"
+  },
+  "OptionsView": {
+    "prefix": "optionsview",
+    "body": [
+      "<OptionsView",
+      "  options={[$1]}",
+      "  // Icon, Option, Text, Color, Func",
+      "  setToggle={$2}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "OptionsView component usage with placeholders"
+  },
+  "CalendarView Usage": {
+    "prefix": "calendarview",
+    "body": [
+      "<CalendarView",
+      "  year={$1}",
+      "  weekdays={[$2]}",
+      "  isAllDays={${3:true}}",
+      "  includeToday={${4:true}}",
+      "  // disabledFunc={() => {}}",
+      "  // (date) => This function will determine which dates should be disabled. Remove if not necessary.",
+      "  func={(date) => {${5:console.log(\"DATE SELECTED\")}}}",
+      "  radius={${6:0}}",
+      "  theme={theme}",
+      "/>"
+    ],
+    "description": "CalendarView component usage with placeholders"
+  },
+  "Map Loop": {
+    "prefix": "maploop",
+    "body": [
+      "{",
+      "  ${1:array}.map((${2:item}, ${3:i}) => {",
+      "    return (",
+      "      <View key={${3:i}}>",
+      "        $0",
+      "      </View>",
+      "    );",
+      "  })",
+      "}"
+    ],
+    "description": "Map over an array and return a JSX block with a key attribute"
+  }
+}

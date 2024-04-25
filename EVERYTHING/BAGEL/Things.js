@@ -43,7 +43,9 @@ import QRCode from "react-native-qrcode-svg";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Clipboard from "expo-clipboard";
 import * as Sharing from "expo-sharing";
-import { createStorefrontApiClient } from "@shopify/storefront-api-client";
+import Geocoder from "react-native-geocoding";
+import axios from "axios";
+import Client from "shopify-buy";
 //
 import { initializeApp } from "firebase/app";
 import {
@@ -1117,7 +1119,7 @@ export function TextFieldOne({
       style={[
         {
           paddingHorizontal: paddingH !== undefined ? paddingH : 14,
-          paddingVertical: paddingV !== undefined ? paddingV : 14,
+          paddingVertical: paddingV !== undefined ? paddingV : 10,
           backgroundColor:
             lightBackgroundColor !== undefined &&
             darkBackgroundColor !== undefined
@@ -1489,7 +1491,7 @@ export function DatePicker({
                     ? lightBackgroundColor
                     : darkBackgroundColor
                   : secondaryThemedBackgroundColor(theme),
-              borderRadius: radius !== undefined ? radius : 12,
+              borderRadius: radius !== undefined ? radius : 8,
             },
           ]}
         >
@@ -1670,7 +1672,7 @@ export function TextPill({
                 : darkBackgroundColor
               : secondaryThemedBackgroundColor(theme),
           borderRadius: radius !== undefined ? radius : 100,
-          paddingVertical: paddingV !== undefined ? paddingV : 10,
+          paddingVertical: paddingV !== undefined ? paddingV : 8,
           paddingHorizontal: paddingH !== undefined ? paddingH : 14,
         },
       ]}
@@ -1684,7 +1686,7 @@ export function TextPill({
                   ? lightColor
                   : darkColor
                 : themedTextColor(theme),
-            fontSize: textSize !== undefined ? textSize : 12,
+            fontSize: textSize !== undefined ? textSize : 18,
           },
         ]}
       >
@@ -1736,9 +1738,9 @@ export function TextIconPill({
             ? theme === "light"
               ? lightIconColor
               : darkIconColor
-            : "#1BA8FF"
+            : themedTextColor(theme)
         }
-        size={iconSize !== undefined ? iconSize : 16}
+        size={iconSize !== undefined ? iconSize : 18}
       />
       <Text
         style={[
@@ -1749,7 +1751,7 @@ export function TextIconPill({
                   ? lightTextColor
                   : darkTextColor
                 : themedTextColor(theme),
-            fontSize: textSize !== undefined ? textSize : 12,
+            fontSize: textSize !== undefined ? textSize : 16,
           },
         ]}
       >
@@ -1830,7 +1832,7 @@ export function SegmentedPicker({
               key={i}
               style={[
                 {
-                  paddingVertical: paddingV !== undefined ? paddingV : 10,
+                  paddingVertical: paddingV !== undefined ? paddingV : 8,
                   paddingHorizontal: paddingH !== undefined ? paddingH : 16,
                   borderRadius: radius !== undefined ? radius : 100,
                   backgroundColor:
@@ -1859,7 +1861,7 @@ export function SegmentedPicker({
                           ? selectedTextColor
                           : "white"
                         : themedTextColor(theme),
-                    fontSize: textSize !== undefined ? textSize : 14,
+                    fontSize: textSize !== undefined ? textSize : 16,
                   },
                 ]}
               >
@@ -1893,8 +1895,8 @@ export function SegmentedPickerTwo({
               key={i}
               style={[
                 {
-                  paddingVertical: paddingV !== undefined ? paddingV : 10,
-                  paddingHorizontal: paddingH !== undefined ? paddingH : 12,
+                  paddingVertical: paddingV !== undefined ? paddingV : 8,
+                  paddingHorizontal: paddingH !== undefined ? paddingH : 14,
                   borderRadius: 0,
                   borderBottomWidth:
                     borderWidth !== undefined ? borderWidth : 2,
@@ -1919,7 +1921,7 @@ export function SegmentedPickerTwo({
                           ? selectedColor
                           : themedTextColor(theme)
                         : themedTextColor(theme),
-                    fontSize: textSize !== undefined ? textSize : 14,
+                    fontSize: textSize !== undefined ? textSize : 16,
                   },
                 ]}
               >
@@ -2350,6 +2352,7 @@ export function InteractiveMap({
   height = 300,
   initialLat = 47.92165474151632,
   initialLon = 106.91706877201796,
+  delta = 0.006, // New prop for default delta
   lightBackgroundColor,
   darkBackgroundColor,
   lightIconColor,
@@ -2372,8 +2375,8 @@ export function InteractiveMap({
         mapViewRef.current.animateToRegion({
           latitude: lat,
           longitude: lng,
-          latitudeDelta: 0.0922,
-          longitudeDelta: 0.0421,
+          latitudeDelta: delta !== undefined ? delta : 0.006,
+          longitudeDelta: delta !== undefined ? delta : 0.006,
         });
       })
       .catch((error) => console.warn(error));
@@ -2434,8 +2437,8 @@ export function InteractiveMap({
         initialRegion={{
           latitude: initialLat,
           longitude: initialLon,
-          latitudeDelta: 0.0722,
-          longitudeDelta: 0.0721,
+          latitudeDelta: delta !== undefined ? delta : 0.006, // Use default delta from prop
+          longitudeDelta: delta !== undefined ? delta : 0.006, // Use default delta from prop
         }}
       >
         {markerCoords && (
@@ -2485,7 +2488,7 @@ export function LocalNotification({
               top: Platform.OS === "ios" ? 25 : 35,
               right: 0,
               left: 0,
-              borderRadius: radius !== undefined ? radius : 10,
+              borderRadius: radius !== undefined ? radius : 8,
               backgroundColor:
                 lightBackgroundColor !== undefined &&
                 darkBackgroundColor !== undefined
@@ -2631,8 +2634,9 @@ export function AudioPlayer({ audioName, audioPath, sliderColor, theme }) {
           value={position}
           onValueChange={onSliderValueChange}
           minimumTrackTintColor={
-            sliderColor !== undefined ? sliderColor : "#1BA8FF"
+            sliderColor !== undefined ? sliderColor : "gray"
           }
+          maximumTrackTintColor={secondaryThemedBackgroundColor(theme)}
         />
         <TextView theme={theme}>{`${formatTime(position)} / ${formatTime(
           duration
@@ -3057,7 +3061,7 @@ export function FullProgressBar({ progress, text, color, theme }) {
           style={[
             {
               width: width * 0.4,
-              backgroundColor: secondaryThemedBackgroundColor(theme),
+              backgroundColor: themedBackgroundColor(theme),
             },
             format.radius,
             layout.padding,
@@ -3083,48 +3087,6 @@ export function FullProgressBar({ progress, text, color, theme }) {
     </View>
   );
 }
-export function ImagesView({ images, styles, onPageSelected }) {
-  const [currentPage, setCurrentPage] = useState(0);
-  const total = images.length;
-
-  const handlePageSelected = (event) => {
-    const { position } = event.nativeEvent;
-    setCurrentPage(position);
-    if (onPageSelected !== undefined) {
-      onPageSelected(position);
-    }
-  };
-
-  return (
-    <View style={{ height: "100%" }}>
-      <PagerView
-        style={[{ height: "100%" }]}
-        onPageSelected={handlePageSelected}
-      >
-        {images.map((img, i) => (
-          <View key={i}>
-            <Image
-              source={img}
-              style={[styles, { width: "100%", height: "100%" }]}
-            />
-          </View>
-        ))}
-      </PagerView>
-      <View style={[layout.absolute, { right: 10, bottom: 10 }]}>
-        <BlurWrapper intensity={80}>
-          <Text
-            style={[
-              colors.white,
-              { fontSize: 10, paddingVertical: 4, paddingHorizontal: 12 },
-            ]}
-          >
-            {currentPage + 1}/{total}
-          </Text>
-        </BlurWrapper>
-      </View>
-    </View>
-  );
-}
 export function NotificationCircle({
   text,
   textSize,
@@ -3141,8 +3103,8 @@ export function NotificationCircle({
             position: "absolute",
             top: -14,
             right: -16,
-            paddingVertical: paddingV !== undefined ? paddingV : 4,
-            paddingHorizontal: paddingH !== undefined ? paddingH : 6,
+            paddingVertical: paddingV !== undefined ? paddingV : 2,
+            paddingHorizontal: paddingH !== undefined ? paddingH : 8,
             backgroundColor:
               backgroundColor !== undefined ? backgroundColor : "#F40202",
             zIndex: 800,
@@ -3612,7 +3574,7 @@ export function QRReader({ func, theme }) {
     </View>
   );
 }
-export function PaymentView({ children, total, currency, successFunc, theme }) {
+export function StripePaymentView({ children, total, currency, successFunc, theme }) {
   const [pi, setPi] = useState("");
   const [stripeLoading, setStripeLoading] = useState(true);
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
@@ -3779,7 +3741,7 @@ export function SmallBubble({
           {
             backgroundColor: secondaryThemedBackgroundColor(theme),
             paddingVertical: paddingV !== undefined ? paddingV : 8,
-            paddingHorizontal: paddingH !== undefined ? paddingH : 14,
+            paddingHorizontal: paddingH !== undefined ? paddingH : 18,
           },
           format.radius_full,
         ]}
@@ -3788,7 +3750,7 @@ export function SmallBubble({
           {icon !== undefined && (
             <Icon
               name={icon}
-              size={iconSize !== undefined ? iconSize : 24}
+              size={iconSize !== undefined ? iconSize : 18}
               theme={theme}
             />
           )}
@@ -3823,7 +3785,7 @@ export function OptionsView({ options, setToggle, theme }) {
             format.radius,
             layout.margin_horizontal,
             layout.center,
-            { maxWidth: 500 },
+            { width: "90%" },
           ]}
         >
           {/* OPTIONS HERE */}
@@ -3857,7 +3819,7 @@ export function OptionsView({ options, setToggle, theme }) {
                   />
                   <View>
                     <TextView
-                      size={15}
+                      size={18}
                       theme={theme}
                       color={
                         opt.Color !== undefined
@@ -3869,9 +3831,10 @@ export function OptionsView({ options, setToggle, theme }) {
                     </TextView>
                     {opt.Text !== undefined && (
                       <TextView
-                        size={13}
+                        size={14}
                         color={secondaryThemedTextColor(theme)}
                         theme={theme}
+                        styles={[{ width: "65%" }]}
                       >
                         {opt.Text}
                       </TextView>
@@ -3915,16 +3878,16 @@ export function CalendarView({
   func,
   theme,
 }) {
-  const months = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+  const months = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
-  const currentMonth = currentDate.getMonth() + 1;
+  const currentMonth = currentDate.getMonth();
 
   let filteredMonths = [...months]; // Copy the original months array
 
   if (year === currentYear) {
     filteredMonths = months.filter((month) => {
-      const monthNumber = months.indexOf(month) + 1;
+      const monthNumber = months.indexOf(month);
       return monthNumber >= currentMonth;
     });
   }
@@ -3964,25 +3927,34 @@ export function CalendarView({
                   const date = createDate(month, day, year);
                   const dayOfWeek = date.getDay(); // 0 = Sunday, 1 = Monday, ...
                   // HIGHLIGHTED TRUTH ************************************************
-                  const isHighlighted =
-                    (weekdays === undefined &&
-                      (!isAllDays ? compareDates(date, new Date()) : true) &&
-                      (disabledFunc !== undefined
-                        ? disabledFunc(date)
-                        : true)) ||
-                    (weekdays !== undefined &&
-                      weekdays.includes(dayOfWeek) &&
-                      (!isAllDays ? compareDates(date, new Date()) : true) &&
-                      (disabledFunc !== undefined
-                        ? disabledFunc(date)
-                        : true)) ||
-                    (checkDate(date, new Date()) &&
-                      (includeToday ? true : false));
+                  var isHighlighted = true;
+                  // TODAY
+                  if (includeToday && checkDate(new Date(), date)) {
+                    isHighlighted = true;
+                  } else if (!includeToday && checkDate(new Date(), date)) {
+                    isHighlighted = false;
+                  }
+                  // WEEKDAYS
+                  if (weekdays === undefined && weekdays.length === 0) {
+                    isHighlighted = true;
+                  }
+                  if (weekdays !== undefined && weekdays.length > 0) {
+                    isHighlighted = weekdays.includes(dayOfWeek);
+                  }
+                  // ALL DAYS
+                  if (!isAllDays && !compareDates(date, new Date())) {
+                    isHighlighted = false;
+                  }
+                  // DISABLED FUNC
+                  if (disabledFunc !== undefined) {
+                    isHighlighted = disabledFunc(date);
+                  }
+
                   //  #endregion
                   return (
                     <TouchableOpacity
                       key={j}
-                      disabled={isHighlighted ? false : true}
+                      disabled={!isHighlighted}
                       style={[
                         layout.padding,
                         {
@@ -4186,7 +4158,7 @@ export function sortObjectArray(arr, order, property) {
   });
 }
 export function createDate(month, day, year) {
-  return new Date(year, month - 1, day);
+  return new Date(year, month, day);
 }
 export function formatDate(date) {
   const tempDate = date;
@@ -4332,7 +4304,7 @@ export function monthLongtoNum(monthStr) {
   return monthNames.indexOf(monthStr);
 }
 export function getFirstDateOfMonth(monthNum, year) {
-  const firstDate = new Date(year, monthNum - 1, 1);
+  const firstDate = new Date(year, monthNum, 1);
   const dayOfWeek = firstDate.getDay();
   return dayOfWeek;
 }
@@ -5065,6 +5037,12 @@ export const colors = StyleSheet.create({
   },
   gray: {
     color: "#CFCFD0",
+  },
+  primaryAccent: {
+    color: "#117DFA",
+  },
+  secondaryAccent: {
+    color: "#28D782",
   },
 });
 export const layout = StyleSheet.create({
@@ -6100,7 +6078,7 @@ export async function storage_DeleteImage(setLoading, path) {
 }
 //
 
-// SHOPIFY
+// SHOPIFY TESTING
 export function shopify_GetStorefrontKey(setKey) {
   fetch(`${serverURL}/get-shopify-storefront`)
     .then((response) => {
@@ -6117,117 +6095,261 @@ export function shopify_GetStorefrontKey(setKey) {
       console.error("Error fetching key:", error);
     });
 }
-export async function shopify_GetAllProducts(accessToken, setProducts) {
-  const response = await fetch(
-    `${shopifyURL}/admin/api/2024-04/products.json`,
-    {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": accessToken,
-      },
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch products: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  setProducts(data.products);
+export function shopify_GetAdminKey(setKey) {
+  fetch(`${serverURL}/get-shopify-key`)
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error("Failed to fetch key");
+      }
+      return response.json();
+    })
+    .then((data) => {
+      const key = data.key; // Assuming the response is a JSON object with a 'key' property
+      setKey(key);
+    })
+    .catch((error) => {
+      console.error("Error fetching key:", error);
+    });
 }
-export async function shopify_UpdateProduct(
-  accessToken,
-  productID,
-  newQuantity
-) {
-  const response = await fetch(
-    `${shopifyURL}/admin/api/2024-04/products/${productID}.json`,
-    {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Shopify-Access-Token": accessToken,
-      },
-      body: JSON.stringify({
-        product: {
-          id: productID,
-          variants: [
-            {
-              inventory_quantity: newQuantity,
-            },
-          ],
-        },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(
-      `Failed to update product quantity: ${response.statusText}`
-    );
-  }
-
-  const data = await response.json();
-  console.log(data.product);
+//
+export function shopify_GetAllProducts(accessToken, setLoading, setProducts) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  client.product.fetchAll().then((products) => {
+    setLoading(false);
+    console.log(products[0].variants);
+    setProducts(products);
+  });
 }
-export async function shopify_CreateOrder(
+export function shopify_GetProduct(accessToken, productID, setProduct) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  client.product.fetch(productID).then((product) => {
+    // Do something with the product
+    setProduct(product);
+    console.log(product);
+  });
+}
+export function shopify_GetAllCollections(
   accessToken,
-  product,
-  quantity,
-  firstName,
-  lastName,
-  email,
-  address1,
-  city,
-  province,
-  zip,
-  country,
-  successFunc
+  setLoading,
+  setCollections
 ) {
-  const orderDetails = {
-    financial_status: "paid",
-    line_items: [
-      {
-        variant_id: product.variants[0].id, 
-        quantity: quantity,
-        title: product.title, // Add a title for the product
-        name: product.variants[0].title, // Add a name for the product
-        price: product.variants[0].price,
-      },
-    ],
-    customer: {
-      first_name: firstName,
-      last_name: lastName,
-      email: email,
-    },
-    billing_address: {
-      address1: address1,
-      city: city,
-      province: province,
-      zip: zip,
-      country: country,
-    },
-  };
-
-  const response = await fetch(`${shopifyURL}/admin/api/2024-04/orders.json`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Shopify-Access-Token": accessToken,
-    },
-    body: JSON.stringify({ order: orderDetails }),
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  client.collection.fetchAllWithProducts().then((collections) => {
+    // Do something with the collections
+    setLoading(false);
+    setCollections(collections);
+  });
+}
+export function shopify_GetCollection(
+  accessToken,
+  setLoading,
+  collectionID,
+  setCollection
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
   });
 
-  console.log("Response status:", response.status);
+  client.collection
+    .fetchWithProducts(collectionID, { productsFirst: 100 })
+    .then((collection) => {
+      // Do something with the collection
+      setLoading(false);
+      console.log(collection);
+      setCollection(collection);
+    });
+}
+export function shopify_CreateCheckout(accessToken, setCheckout) {
+  // ONLY DO ONCE
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  client.checkout.create().then((checkout) => {
+    // Do something with the checkout
+    console.log(checkout);
+    setCheckout(checkout);
+  });
+}
+export function shopify_GetCheckOut(accessToken, checkoutID, setCheckout) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  client.checkout.fetch(checkoutID).then((checkout) => {
+    // Do something with the checkout
+    setCheckout(checkout);
+  });
+}
+export function shopify_AddItemCheckout(
+  accessToken,
+  checkoutID,
+  variantID,
+  quantity,
+  args,
+  setCheckout
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  const lineItemsToAdd = [
+    {
+      variantId: variantID,
+      quantity: quantity,
+      customAttributes: args !== undefined ? args : [],
+    },
+  ];
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    console.error("Error creating order:", errorData);
-    throw new Error(`Failed to create order: ${response.statusText}`);
-  }
+  // Add an item to the checkout
+  client.checkout.addLineItems(checkoutID, lineItemsToAdd).then((checkout) => {
+    // Do something with the updated checkout
+    setCheckout(checkout);
+  });
+}
+export function shopify_UpdateItemCheckout(
+  accessToken,
+  checkoutID,
+  checkoutLineItemID,
+  quantity,
+  args,
+  setCheckout
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+  console.log(checkoutLineItemID);
+  const lineItemsToUpdate = [
+    {
+      id: checkoutLineItemID,
+      quantity: quantity,
+      customAttributes: args !== undefined ? args : [],
+    },
+  ];
 
-  const data = await response.json();
-  shopify_UpdateProduct(accessToken, product.id, product.variants[0].inventory_quantity - quantity)
-  successFunc(data);
+  // Update the line item on the checkout (change the quantity or variant)
+  client.checkout
+    .updateLineItems(checkoutID, lineItemsToUpdate)
+    .then((checkout) => {
+      setCheckout(checkout);
+    });
+}
+export function shopify_RemoveItemCheckout(
+  accessToken,
+  checkoutID,
+  checkoutLineItemID,
+  setCheckout
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+
+  const lineItemIdsToRemove = [checkoutLineItemID];
+
+  // Remove an item from the checkout
+  client.checkout
+    .removeLineItems(checkoutID, lineItemIdsToRemove)
+    .then((checkout) => {
+      // Do something with the updated checkout
+      setCheckout(checkout);
+    });
+}
+export function shopify_AddDiscountItemCheckout(
+  accessToken,
+  checkoutID,
+  discountCode,
+  setCheckout
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+
+  // Add a discount code to the checkout
+  client.checkout.addDiscount(checkoutID, discountCode).then((checkout) => {
+    // Do something with the updated checkout
+    setCheckout(checkout);
+  });
+}
+export function shopify_RemoveDiscountItemCheckout(
+  accessToken,
+  checkoutID,
+  setCheckout
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+
+  // Removes the applied discount from an existing checkout.
+  client.checkout.removeDiscount(checkoutID).then((checkout) => {
+    // Do something with the updated checkout
+    setCheckout(checkout);
+  });
+}
+export function shopify_UpdateAddressCheckout(
+  accessToken,
+  checkoutID,
+  address,
+  setCheckout
+) {
+  const client = Client.buildClient({
+    domain: shopifyURL,
+    storefrontAccessToken: accessToken,
+  });
+
+  // const shippingAddress = {
+  //   address1: 'Chestnut Street 92',
+  //   address2: 'Apartment 2',
+  //   city: 'Louisville',
+  //   company: null,
+  //   country: 'United States',
+  //   firstName: 'Bob',
+  //   lastName: 'Norman',
+  //   phone: '555-625-1199',
+  //   province: 'Kentucky',
+  //   zip: '40202'
+  // };
+
+  // Update the shipping address for an existing checkout.
+  client.checkout
+    .updateShippingAddress(checkoutID, address)
+    .then((checkout) => {
+      // Do something with the updated checkout
+      setCheckout(checkout);
+    });
+}
+export function shopify_GetOrders(accessToken, setOrders) {
+  return axios
+    .get(`${shopifyURL}/admin/api/2024-04/orders.json`, {
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+      },
+    })
+    .then((response) => {
+      const orders = response.data.orders;
+      for (const order of orders) {
+        console.log('Order:');
+        Object.entries(order).forEach(([key, value]) => {
+          console.log(`${key}: ${JSON.stringify(value)}`);
+        });
+      }
+      setOrders(orders)
+    })
+    .catch((error) => {
+      console.error("Error fetching orders:", error);
+      throw error;
+    });
 }
