@@ -271,13 +271,12 @@ export function Loading() {
         },
       ]}
     >
-      <BlurWrapper
-        intensity={40}
-        radius={0}
-        styles={[
+      <View
+        style={[
           {
             flex: 1,
             height: height,
+            backgroundColor: "rgba(0,0,0,0.75)"
           },
         ]}
       >
@@ -296,7 +295,7 @@ export function Loading() {
         </View>
         {/* <ActivityIndicator color={"white"} /> */}
         <View style={[{ flex: 1 }]}></View>
-      </BlurWrapper>
+      </View>
     </View>
   );
 }

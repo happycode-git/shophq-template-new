@@ -173,7 +173,7 @@ function Test({ navigation, route }) {
   const [theme, setTheme] = useState("light");
 
   useEffect(() => {
-    setInDevice("theme", "dark");
+    setInDevice("theme", "light");
     getInDevice("theme", setTheme);
   }, []);
 
