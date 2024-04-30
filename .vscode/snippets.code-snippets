@@ -3,7 +3,7 @@
     "prefix": "starter",
     "body": [
       "import { useEffect, useState } from 'react';",
-      "import { SafeArea, getInDevice } from './EVERYTHING/BAGEL/Things';",
+      "import { SafeArea, getInDevice } from '../EVERYTHING/BAGEL/Things';",
       "",
       "export function ${1:ComponentName}({ navigation, route }) {",
       "  const [loading, setLoading] = useState(false);",
@@ -242,7 +242,6 @@
       "  radius={8}",
       "  autoCap={true}",
       "  isPassword={false}",
-      "  isNum={false}",
       "  theme={theme}",
       "/>"
     ],

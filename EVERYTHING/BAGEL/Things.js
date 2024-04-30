@@ -56,6 +56,7 @@ import {
   signOut,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
+  deleteUser,
 } from "firebase/auth";
 import ReactNativeAsyncStorage from "@react-native-async-storage/async-storage";
 import {
@@ -93,14 +94,14 @@ export const searchClient = algoliasearch(
   "2DOEMGLWFB",
   "7cb8106771824a1a327f1e7cb9d81feb"
 );
-export const c_projectID = "178e14d8-0dce-4f61-8732-26291c7f545e";
+export const c_projectID = "5a0ea88a-4dfe-40da-88d7-3a538989ae22";
 export const c_googleMapsAPI = "AIzaSyCOEbp9AblLGkiNDi_BMptPP8QayFMk6uM";
 export var me = {};
 export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
-export const shopifyURL = `https://75c8dc-41.myshopify.com`;
+export const shopifyURL = `55c4c9-5f.myshopify.com`;
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var myCoords = {
@@ -109,17 +110,17 @@ export var myCoords = {
 };
 // Config
 const firebaseConfig = {
-  apiKey: "AIzaSyAMkZs0qvSSYVfA4pOMzSkXl-Nkut7raqw",
-  authDomain: "iic-appline-template.firebaseapp.com",
-  projectId: "iic-appline-template",
-  storageBucket: "iic-appline-template.appspot.com",
-  messagingSenderId: "957439211423",
-  appId: "1:957439211423:web:57d7872b6486b922102faa",
-  measurementId: "G-D2Y4Q8QLJW",
+  apiKey: "AIzaSyAyLa1sxXSdUH3rhJQdcv1VI3qDA3ChP6c",
+  authDomain: "shop-hq-feef8.firebaseapp.com",
+  projectId: "shop-hq-feef8",
+  storageBucket: "shop-hq-feef8.appspot.com",
+  messagingSenderId: "724976916743",
+  appId: "1:724976916743:web:a5beb00139c7028b00cda2",
+  measurementId: "G-71HS91E9LP",
 };
 
 // APP INFO
-export var appName = "Happy Code Dev";
+export var appName = "Shop HQ";
 
 // EXTRAS
 export const themedTextColor = (theme) => {
@@ -276,7 +277,7 @@ export function Loading() {
           {
             flex: 1,
             height: height,
-            backgroundColor: "rgba(0,0,0,0.75)"
+            backgroundColor: "rgba(0,0,0,0.75)",
           },
         ]}
       >
@@ -1113,8 +1114,8 @@ export function TextFieldOne({
       onChangeText={onType}
       value={value}
       secureTextEntry={isPassword !== undefined ? isPassword : false}
-      autoCapitalize={autoCap !== undefined ? "sentences" : "none"}
-      keyboardType={isNum !== undefined ? "decimal-pad" : "default"}
+      autoCapitalize={autoCap !== undefined && autoCap ? "sentences" : "none"}
+      keyboardType={isNum !== undefined && isNum ? "decimal-pad" : "default"}
       style={[
         {
           paddingHorizontal: paddingH !== undefined ? paddingH : 14,
@@ -1212,7 +1213,9 @@ export function TextAreaOne({
       >
         <TextInput
           multiline={true}
-          autoCapitalize={autoCap !== undefined ? "sentences" : "none"}
+          autoCapitalize={
+            autoCap !== undefined && autoCap ? "sentences" : "none"
+          }
           placeholder={placeholder !== undefined ? placeholder : "Type here.."}
           placeholderTextColor={
             lightPlaceholderColor !== undefined &&
@@ -2253,6 +2256,60 @@ export function AsyncImagesView({ paths, radius, styles }) {
               {currentPage + 1}/{total}
             </Text>
           </BlurWrapper>
+        </View>
+      )}
+    </View>
+  );
+}
+export function ImagesView({ urls, radius, styles }) {
+  const [currentPage, setCurrentPage] = useState(0);
+  const total = urls.length;
+
+  const handlePageSelected = (event) => {
+    const { position } = event.nativeEvent;
+    setCurrentPage(position);
+  };
+
+  useEffect(() => {
+    // console.log(paths);
+  }, []);
+
+  return (
+    <View style={{ height: "100%" }}>
+      <PagerView
+        style={[styles, { height: "100%" }]}
+        onPageSelected={handlePageSelected}
+      >
+        {urls.map((url, i) => (
+          <View key={i}>
+            <Image
+              source={{ uri: url }}
+              style={[
+                {
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: radius !== undefined ? radius : 10,
+                },
+                styles,
+              ]}
+            />
+          </View>
+        ))}
+      </PagerView>
+      {urls.length > 1 && (
+        <View style={[layout.absolute, { right: 10, bottom: 10 }]}>
+          <View
+            style={[{ backgroundColor: "rgba(0,0,0,0.8)" }, format.radius_full]}
+          >
+            <Text
+              style={[
+                colors.white,
+                { fontSize: 10, paddingVertical: 4, paddingHorizontal: 8 },
+              ]}
+            >
+              {currentPage + 1}/{total}
+            </Text>
+          </View>
         </View>
       )}
     </View>
@@ -3573,7 +3630,13 @@ export function QRReader({ func, theme }) {
     </View>
   );
 }
-export function StripePaymentView({ children, total, currency, successFunc, theme }) {
+export function StripePaymentView({
+  children,
+  total,
+  currency,
+  successFunc,
+  theme,
+}) {
   const [pi, setPi] = useState("");
   const [stripeLoading, setStripeLoading] = useState(true);
   const { initPaymentSheet, presentPaymentSheet } = usePaymentSheet();
@@ -6118,7 +6181,8 @@ export function shopify_GetAllProducts(accessToken, setLoading, setProducts) {
   });
   client.product.fetchAll().then((products) => {
     setLoading(false);
-    console.log(products[0].variants);
+    // console.log(products[0].variants);
+    console.log("WE GOT SOMETHING!");
     setProducts(products);
   });
 }
@@ -6127,11 +6191,33 @@ export function shopify_GetProduct(accessToken, productID, setProduct) {
     domain: shopifyURL,
     storefrontAccessToken: accessToken,
   });
-  client.product.fetch(productID).then((product) => {
+  client.product.fetch(productID, { includeFields: 'variants.inventory_quantity' }).then((product) => {
     // Do something with the product
     setProduct(product);
-    console.log(product);
   });
+}
+export async function shopify_GetProductAdmin(adminAPIKey, productID, setProduct) {
+  const url = `https://${shopifyURL}/admin/api/2024-04/products/${productID}.json`;
+  
+  try {
+    const response = await axios.get(url, {
+      headers: {
+        'X-Shopify-Access-Token': adminAPIKey,
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.status === 200) {
+      const product = response.data.product;
+     setProduct(product)
+    } else {
+      console.error('Failed to fetch product:', response.statusText);
+      return null;
+    }
+  } catch (error) {
+    console.error('Failed to fetch product:', error.message);
+    return null;
+  }
 }
 export function shopify_GetAllCollections(
   accessToken,
@@ -6168,17 +6254,39 @@ export function shopify_GetCollection(
       setCollection(collection);
     });
 }
-export function shopify_CreateCheckout(accessToken, setCheckout) {
+export function shopify_CreateCheckout(accessToken, setCheckout, me) {
   // ONLY DO ONCE
   const client = Client.buildClient({
     domain: shopifyURL,
     storefrontAccessToken: accessToken,
   });
-  client.checkout.create().then((checkout) => {
-    // Do something with the checkout
-    console.log(checkout);
-    setCheckout(checkout);
-  });
+  if (me.Address1 !== undefined) {
+    client.checkout
+      .create({
+        shippingAddress: {
+          firstName: me.FirstName,
+          lastName: me.LastName,
+          address1: me.Address1,
+          address2: me.Address2,
+          city: me.City,
+          province: me.State,
+          country: me.Country,
+          zip: me.Zip,
+          company: me.Company,
+        },
+        email: me.Email,
+      })
+      .then((checkout) => {
+        // Do something with the checkout
+        console.log(checkout);
+        setCheckout(checkout);
+      });
+  } else {
+    client.checkout.create({ email: me.Email }).then((checkout) => {
+      // Do something with the checkout
+      setCheckout(checkout);
+    });
+  }
 }
 export function shopify_GetCheckOut(accessToken, checkoutID, setCheckout) {
   const client = Client.buildClient({
@@ -6305,7 +6413,7 @@ export function shopify_UpdateAddressCheckout(
   setCheckout
 ) {
   const client = Client.buildClient({
-    domain: shopifyURL,
+    domain: `https://${shopifyURL}`,
     storefrontAccessToken: accessToken,
   });
 
@@ -6330,22 +6438,32 @@ export function shopify_UpdateAddressCheckout(
       setCheckout(checkout);
     });
 }
+export function shopify_GetOrder(accessToken, setOrder, orderId) {
+  return axios
+    .get(`https://${shopifyURL}/admin/api/2024-04/orders/${orderId}.json`, {
+      headers: {
+        "X-Shopify-Access-Token": accessToken,
+      },
+    })
+    .then((response) => {
+      const order = response.data.order;
+      setOrder(order);
+    })
+    .catch((error) => {
+      console.error("Error fetching order:", error);
+      throw error;
+    });
+}
 export function shopify_GetOrders(accessToken, setOrders) {
   return axios
-    .get(`${shopifyURL}/admin/api/2024-04/orders.json`, {
+    .get(`https://${shopifyURL}/admin/api/2024-04/orders.json`, {
       headers: {
         "X-Shopify-Access-Token": accessToken,
       },
     })
     .then((response) => {
       const orders = response.data.orders;
-      for (const order of orders) {
-        console.log('Order:');
-        Object.entries(order).forEach(([key, value]) => {
-          console.log(`${key}: ${JSON.stringify(value)}`);
-        });
-      }
-      setOrders(orders)
+      setOrders(orders);
     })
     .catch((error) => {
       console.error("Error fetching orders:", error);

@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "IICApplineLibrary",
-    "slug": "iic-appline-library",
+    "name": "ShopHQ Template",
+    "slug": "shophq-template",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +16,7 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.iicdev.IICApplineLibrary"
+      "bundleIdentifier": "com.iicdev.ShopHQTemplate"
     },
     "notifications": {
       "color": "#ffffff",
@@ -32,9 +32,9 @@
           "priority": "max",
           "sound": true,
           "vibrate": true,
-          "firebaseSenderId": "931444482872",
-          "firebaseAppId": "1:931444482872:android:07700be798805c3842d7cd",
-          "firebaseApiKey": "AIzaSyD6dYviMLxisVSdckCID3rSNR_4IIEApUE"
+          "firebaseSenderId": "724976916743",
+          "firebaseAppId": "1:724976916743:android:f99cf3d2f750c18000cda2",
+          "firebaseApiKey": "AIzaSyD0kbxvX272xJ4loDGTfphePRy-7YoY2Fk"
         }
       }
     },
@@ -54,7 +54,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
-      "package": "com.iicdev.IICApplineLibrary"
+      "package": "com.iicdev.ShopHQTemplate"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -89,7 +89,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "42ec020e-de92-4dbb-abff-f6097a2bbf88"
+        "projectId": "5a0ea88a-4dfe-40da-88d7-3a538989ae22"
       }
     }
   }
