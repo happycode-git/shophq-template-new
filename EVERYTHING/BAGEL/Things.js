@@ -101,7 +101,7 @@ export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
-export const shopifyURL = `55c4c9-5f.myshopify.com`;
+export const shopifyURL = `7cc83b-57.myshopify.com`;
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var myCoords = {
