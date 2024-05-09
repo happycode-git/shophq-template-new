@@ -44,7 +44,7 @@ export function SignUp({ navigation, route }) {
   function onSignUp() {
     Alert.alert(
       "Confirmation",
-      "Would you like to continue with creating a ShopHQ account?",
+      "Would you like to continue with creating a Shopfolio account?",
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -137,7 +137,7 @@ export function SignUp({ navigation, route }) {
             <Spacer height={10} />
             <TextView color={themedTextColor(theme)} size={16} theme={theme}>
               You do not need to create a new account if you have already signed
-              up on another Shop HQ vendor app.
+              up on another Shopfolio vendor app.
             </TextView>
           </View>
           <ScrollView showsVerticalScrollIndicator={false}>

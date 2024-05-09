@@ -37,10 +37,9 @@ export function Collections({ navigation, route }) {
     const unsubscribe = navigation.addListener("focus", () => {
       // Your code to run when the screen is focused
       getInDevice("theme", setTheme);
-      console.log("GETTING THEME");
       getInDevice("user", (person) => {
         setMe(person);
-        if (person.Address1 === undefined || person.Address1 === "") {
+        if (person.Address1 === null || person.Address1 === "") {
           Alert.alert(
             "Shipping Address",
             "Filling out your shipping address before you add any items to your cart will allow a quicker checkout process. Do you want to set up your address?",

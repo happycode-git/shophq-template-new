@@ -5304,6 +5304,7 @@ export function auth_IsUserSignedIn(
       } else {
         navigation.navigate(ifNotLoggedIn);
       }
+      setInDevice("theme", "light");
     }
   });
 

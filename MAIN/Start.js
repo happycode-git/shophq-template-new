@@ -27,7 +27,6 @@ export function Start({ navigation, route }) {
   const [theme, setTheme] = useState("");
 
   useEffect(() => {
-    setInDevice("theme", "light");
     setLoading(true);
     getInDevice("theme", setTheme);
     auth_IsUserSignedIn(
@@ -73,7 +72,7 @@ export function Start({ navigation, route }) {
             <View style={[layout.padding, layout.margin, format.radius, {backgroundColor: secondaryThemedBackgroundColor(theme)}]}>
               <TextView
                 color={themedTextColor(theme)}
-                size={22}
+                size={20}
                 theme={theme}
                 // bold={true}
                 // styles={[format.all_caps]}
