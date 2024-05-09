@@ -54,14 +54,14 @@ export function BrowseItems({ navigation, route }) {
           color={themedTextColor(theme)}
           size={26}
           theme={theme}
-          styles={[format.all_caps]}
+          // styles={[format.all_caps]}
         >
           {collection.title}
         </TextView>
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={[layout.horizontal]}>
-          <Grid columns={2} gap={5}>
+          <Grid columns={2} gap={0}>
             {collection.products.map((prod, i) => {
               return (
                 <View key={i} style={[]}>
@@ -74,8 +74,8 @@ export function BrowseItems({ navigation, route }) {
                     }}
                   >
                     <Image
-                      source={{ uri: prod.images[0].src }}
-                      style={[{ width: "100%", height: width * 0.45 }]}
+                      source={prod.images.length > 0 ? { uri: prod.images[0].src } : require("../assets/shophq.png")}
+                      style={[{ width: "100%", height: width * 0.48 }]}
                     />
                     <View style={[layout.padding_small]}>
                       <TextView
@@ -85,8 +85,8 @@ export function BrowseItems({ navigation, route }) {
                       >
                         {prod.title}
                       </TextView>
-                      <TextView color={"#117DFA"} size={16} theme={theme}>
-                        ${prod.variants[0].price.amount}
+                      <TextView size={16} theme={theme}>
+                        ${parseFloat(prod.variants[0].price.amount).toFixed(2)}
                       </TextView>
                     </View>
                   </TouchableOpacity>

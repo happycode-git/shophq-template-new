@@ -8,6 +8,7 @@ import {
   format,
   getInDevice,
   layout,
+  secondaryThemedBackgroundColor,
   themedTextColor,
   width,
 } from "../EVERYTHING/BAGEL/Things";
@@ -51,7 +52,7 @@ export function Items({ navigation, route }) {
       </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={[layout.horizontal]}>
-          <Grid columns={2} gap={5}>
+          <Grid columns={2} gap={0}>
             {collection.products.map((prod, i) => {
               return (
                 <View key={i} style={[]}>
@@ -63,10 +64,20 @@ export function Items({ navigation, route }) {
                       });
                     }}
                   >
-                    <Image
-                      source={{ uri: prod.images[0].src }}
-                      style={[{ width: "100%", height: width * 0.45 }]}
-                    />
+                    <View
+                      style={{
+                        backgroundColor: secondaryThemedBackgroundColor(theme),
+                      }}
+                    >
+                      <Image
+                        source={
+                          prod.images.length > 0
+                            ? { uri: prod.images[0].src }
+                            : require("../assets/shophq.png")
+                        }
+                        style={[{ width: "100%", height: width * 0.48 }]}
+                      />
+                    </View>
                     <View style={[layout.padding_small]}>
                       <TextView
                         color={themedTextColor(theme)}
@@ -76,7 +87,7 @@ export function Items({ navigation, route }) {
                         {prod.title}
                       </TextView>
                       <TextView color={"#117DFA"} size={16} theme={theme}>
-                        ${prod.variants[0].price.amount}
+                        ${parseFloat(prod.variants[0].price.amount).toFixed(2)}
                       </TextView>
                     </View>
                   </TouchableOpacity>

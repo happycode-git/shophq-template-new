@@ -35,6 +35,7 @@ import {
 } from "../EVERYTHING/BAGEL/Things";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -55,120 +56,243 @@ export function Item({ navigation, route }) {
   const [isSaved, setIsSaved] = useState(false);
   const [savedID, setSavedID] = useState("");
   const [soldOut, setSoldOut] = useState(false);
+  const [inStock, setInStock] = useState(0);
 
   //
   function onAddToCart() {
-    Alert.alert(
-      "Confirmation",
-      "Are you sure you want to add this item to your cart?",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Proceed",
-          style: "default",
-          onPress: () => {
-            setLoading(true);
-            getInDevice("keys", (keys) => {
-              const storefront = keys[0].StorefrontAPI;
-              firebase_GetAllDocuments(
-                setFakeLoading,
-                "Carts",
-                (carts) => {
-                  const thisCart = carts.find(
-                    (ting) => ting.URL === shopifyURL
-                  );
-                  if (thisCart !== undefined) {
-                    // CHECK OUT EXISTS
-                    shopify_GetCheckOut(
-                      storefront,
-                      thisCart.CheckoutID,
-                      (checkout) => {
-                        shopify_AddItemCheckout(
+    if (tempOptions.length > 0) {
+      if (quantity !== "" && chosenOption.id !== undefined) {
+        Alert.alert(
+          "Confirmation",
+          "Are you sure you want to add this item to your cart?",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Proceed",
+              style: "default",
+              onPress: () => {
+                setLoading(true);
+                getInDevice("keys", (keys) => {
+                  const storefront = keys[0].StorefrontAPI;
+                  firebase_GetAllDocuments(
+                    setFakeLoading,
+                    "Carts",
+                    (carts) => {
+                      const thisCart = carts.find(
+                        (ting) => ting.URL === shopifyURL
+                      );
+                      if (thisCart !== undefined) {
+                        // CHECK OUT EXISTS
+                        shopify_GetCheckOut(
                           storefront,
-                          checkout.id,
-                          chosenOption.id !== undefined
-                            ? chosenOption.id
-                            : product.variants[0].id,
-                          parseInt(quantity),
-                          null,
+                          thisCart.CheckoutID,
                           (checkout) => {
-                            setLoading(false);
-                            Alert.alert(
-                              "Success!",
-                              "Item added to your cart.",
-                              [
-                                {
-                                  text: "Okay",
-                                  style: "default",
-                                  onPress: () => {
-                                    navigation.navigate("items", {
-                                      collection,
-                                    });
-                                  },
-                                },
-                              ]
+                            shopify_AddItemCheckout(
+                              storefront,
+                              checkout.id,
+                              chosenOption.id !== undefined
+                                ? chosenOption.id
+                                : product.variants[0].id,
+                              parseInt(quantity),
+                              null,
+                              (checkout) => {
+                                setLoading(false);
+                                Alert.alert(
+                                  "Success!",
+                                  "Item added to your cart.",
+                                  [
+                                    {
+                                      text: "Okay",
+                                      style: "default",
+                                      onPress: () => {
+                                        navigation.navigate("items", {
+                                          collection,
+                                        });
+                                      },
+                                    },
+                                  ]
+                                );
+                              }
                             );
+                            setLoading(false);
                           }
                         );
-                        setLoading(false);
-                      }
-                    );
-                  } else {
-                    // DOES NOT EXIST
-                    shopify_CreateCheckout(
-                      storefront,
-                      (checkout) => {
-                        firebase_CreateDocument(
-                          {
-                            UserID: me.id,
-                            URL: shopifyURL,
-                            CheckoutID: checkout.id,
+                      } else {
+                        // DOES NOT EXIST
+                        shopify_CreateCheckout(
+                          storefront,
+                          (checkout) => {
+                            firebase_CreateDocument(
+                              {
+                                UserID: me.id,
+                                URL: shopifyURL,
+                                CheckoutID: checkout.id,
+                              },
+                              "Carts",
+                              randomString(25)
+                            );
+                            shopify_AddItemCheckout(
+                              storefront,
+                              checkout.id,
+                              chosenOption.id !== undefined
+                                ? chosenOption.id
+                                : product.variants[0].id,
+                              parseInt(quantity),
+                              null,
+                              (checkout) => {
+                                setLoading(false);
+                                Alert.alert(
+                                  "Success!",
+                                  "Item added to your cart.",
+                                  [
+                                    {
+                                      text: "Okay",
+                                      style: "default",
+                                      onPress: () => {
+                                        navigation.navigate("items", {
+                                          collection,
+                                        });
+                                      },
+                                    },
+                                  ]
+                                );
+                              }
+                            );
                           },
-                          "Carts",
-                          randomString(25)
+                          me
                         );
-                        shopify_AddItemCheckout(
+                      }
+                    },
+                    0,
+                    "UserID",
+                    "==",
+                    me.id
+                  );
+                });
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Missing Info", "Please enter a valid quantity and choose an option.");
+      }
+    } else {
+      if (quantity !== "") {
+        Alert.alert(
+          "Confirmation",
+          "Are you sure you want to add this item to your cart?",
+          [
+            { text: "Cancel", style: "cancel" },
+            {
+              text: "Proceed",
+              style: "default",
+              onPress: () => {
+                setLoading(true);
+                getInDevice("keys", (keys) => {
+                  const storefront = keys[0].StorefrontAPI;
+                  firebase_GetAllDocuments(
+                    setFakeLoading,
+                    "Carts",
+                    (carts) => {
+                      const thisCart = carts.find(
+                        (ting) => ting.URL === shopifyURL
+                      );
+                      if (thisCart !== undefined) {
+                        // CHECK OUT EXISTS
+                        shopify_GetCheckOut(
                           storefront,
-                          checkout.id,
-                          chosenOption.id !== undefined
-                            ? chosenOption.id
-                            : product.variants[0].id,
-                          parseInt(quantity),
-                          null,
+                          thisCart.CheckoutID,
                           (checkout) => {
-                            setLoading(false);
-                            Alert.alert(
-                              "Success!",
-                              "Item added to your cart.",
-                              [
-                                {
-                                  text: "Okay",
-                                  style: "default",
-                                  onPress: () => {
-                                    navigation.navigate("items", {
-                                      collection,
-                                    });
-                                  },
-                                },
-                              ]
+                            shopify_AddItemCheckout(
+                              storefront,
+                              checkout.id,
+                              chosenOption.id !== undefined
+                                ? chosenOption.id
+                                : product.variants[0].id,
+                              parseInt(quantity),
+                              null,
+                              (checkout) => {
+                                setLoading(false);
+                                Alert.alert(
+                                  "Success!",
+                                  "Item added to your cart.",
+                                  [
+                                    {
+                                      text: "Okay",
+                                      style: "default",
+                                      onPress: () => {
+                                        navigation.navigate("items", {
+                                          collection,
+                                        });
+                                      },
+                                    },
+                                  ]
+                                );
+                              }
                             );
+                            setLoading(false);
                           }
                         );
-                      },
-                      me
-                    );
-                  }
-                },
-                0,
-                "UserID",
-                "==",
-                me.id
-              );
-            });
-          },
-        },
-      ]
-    );
+                      } else {
+                        // DOES NOT EXIST
+                        shopify_CreateCheckout(
+                          storefront,
+                          (checkout) => {
+                            firebase_CreateDocument(
+                              {
+                                UserID: me.id,
+                                URL: shopifyURL,
+                                CheckoutID: checkout.id,
+                              },
+                              "Carts",
+                              randomString(25)
+                            );
+                            shopify_AddItemCheckout(
+                              storefront,
+                              checkout.id,
+                              chosenOption.id !== undefined
+                                ? chosenOption.id
+                                : product.variants[0].id,
+                              parseInt(quantity),
+                              null,
+                              (checkout) => {
+                                setLoading(false);
+                                Alert.alert(
+                                  "Success!",
+                                  "Item added to your cart.",
+                                  [
+                                    {
+                                      text: "Okay",
+                                      style: "default",
+                                      onPress: () => {
+                                        navigation.navigate("items", {
+                                          collection,
+                                        });
+                                      },
+                                    },
+                                  ]
+                                );
+                              }
+                            );
+                          },
+                          me
+                        );
+                      }
+                    },
+                    0,
+                    "UserID",
+                    "==",
+                    me.id
+                  );
+                });
+              },
+            },
+          ]
+        );
+      } else {
+        Alert.alert("Missing Info", "Please enter a valid quantity");
+      }
+    }
   }
   function onSaveUnsave() {
     if (isSaved) {
@@ -192,7 +316,7 @@ export function Item({ navigation, route }) {
   useEffect(() => {
     // setInDevice("theme", "dark")
     getInDevice("theme", setTheme);
-    setTempOptions(product.variants);
+
     getInDevice("user", (person) => {
       setMe(person);
       firebase_GetAllDocuments(
@@ -222,10 +346,20 @@ export function Item({ navigation, route }) {
       const parts = product.id.split("/");
       const thisID = parts[parts.length - 1];
       shopify_GetProductAdmin(adminAPI, thisID, (prod) => {
-        const newArr = prod.variants.map((ting) => {
+        const thisArr = prod.variants.filter(
+          (ting) =>
+            ting.title !== "Default Title" && ting.inventory_quantity > 0
+        );
+        const newArr = thisArr.map((ting) => {
           return ting.inventory_quantity;
         });
         const allQty = newArr.reduce((total, current) => total + current, 0);
+        if (thisArr.length > 0) {
+          setChosenOption(thisArr[0]);
+        }
+        setInStock(allQty);
+        setTempOptions(thisArr);
+
         if (allQty === 0) {
           setSoldOut(true);
         }
@@ -278,13 +412,21 @@ export function Item({ navigation, route }) {
                 },
               ]}
             >
-              <ImagesView
-                urls={product.images.map((ting) => {
-                  return ting.src;
-                })}
-                radius={0}
-                styles={[{ objectFit: "contain" }]}
-              />
+              {product.images.length > 0 && (
+                <ImagesView
+                  urls={product.images.map((ting) => {
+                    return ting.src;
+                  })}
+                  radius={0}
+                  styles={[{ objectFit: "contain" }]}
+                />
+              )}
+              {product.images.length === 0 && (
+                <Image
+                  source={require("../assets/shophq.png")}
+                  style={[{ width: "100%", height: height * 0.4 }]}
+                />
+              )}
             </View>
             {/* REST */}
             <View style={[layout.padding]}>
@@ -296,6 +438,19 @@ export function Item({ navigation, route }) {
               >
                 {product.title}
               </TextView>
+
+              <SeparatedView>
+                <View>
+                  {tempOptions.length === 0 && (
+                    <TextView size={20} theme={theme}>
+                      ${parseFloat(product.variants[0].price.amount).toFixed(2)}
+                    </TextView>
+                  )}
+                </View>
+                <TextView size={18} theme={theme} color={inStock > 0 ? "#28D782" : "#D6133B"}>
+                  {inStock} in stock
+                </TextView>
+              </SeparatedView>
 
               <View style={[layout.padding_vertical]}>
                 <TextView
@@ -331,54 +486,71 @@ export function Item({ navigation, route }) {
                   </View>
                   {/*  */}
                   <View style={[layout.margin_vertical_small, { flex: 1 }]}>
-                    {tempOptions.map((opt, i) => {
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          style={[
-                            layout.padding,
-                            {
-                              backgroundColor:
-                                chosenOption.id !== opt.id
-                                  ? secondaryThemedBackgroundColor(theme)
-                                  : "#117DFA",
-                            },
-                            layout.full_width,
-                          ]}
-                          onPress={() => {
-                            setChosenOption(opt);
-                            console.log(opt);
-                          }}
-                        >
-                          <View style={[{ flex: 1 }]}>
-                            <SeparatedView>
-                              <TextView
-                                color={
+                    {tempOptions
+                      .filter((ting) => ting.inventory_quantity > 0)
+                      .map((opt, i) => {
+                        console.log(opt);
+                        return (
+                          <TouchableOpacity
+                            key={i}
+                            style={[
+                              layout.padding,
+                              {
+                                backgroundColor:
                                   chosenOption.id !== opt.id
-                                    ? themedTextColor(theme)
-                                    : "white"
-                                }
-                                size={18}
-                                theme={theme}
-                              >
-                                {opt.title}
-                              </TextView>
-                              <TextView
-                                color={
-                                  chosenOption.id !== opt.id
-                                    ? themedTextColor(theme)
-                                    : "white"
-                                }
-                                size={18}
-                                theme={theme}
-                              >
-                                ${opt.price.amount}
-                              </TextView>
-                            </SeparatedView>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
+                                    ? secondaryThemedBackgroundColor(theme)
+                                    : "#117DFA",
+                              },
+                              layout.full_width,
+                            ]}
+                            onPress={() => {
+                              setChosenOption(opt);
+                              console.log(opt);
+                            }}
+                          >
+                            <View style={[{ flex: 1 }]}>
+                              <SeparatedView>
+                                <TextView
+                                  color={
+                                    chosenOption.id !== opt.id
+                                      ? themedTextColor(theme)
+                                      : "white"
+                                  }
+                                  size={18}
+                                  theme={theme}
+                                >
+                                  {opt.title}
+                                </TextView>
+                                <SideBySide>
+                                  <TextView
+                                    color={
+                                      chosenOption.id !== opt.id
+                                        ? themedTextColor(theme)
+                                        : "white"
+                                    }
+                                    size={16}
+                                    theme={theme}
+                                  >
+                                    {opt.inventory_quantity} in stock
+                                  </TextView>
+                                  <TextView
+                                    color={
+                                      chosenOption.id !== opt.id
+                                        ? "#117DFA"
+                                        : "white"
+                                    }
+                                    size={18}
+                                    theme={theme}
+                                    bold={true}
+                                  >
+                                    ${parseFloat(opt.price).toFixed(2)}
+                                  </TextView>
+                                </SideBySide>
+                              </SeparatedView>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
                   </View>
                 </View>
               )}
@@ -401,7 +573,22 @@ export function Item({ navigation, route }) {
                   <TextFieldOne
                     placeholder="Qty"
                     value={`${quantity}`}
-                    setter={setQuantity}
+                    setter={(value) => {
+                      if (tempOptions.length > 0) {
+                        if (value > chosenOption.inventory_quantity) {
+                          setQuantity(chosenOption.inventory_quantity);
+                        } else {
+                          setQuantity(value);
+                        }
+                      } else {
+                        // HAS NO OPTIONS
+                        if (value > inStock) {
+                          setQuantity(inStock);
+                        } else {
+                          setQuantity(value);
+                        }
+                      }
+                    }}
                     radius={8}
                     isNum={true}
                     theme={theme}
@@ -439,7 +626,7 @@ export function Item({ navigation, route }) {
                         >
                           $
                           {(
-                            parseFloat(chosenOption.price.amount) * quantity
+                            parseFloat(chosenOption.price) * quantity
                           ).toFixed(2)}
                         </TextView>
                       )}
@@ -464,16 +651,18 @@ export function Item({ navigation, route }) {
             </SideBySide>
           </View>
         )}
-        {soldOut && <View style={[layout.padding]}>
-          <TextView
-            color={themedTextColor(theme)}
-            size={16}
-            theme={theme}
-            center={true}
-          >
-            This item is currently sold out.
-          </TextView>
-        </View>}
+        {soldOut && (
+          <View style={[layout.padding]}>
+            <TextView
+              color={themedTextColor(theme)}
+              size={16}
+              theme={theme}
+              center={true}
+            >
+              This item is currently sold out.
+            </TextView>
+          </View>
+        )}
       </SafeArea>
     </KeyboardAvoidingView>
   );

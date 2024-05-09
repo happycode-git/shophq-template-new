@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Grid,
+  Icon,
   IconButtonOne,
   LinkOne,
   MenuBar,
@@ -31,21 +32,29 @@ export function Collections({ navigation, route }) {
   const [colls, setColls] = useState([]);
   //
   const [me, setMe] = useState({});
-  
+
   useEffect(() => {
-    const unsubscribe = navigation.addListener('focus', () => {
+    const unsubscribe = navigation.addListener("focus", () => {
       // Your code to run when the screen is focused
       getInDevice("theme", setTheme);
-      console.log("GETTING THEME")
+      console.log("GETTING THEME");
       getInDevice("user", (person) => {
         setMe(person);
         if (person.Address1 === undefined || person.Address1 === "") {
-          Alert.alert("Shipping Address", "Filling out your shipping address before you add any items to your cart will allow a quicker checkout process. Do you want to set up your address?", [
-            {text: "Later", style: "cancel"},
-            {text: "Go to Settings", style: "default", onPress: () => {
-              navigation.navigate("profile")
-            }}
-          ])
+          Alert.alert(
+            "Shipping Address",
+            "Filling out your shipping address before you add any items to your cart will allow a quicker checkout process. Do you want to set up your address?",
+            [
+              { text: "Later", style: "cancel" },
+              {
+                text: "Go to Settings",
+                style: "default",
+                onPress: () => {
+                  navigation.navigate("profile");
+                },
+              },
+            ]
+          );
         }
       });
       firebase_GetAllDocuments(
@@ -53,7 +62,7 @@ export function Collections({ navigation, route }) {
         "Keys",
         (keys) => {
           const storefrontAPI = keys[0].StorefrontAPI;
-          console.log(keys)
+          console.log(keys);
           shopify_GetAllCollections(storefrontAPI, setLoading, (cs) => {
             setColls(cs);
           });
@@ -67,7 +76,7 @@ export function Collections({ navigation, route }) {
         null
       );
     });
-  
+
     return unsubscribe;
   }, [navigation]);
 
@@ -86,22 +95,30 @@ export function Collections({ navigation, route }) {
           </TextView>
           {/*  */}
           <SideBySide gap={15}>
-          <IconButtonOne
-            name="bookmark-outline"
+            {/* <IconButtonOne
+            name="chatbubbles-outline"
             size={26}
             onPress={() => {
-              navigation.navigate("favorites")
+              navigation.navigate("chat")
             }}
             theme={theme}
-          />
-          <IconButtonOne
-            name="settings-outline"
-            size={26}
-            onPress={() => {
-              navigation.navigate("profile")
-            }}
-            theme={theme}
-          />
+          /> */}
+            <IconButtonOne
+              name="bookmark-outline"
+              size={26}
+              onPress={() => {
+                navigation.navigate("favorites");
+              }}
+              theme={theme}
+            />
+            <IconButtonOne
+              name="settings-outline"
+              size={26}
+              onPress={() => {
+                navigation.navigate("profile");
+              }}
+              theme={theme}
+            />
           </SideBySide>
         </SeparatedView>
       </View>
@@ -109,58 +126,98 @@ export function Collections({ navigation, route }) {
       {/* BODY */}
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={[]}>
-          {colls.map((cs, i) => {
-            return (
-              <View key={i}>
-                <TouchableOpacity
-                  onPress={() => {
-                    navigation.navigate("items", { collection: cs });
-                  }}
-                >
-                  {cs.image !== null && <Image
-                    source={{ uri: cs.image.src }}
-                    style={[
-                      {
-                        width: "100%",
-                        height: width * 0.88,
-                        //   borderRadius: 6,
-                      },
-                    ]}
-                  />}
-                  {
-                    cs.image === null && 
-                    <Image
-                    source={require("../assets/IMAGES/stock1.jpg")}
-                    style={[
-                      {
-                        width: "100%",
-                        height: width * 0.88,
-                        //   borderRadius: 6,
-                      },
-                    ]}
-                  />
-                  }
-                  <View
-                    style={[
-                      layout.padding,
-                      layout.absolute,
-                      { backgroundColor: themedBackgroundColor(theme) },
-                    ]}
+          {colls
+            .filter((ting) => ting.image !== null && ting.title !== "Home page")
+            .map((cs, i) => {
+              return (
+                <View key={i}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate("items", { collection: cs });
+                    }}
                   >
-                    <TextView
-                      color={themedTextColor(theme)}
-                      size={18}
-                      theme={theme}
-                      styles={[format.all_caps]}
-                      // bold={true}
+                    <View
+                      style={{
+                        backgroundColor: secondaryThemedBackgroundColor(theme),
+                      }}
                     >
-                      {cs.title}
-                    </TextView>
-                  </View>
-                </TouchableOpacity>
-              </View>
-            );
-          })}
+                      {cs.image !== null && (
+                        <Image
+                          source={{ uri: cs.image.src }}
+                          style={[
+                            {
+                              width: "100%",
+                              height: width * 0.88,
+                              //   borderRadius: 6,
+                            },
+                          ]}
+                        />
+                      )}
+                      {cs.image === null && (
+                        <Image
+                          source={require("../assets/IMAGES/stock1.jpg")}
+                          style={[
+                            {
+                              width: "100%",
+                              height: width * 0.88,
+                              //   borderRadius: 6,
+                            },
+                          ]}
+                        />
+                      )}
+                    </View>
+                    <View
+                      style={[
+                        layout.padding,
+                        layout.absolute,
+                        { backgroundColor: themedBackgroundColor(theme) },
+                      ]}
+                    >
+                      <TextView
+                        color={themedTextColor(theme)}
+                        size={18}
+                        theme={theme}
+                        // styles={[format.all_caps]}
+                        // bold={true}
+                      >
+                        {cs.title}
+                      </TextView>
+                    </View>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+          {colls
+            .filter((ting) => ting.image === null && ting.title !== "Home page")
+            .map((cs, i) => {
+              return (
+                <View key={i}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      navigation.navigate("items", { collection: cs });
+                    }}
+                    style={[layout.padding]}
+                  >
+                    <SeparatedView>
+                      <TextView
+                        color={themedTextColor(theme)}
+                        size={18}
+                        theme={theme}
+                        // styles={[format.all_caps]}
+                        // bold={true}
+                      >
+                        {cs.title}
+                      </TextView>
+                      <Icon
+                        name={"arrow-forward-outline"}
+                        size={20}
+                        theme={theme}
+                      />
+                    </SeparatedView>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
         </View>
 
         {/*  */}
@@ -175,19 +232,19 @@ export function Collections({ navigation, route }) {
             left: 0,
             right: 0,
             backgroundColor: themedBackgroundColor(theme),
-            paddingBottom: 10
+            paddingBottom: 10,
           },
         ]}
       >
         <Grid columns={3} gap={10} styles={[{}]}>
-        <View
-            style={[
-              layout.padding,
-            ]}
-          >
-            <LinkOne onPress={() => {
-              navigation.navigate("collections")
-            }} theme={theme} styles={[layout.center]}>
+          <View style={[layout.padding]}>
+            <LinkOne
+              onPress={() => {
+                navigation.navigate("collections");
+              }}
+              theme={theme}
+              styles={[layout.center]}
+            >
               <TextView color={themedTextColor(theme)} size={18} theme={theme}>
                 collections
               </TextView>
@@ -202,9 +259,13 @@ export function Collections({ navigation, route }) {
               },
             ]}
           >
-            <LinkOne onPress={() => {
-              navigation.navigate("orders")
-            }} theme={theme} styles={[layout.center]}>
+            <LinkOne
+              onPress={() => {
+                navigation.navigate("orders");
+              }}
+              theme={theme}
+              styles={[layout.center]}
+            >
               <TextView color={themedTextColor(theme)} size={18} theme={theme}>
                 orders
               </TextView>
@@ -219,9 +280,13 @@ export function Collections({ navigation, route }) {
               },
             ]}
           >
-            <LinkOne onPress={() => {
-              navigation.navigate("cart")
-            }} theme={theme} styles={[layout.center]}>
+            <LinkOne
+              onPress={() => {
+                navigation.navigate("cart");
+              }}
+              theme={theme}
+              styles={[layout.center]}
+            >
               <TextView color={themedTextColor(theme)} size={18} theme={theme}>
                 cart
               </TextView>

@@ -147,7 +147,7 @@ export default function App() {
             headerShown: false,
             gestureEnabled: true,
             gestureDirection: "horizontal",
-            animation: "slide_from_horizontal",
+            animation: "slide_from_right",
           }}
         />
         <Stack.Screen
@@ -157,7 +157,7 @@ export default function App() {
             headerShown: false,
             gestureEnabled: true,
             gestureDirection: "horizontal",
-            animation: "slide_from_horizontal",
+            animation: "slide_from_right",
           }}
         />
 

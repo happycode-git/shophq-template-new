@@ -102,6 +102,7 @@ export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
 export const shopifyURL = `7cc83b-57.myshopify.com`;
+export const vendorID = "7cc83b-57";
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";
 export var myCoords = {
@@ -6191,31 +6192,37 @@ export function shopify_GetProduct(accessToken, productID, setProduct) {
     domain: shopifyURL,
     storefrontAccessToken: accessToken,
   });
-  client.product.fetch(productID, { includeFields: 'variants.inventory_quantity' }).then((product) => {
-    // Do something with the product
-    setProduct(product);
-  });
+  client.product
+    .fetch(productID, { includeFields: "variants.inventory_quantity" })
+    .then((product) => {
+      // Do something with the product
+      setProduct(product);
+    });
 }
-export async function shopify_GetProductAdmin(adminAPIKey, productID, setProduct) {
+export async function shopify_GetProductAdmin(
+  adminAPIKey,
+  productID,
+  setProduct
+) {
   const url = `https://${shopifyURL}/admin/api/2024-04/products/${productID}.json`;
-  
+
   try {
     const response = await axios.get(url, {
       headers: {
-        'X-Shopify-Access-Token': adminAPIKey,
-        'Content-Type': 'application/json',
+        "X-Shopify-Access-Token": adminAPIKey,
+        "Content-Type": "application/json",
       },
     });
-    
+
     if (response.status === 200) {
       const product = response.data.product;
-     setProduct(product)
+      setProduct(product);
     } else {
-      console.error('Failed to fetch product:', response.statusText);
+      console.error("Failed to fetch product:", response.statusText);
       return null;
     }
   } catch (error) {
-    console.error('Failed to fetch product:', error.message);
+    console.error("Failed to fetch product:", error.message);
     return null;
   }
 }
@@ -6470,3 +6477,8 @@ export function shopify_GetOrders(accessToken, setOrders) {
       throw error;
     });
 }
+
+
+
+
+

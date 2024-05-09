@@ -80,7 +80,7 @@ export function Orders({ navigation, route }) {
     // setInDevice("theme", "light")
     getInDevice("theme", setTheme);
     getInDevice("user", (person) => {
-        // setLoading(true);
+      // setLoading(true);
       setMe(person);
       firebase_GetAllDocuments(
         setFakeLoading,
@@ -200,7 +200,6 @@ export function Orders({ navigation, route }) {
                 name="reload-outline"
                 size={26}
                 onPress={() => {
-                  
                   firebase_GetAllDocuments(
                     setLoading,
                     "Orders",
@@ -222,7 +221,12 @@ export function Orders({ navigation, route }) {
                             shopify_GetOrder(
                               adminKey,
                               (thisOrder) => {
-                                setTempOrders((prev) => removeDuplicatesByProperty([...prev, thisOrder], "id"));
+                                setTempOrders((prev) =>
+                                  removeDuplicatesByProperty(
+                                    [...prev, thisOrder],
+                                    "id"
+                                  )
+                                );
                               },
                               orderID
                             );
@@ -432,6 +436,14 @@ export function Orders({ navigation, route }) {
                               </TextView>
                             </LinkOne>
                           </SeparatedView>
+                        </View>
+                      )}
+                      {order.fulfillments.length === 0 && (
+                        <View style={[layout.padding_horizontal]}>
+                          <TextView theme={theme}>
+                            A tracking number will appear as soon as the vendor
+                            creates a shipping label.
+                          </TextView>
                         </View>
                       )}
                       {/* LINK */}

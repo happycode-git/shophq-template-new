@@ -84,13 +84,21 @@ export function BrowseItem({ navigation, route }) {
                 },
               ]}
             >
-              <ImagesView
-                urls={product.images.map((ting) => {
-                  return ting.src;
-                })}
-                radius={0}
-                styles={[{ objectFit: "contain" }]}
-              />
+              {product.images.length > 0 && (
+                <ImagesView
+                  urls={product.images.map((ting) => {
+                    return ting.src;
+                  })}
+                  radius={0}
+                  styles={[{ objectFit: "contain" }]}
+                />
+              )}
+              {product.images.length === 0 && (
+                <Image
+                  source={require("../assets/shophq.png")}
+                  style={[{ width: "100%", height: height * 0.4 }]}
+                />
+              )}
             </View>
             {/* REST */}
             <View style={[layout.padding]}>
@@ -102,6 +110,15 @@ export function BrowseItem({ navigation, route }) {
               >
                 {product.title}
               </TextView>
+              
+              {tempOptions
+                .length === 1 && (
+                <View>
+                  <TextView size={20} theme={theme}>
+                    ${parseFloat(product.variants[0].price.amount).toFixed(2)}
+                  </TextView>
+                </View>
+              )}
 
               <View style={[layout.padding_vertical]}>
                 <TextView
@@ -138,6 +155,7 @@ export function BrowseItem({ navigation, route }) {
                   {/*  */}
                   <View style={[layout.margin_vertical_small, { flex: 1 }]}>
                     {tempOptions.map((opt, i) => {
+                      console.log(opt)
                       return (
                         <TouchableOpacity
                           key={i}
@@ -169,17 +187,31 @@ export function BrowseItem({ navigation, route }) {
                               >
                                 {opt.title}
                               </TextView>
+                              <SideBySide>
                               <TextView
                                 color={
                                   chosenOption.id !== opt.id
                                     ? themedTextColor(theme)
                                     : "white"
                                 }
-                                size={18}
+                                size={16}
                                 theme={theme}
                               >
-                                ${opt.price.amount}
+                                {opt.inventory_quantity} in stock
                               </TextView>
+                              <TextView
+                                color={
+                                  chosenOption.id !== opt.id
+                                    ? "#117DFA"
+                                    : "white"
+                                }
+                                size={18}
+                                theme={theme}
+                                bold={true}
+                              >
+                                ${parseFloat(opt.price).toFixed(2)}
+                              </TextView>
+                              </SideBySide>
                             </SeparatedView>
                           </View>
                         </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Grid,
+  Icon,
   LinkOne,
   SafeArea,
   SeparatedView,
@@ -34,8 +35,9 @@ export function Browse({ navigation, route }) {
   useEffect(() => {
     // setInDevice("theme", "dark");
     getInDevice("theme", setTheme);
+    setLoading(true);
     firebase_GetAllDocuments(
-      setLoading,
+      setFakeLoading,
       "Keys",
       (keys) => {
         const storefrontAPI = keys[0].StorefrontAPI;
@@ -81,64 +83,102 @@ export function Browse({ navigation, route }) {
           </TextView>
         </View>
         <ScrollView showsVerticalScrollIndicator={false}>
-          <View style={[layout.horizontal]}>
-            <Grid columns={1} gap={0}>
-              {collections.map((collection, i) => {
-                return (
-                  <View key={i}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        navigation.navigate("browse-items", {
-                          collection,
-                        });
-                      }}
-                    >
-                      {collection.image !== null && (
-                        <Image
-                          source={{ uri: collection.image.src }}
-                          style={[
-                            {
-                              width: "100%",
-                              height: width * 0.88,
-                              //   borderRadius: 6,
-                            },
-                          ]}
-                        />
-                      )}
-                      {collection.image === null && (
-                        <Image
-                          source={require("../assets/IMAGES/stock1.jpg")}
-                          style={[
-                            {
-                              width: "100%",
-                              height: width * 0.88,
-                              //   borderRadius: 6,
-                            },
-                          ]}
-                        />
-                      )}
-                      <View
-                        style={[
-                          layout.padding,
-                          layout.absolute,
-                          { backgroundColor: themedBackgroundColor(theme) },
-                        ]}
+          <View>
+            <View>
+              {collections
+                .filter(
+                  (ting) => ting.title !== "Home page" && ting.image !== null
+                )
+                .map((collection, i) => {
+                  return (
+                    <View key={i}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          navigation.navigate("browse-items", {
+                            collection,
+                          });
+                        }}
                       >
-                        <TextView
-                          color={themedTextColor(theme)}
-                          size={18}
-                          theme={theme}
-                          styles={[format.all_caps]}
-                          // bold={true}
+                        {collection.image !== null && (
+                          <Image
+                            source={{ uri: collection.image.src }}
+                            style={[
+                              {
+                                width: "100%",
+                                height: width * 0.88,
+                                //   borderRadius: 6,
+                              },
+                            ]}
+                          />
+                        )}
+                        {collection.image === null && (
+                          <Image
+                            source={require("../assets/IMAGES/stock1.jpg")}
+                            style={[
+                              {
+                                width: "100%",
+                                height: width * 0.88,
+                                //   borderRadius: 6,
+                              },
+                            ]}
+                          />
+                        )}
+                        <View
+                          style={[
+                            layout.padding,
+                            layout.absolute,
+                            { backgroundColor: themedBackgroundColor(theme) },
+                          ]}
                         >
-                          {collection.title}
-                        </TextView>
-                      </View>
-                    </TouchableOpacity>
-                  </View>
-                );
-              })}
-            </Grid>
+                          <TextView
+                            color={themedTextColor(theme)}
+                            size={18}
+                            theme={theme}
+                            // styles={[format.all_caps]}
+                            // bold={true}
+                          >
+                            {collection.title}
+                          </TextView>
+                        </View>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+            </View>
+            {/* NO IMAGES */}
+            <View>
+              {collections
+                .filter(
+                  (ting) => ting.title !== "Home page" && ting.image === null
+                )
+                .map((collection, i) => {
+                  return (
+                    <View key={i}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          navigation.navigate("browse-items", {
+                            collection,
+                          });
+                        }}
+                        style={[layout.padding]}
+                      >
+                        <SeparatedView>
+                          <TextView
+                            color={themedTextColor(theme)}
+                            size={18}
+                            theme={theme}
+                            // styles={[format.all_caps]}
+                            // bold={true}
+                          >
+                            {collection.title}
+                          </TextView>
+                          <Icon theme={theme} name={"arrow-forward-outline"} size={22} />
+                        </SeparatedView>
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
+            </View>
           </View>
 
           {/*  */}

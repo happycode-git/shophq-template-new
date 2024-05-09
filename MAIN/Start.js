@@ -6,6 +6,7 @@ import {
   Spacer,
   TextView,
   auth_IsUserSignedIn,
+  backgrounds,
   firebase_GetAllDocuments,
   format,
   getInDevice,
@@ -59,86 +60,52 @@ export function Start({ navigation, route }) {
   return (
     <SafeArea loading={loading} theme={theme}>
       <View style={[layout.separate_vertical]}>
-        <View style={[]}>
-          <View style={[layout.padding]}>
-            <TextView
-              color={themedTextColor(theme)}
-              size={22}
-              theme={theme}
-              styles={[format.all_caps]}
-            >
-              An incredible new way of shopping. Everything sold on Shopify, is
-              sold here.
-            </TextView>
-          </View>
-          <Spacer height={20} />
-          <View
-            style={[
-              { backgroundColor: themedButtonColor(theme) },
-              layout.padding,
-              { transform: [{ rotate: "4deg" }] },
-            ]}
-          >
-            <TextView
-              color={themedButtonTextColor(theme)}
-              size={18}
-              theme={theme}
-              styles={[format.all_caps]}
-              center={true}
-              bold={true}
-            >
-              bags, shirts, pants, necklaces
-            </TextView>
-          </View>
-          <Spacer height={20} />
-          <View
-            style={[
-              { backgroundColor: themedButtonColor(theme) },
-              layout.padding,
-              { transform: [{ rotate: "-4deg" }] },
-            ]}
-          >
-            <TextView
-              color={themedButtonTextColor(theme)}
-              size={18}
-              theme={theme}
-              styles={[format.all_caps]}
-              center={true}
-              bold={true}
-            >
-              socks, hats, chains, jackets
-            </TextView>
-          </View>
-        </View>
+        <Image
+          source={require("../assets/loading.png")}
+          style={[
+            { width: "100%", height: height * 0.5, objectFit: "cover" },
+            // format.radius,
+          ]}
+        />
+
         <View>
-          <Image
-            source={require("../assets/loading.png")}
-            style={[
-              { width: "100%", height: height * 0.5, objectFit: "cover" },
-              // format.radius,
-            ]}
-          />
-         <View style={[layout.padding]}>
-         <ButtonTwo
-            borderColor={themedTextColor(theme)}
-            borderWidth={2}
-            radius={100}
-            padding={10}
-            onPress={() => {
-              navigation.navigate("login");
-            }}
-          >
-            <TextView
-              color={themedTextColor(theme)}
-              size={18}
-              theme={theme}
-              center={true}
-              styles={[format.all_caps]}
+          <View style={[]}>
+            <View style={[layout.padding, layout.margin, format.radius, {backgroundColor: secondaryThemedBackgroundColor(theme)}]}>
+              <TextView
+                color={themedTextColor(theme)}
+                size={22}
+                theme={theme}
+                // bold={true}
+                // styles={[format.all_caps]}
+              >
+                Welcome to our app! Discover our latest items, track your orders
+                effortlessly, and feel free to chat with us anytime for any
+                questions or assistance you need!
+              </TextView>
+            </View>
+            <Spacer height={20} />
+          </View>
+          <View style={[layout.padding]}>
+            <ButtonTwo
+              borderColor={themedTextColor(theme)}
+              borderWidth={2}
+              radius={100}
+              padding={10}
+              onPress={() => {
+                navigation.navigate("login");
+              }}
             >
-              Get Started
-            </TextView>
-          </ButtonTwo>
-         </View>
+              <TextView
+                color={themedTextColor(theme)}
+                size={18}
+                theme={theme}
+                center={true}
+                // styles={[format.all_caps]}
+              >
+                Get Started
+              </TextView>
+            </ButtonTwo>
+          </View>
         </View>
       </View>
     </SafeArea>

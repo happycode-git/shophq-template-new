@@ -131,14 +131,18 @@ export function Cart({ navigation, route }) {
               shopify_GetCheckOut(storefront, checkoutID, (checkout) => {
                 if (checkout.order !== null) {
                   // ORDER EXISTS
-                  const orderID = checkout.order.id
-                  const orderURL = checkout.webUrl
-                  firebase_CreateDocument({
-                    UserID: person.id,
-                    OrderID: orderID,
-                    URL: shopifyURL,
-                    webUrl: orderURL
-                  }, "Orders", randomString(25))
+                  const orderID = checkout.order.id;
+                  const orderURL = checkout.webUrl;
+                  firebase_CreateDocument(
+                    {
+                      UserID: person.id,
+                      OrderID: orderID,
+                      URL: shopifyURL,
+                      webUrl: orderURL,
+                    },
+                    "Orders",
+                    randomString(25)
+                  );
                   firebase_DeleteDocument(setLoading, "Carts", thisID);
                 } else {
                   setCartItems(checkout.lineItems);
@@ -208,11 +212,23 @@ export function Cart({ navigation, route }) {
                 ]}
               >
                 <View style={[layout.horizontal, { gap: 15 }]}>
-                  <Image
-                    source={{ uri: item.variant.image.src }}
-                    style={[{ width: 100, height: 100 }]}
-                  />
-                  <View style={{width: width * 0.6}}>
+                  <View
+                    style={[
+                      {
+                        backgroundColor: secondaryThemedBackgroundColor(theme),
+                      },
+                    ]}
+                  >
+                    <Image
+                      source={
+                        item.variant.image !== null
+                          ? { uri: item.variant.image.src }
+                          : require("../assets/shophq.png")
+                      }
+                      style={[{ width: 100, height: 100 }]}
+                    />
+                  </View>
+                  <View style={{ width: width * 0.6 }}>
                     <View>
                       <TextView
                         color={themedTextColor(theme)}
@@ -242,7 +258,7 @@ export function Cart({ navigation, route }) {
                       <View>
                         <SeparatedView>
                           <TextView color={"#117DFA"} size={16} theme={theme}>
-                            ${item.variant.price.amount} each
+                            ${parseFloat(item.variant.price.amount).toFixed(2)} each
                           </TextView>
                           <TextView
                             color={themedTextColor(theme)}
