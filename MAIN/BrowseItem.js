@@ -24,6 +24,7 @@ import {
 } from "../EVERYTHING/BAGEL/Things";
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -79,7 +80,7 @@ export function BrowseItem({ navigation, route }) {
               style={[
                 {
                   width: "100%",
-                  height: height * 0.4,
+                  height: height * 0.45,
                   backgroundColor: secondaryThemedBackgroundColor(theme),
                 },
               ]}
@@ -96,7 +97,7 @@ export function BrowseItem({ navigation, route }) {
               {product.images.length === 0 && (
                 <Image
                   source={require("../assets/shophq.png")}
-                  style={[{ width: "100%", height: height * 0.4 }]}
+                  style={[{ width: "100%", height: height * 0.45 }]}
                 />
               )}
             </View>
@@ -209,7 +210,7 @@ export function BrowseItem({ navigation, route }) {
                                 theme={theme}
                                 bold={true}
                               >
-                                ${parseFloat(opt.price).toFixed(2)}
+                                ${parseFloat(opt.price.amount).toFixed(2)}
                               </TextView>
                               </SideBySide>
                             </SeparatedView>

@@ -101,7 +101,7 @@ export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
-export const shopifyURL = `edmusica.com`;
+export const shopifyURL = `averys-avenue.com`;
 export const vendorID = "7cc83b-57";
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";
@@ -121,7 +121,7 @@ const firebaseConfig = {
 };
 
 // APP INFO
-export var appName = "Shop HQ";
+export var appName = "Averys Avenue";
 
 // EXTRAS
 export const themedTextColor = (theme) => {

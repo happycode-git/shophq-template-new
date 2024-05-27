@@ -17,7 +17,9 @@ export function GetStarted({ title, caption, details, onPress, theme }) {
   return (
     <View style={[{ flex: 1 }, layout.padding, layout.separate_vertical]}>
       {/* TOP */}
+      <Spacer height={30} />
       <View style={[layout.relative]}>
+        
         <Image
           source={require("../assets/IMAGES/stock1.jpg")}
           style={[{ width: "100%", height: width * 1.2, objectFit: "cover", borderRadius: 12 }]}
