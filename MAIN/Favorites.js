@@ -73,6 +73,16 @@ export function Favorites({ navigation, route }) {
         </LinkOne>
       </View>
       {/* BODY */}
+      <View style={[layout.padding_horizontal]}>
+        <TextView
+          color={themedTextColor(theme)}
+          size={22}
+          theme={theme}
+          styles={[format.all_caps]}
+        >
+          FAVORITES
+        </TextView>
+      </View>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={[layout.padding, layout.horizontal]}>
           <Grid columns={2} gap={6}>

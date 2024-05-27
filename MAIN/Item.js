@@ -32,6 +32,7 @@ import {
   themedButtonColor,
   themedButtonTextColor,
   themedTextColor,
+  width,
 } from "../EVERYTHING/BAGEL/Things";
 import {
   Alert,
@@ -91,8 +92,8 @@ export function Item({ navigation, route }) {
                               storefront,
                               checkout.id,
                               chosenOption.id !== undefined
-                                ? chosenOption.id
-                                : product.variants[0].id,
+                                ? chosenOption.admin_graphql_api_id
+                                : product.variants[0].admin_graphql_api_id,
                               parseInt(quantity),
                               null,
                               (checkout) => {
@@ -135,8 +136,8 @@ export function Item({ navigation, route }) {
                               storefront,
                               checkout.id,
                               chosenOption.id !== undefined
-                                ? chosenOption.id
-                                : product.variants[0].id,
+                                ? chosenOption.admin_graphql_api_id
+                                : product.variants[0].admin_graphql_api_id,
                               parseInt(quantity),
                               null,
                               (checkout) => {
@@ -174,7 +175,10 @@ export function Item({ navigation, route }) {
           ]
         );
       } else {
-        Alert.alert("Missing Info", "Please enter a valid quantity and choose an option.");
+        Alert.alert(
+          "Missing Info",
+          "Please enter a valid quantity and choose an option."
+        );
       }
     } else {
       if (quantity !== "") {
@@ -338,23 +342,24 @@ export function Item({ navigation, route }) {
         null
       );
     });
-    if (product.variants[0].title !== "Default Title") {
-      setChosenOption(product.variants[0]);
-    }
+    // if (product.variants[0].title !== "Default Title") {
+    //   setChosenOption(product.variants[0]);
+    // }
     getInDevice("keys", (keys) => {
       const adminAPI = keys[0].AdminAPI;
       const parts = product.id.split("/");
       const thisID = parts[parts.length - 1];
       shopify_GetProductAdmin(adminAPI, thisID, (prod) => {
         const thisArr = prod.variants.filter(
-          (ting) =>
-            ting.title !== "Default Title" && ting.inventory_quantity > 0
+          (ting) => ting.inventory_quantity !== 0
         );
+        console.log(prod.variants)
         const newArr = thisArr.map((ting) => {
           return ting.inventory_quantity;
         });
         const allQty = newArr.reduce((total, current) => total + current, 0);
-        if (thisArr.length > 0) {
+
+        if (thisArr.length > 0 && thisArr[0].title === "Default Title") {
           setChosenOption(thisArr[0]);
         }
         setInStock(allQty);
@@ -382,7 +387,12 @@ export function Item({ navigation, route }) {
               }}
               theme={theme}
             >
-              <TextView color={themedTextColor(theme)} size={18} theme={theme}>
+              <TextView
+                color={themedTextColor(theme)}
+                size={18}
+                theme={theme}
+                styles={{ maxWidth: width * 0.75 }}
+              >
                 back to {collection.title}
               </TextView>
             </LinkOne>
@@ -447,9 +457,15 @@ export function Item({ navigation, route }) {
                     </TextView>
                   )}
                 </View>
-                <TextView size={18} theme={theme} color={inStock > 0 ? "#28D782" : "#D6133B"}>
-                  {inStock} in stock
-                </TextView>
+                {inStock >= 0 && (
+                  <TextView
+                    size={18}
+                    theme={theme}
+                    color={inStock > 0 ? "#28D782" : "#D6133B"}
+                  >
+                    {inStock} in stock
+                  </TextView>
+                )}
               </SeparatedView>
 
               <View style={[layout.padding_vertical]}>
@@ -625,12 +641,12 @@ export function Item({ navigation, route }) {
                           bold={true}
                         >
                           $
-                          {(
-                            parseFloat(chosenOption.price) * quantity
-                          ).toFixed(2)}
+                          {(parseFloat(chosenOption.price) * quantity).toFixed(
+                            2
+                          )}
                         </TextView>
                       )}
-                      {chosenOption.price === undefined && (
+                      {/* {chosenOption.price === undefined && (
                         <TextView
                           color={themedButtonTextColor(theme)}
                           size={18}
@@ -643,7 +659,7 @@ export function Item({ navigation, route }) {
                             quantity
                           ).toFixed(2)}
                         </TextView>
-                      )}
+                      )} */}
                     </View>
                   </SeparatedView>
                 </ButtonOne>

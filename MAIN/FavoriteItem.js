@@ -70,6 +70,7 @@ export function FavoriteItem({ navigation, route }) {
               setLoading(true);
               getInDevice("keys", (keys) => {
                 const storefront = keys[0].StorefrontAPI;
+                console.log(storefront)
                 firebase_GetAllDocuments(
                   setFakeLoading,
                   "Carts",
@@ -77,6 +78,7 @@ export function FavoriteItem({ navigation, route }) {
                     const thisCart = carts.find(
                       (ting) => ting.URL === shopifyURL
                     );
+                    console.log(thisCart)
                     if (thisCart !== undefined) {
                       // CHECK OUT EXISTS
                       shopify_GetCheckOut(
@@ -87,8 +89,8 @@ export function FavoriteItem({ navigation, route }) {
                             storefront,
                             checkout.id,
                             chosenOption.id !== undefined
-                              ? chosenOption.id
-                              : product.variants[0].id,
+                              ? chosenOption.admin_graphql_api_id
+                              : product.variants[0].admin_graphql_api_id,
                             parseInt(quantity),
                             null,
                             (checkout) => {
@@ -114,6 +116,7 @@ export function FavoriteItem({ navigation, route }) {
                         }
                       );
                     } else {
+                      console.log("THERE IS NO CART");
                       // DOES NOT EXIST
                       shopify_CreateCheckout(
                         storefront,
@@ -131,8 +134,8 @@ export function FavoriteItem({ navigation, route }) {
                             storefront,
                             checkout.id,
                             chosenOption.id !== undefined
-                              ? chosenOption.id
-                              : product.variants[0].id,
+                              ? chosenOption.admin_graphql_api_id
+                              : product.variants[0].admin_graphql_api_id,
                             parseInt(quantity),
                             null,
                             (checkout) => {
@@ -223,14 +226,15 @@ export function FavoriteItem({ navigation, route }) {
       const thisID = parts[parts.length - 1];
       shopify_GetProductAdmin(adminAPI, thisID, (prod) => {
         const thisArr = prod.variants.filter(
-          (ting) =>
-            ting.title !== "Default Title" && ting.inventory_quantity > 0
+          (ting) => ting.inventory_quantity !== 0
         );
+        console.log(prod.variants);
         const newArr = thisArr.map((ting) => {
           return ting.inventory_quantity;
         });
         const allQty = newArr.reduce((total, current) => total + current, 0);
-        if (thisArr.length > 0) {
+
+        if (thisArr.length > 0 && thisArr[0].title === "Default Title") {
           setChosenOption(thisArr[0]);
         }
         setInStock(allQty);
@@ -314,6 +318,7 @@ export function FavoriteItem({ navigation, route }) {
               >
                 {product.title}
               </TextView>
+
               <SeparatedView>
                 <View>
                   {tempOptions.length === 0 && (
@@ -322,10 +327,17 @@ export function FavoriteItem({ navigation, route }) {
                     </TextView>
                   )}
                 </View>
-                <TextView size={18} theme={theme} color={inStock > 0 ? "#28D782" : "#D6133B"}>
-                  {inStock} in stock
-                </TextView>
+                {inStock >= 0 && (
+                  <TextView
+                    size={18}
+                    theme={theme}
+                    color={inStock > 0 ? "#28D782" : "#D6133B"}
+                  >
+                    {inStock} in stock
+                  </TextView>
+                )}
               </SeparatedView>
+
               <View style={[layout.padding_vertical]}>
                 <TextView
                   color={secondaryThemedTextColor(theme)}
@@ -345,94 +357,95 @@ export function FavoriteItem({ navigation, route }) {
               </View>
             </View>
             {/* OPTIONS */}
-            {tempOptions.length > 0 && (
-              <View style={[]}>
-                <View style={[layout.padding_horizontal]}>
-                  <TextView
-                    color={secondaryThemedTextColor(theme)}
-                    size={14}
-                    theme={theme}
-                    styles={[format.all_caps]}
-                  >
-                    Options
-                  </TextView>
-                </View>
-                {/*  */}
-                <View style={[layout.margin_vertical_small, { flex: 1 }]}>
-                  {tempOptions
-                    .filter((ting) => ting.inventory_quantity > 0)
-                    .map((opt, i) => {
-                      console.log(chosenOption.id);
-                      console.log(opt.id);
-                      return (
-                        <TouchableOpacity
-                          key={i}
-                          style={[
-                            layout.padding,
-                            {
-                              backgroundColor:
-                                chosenOption.id !== opt.id
-                                  ? secondaryThemedBackgroundColor(theme)
-                                  : "#117DFA",
-                            },
-                            layout.full_width,
-                          ]}
-                          onPress={() => {
-                            setChosenOption(opt);
-                            console.log(opt);
-                          }}
-                        >
-                          <View style={[{ flex: 1 }]}>
-                            <SeparatedView>
-                              <TextView
-                                color={
+            {tempOptions.length > 0 &&
+              tempOptions[0].title !== "Default Title" && (
+                <View style={[]}>
+                  <View style={[layout.padding_horizontal]}>
+                    <TextView
+                      color={secondaryThemedTextColor(theme)}
+                      size={14}
+                      theme={theme}
+                      styles={[format.all_caps]}
+                    >
+                      Options
+                    </TextView>
+                  </View>
+                  {/*  */}
+                  <View style={[layout.margin_vertical_small, { flex: 1 }]}>
+                    {tempOptions
+                      .filter((ting) => ting.inventory_quantity > 0)
+                      .map((opt, i) => {
+                        console.log(opt);
+                        return (
+                          <TouchableOpacity
+                            key={i}
+                            style={[
+                              layout.padding,
+                              {
+                                backgroundColor:
                                   chosenOption.id !== opt.id
-                                    ? themedTextColor(theme)
-                                    : "white"
-                                }
-                                size={18}
-                                theme={theme}
-                              >
-                                {opt.title}
-                              </TextView>
-                              <SideBySide>
+                                    ? secondaryThemedBackgroundColor(theme)
+                                    : "#117DFA",
+                              },
+                              layout.full_width,
+                            ]}
+                            onPress={() => {
+                              setChosenOption(opt);
+                              console.log(opt);
+                            }}
+                          >
+                            <View style={[{ flex: 1 }]}>
+                              <SeparatedView>
                                 <TextView
                                   color={
                                     chosenOption.id !== opt.id
                                       ? themedTextColor(theme)
                                       : "white"
                                   }
-                                  size={16}
-                                  theme={theme}
-                                >
-                                  {opt.inventory_quantity} in stock
-                                </TextView>
-                                <TextView
-                                  color={
-                                    chosenOption.id !== opt.id
-                                      ? "#117DFA"
-                                      : "white"
-                                  }
                                   size={18}
                                   theme={theme}
-                                  bold={true}
                                 >
-                                  ${parseFloat(opt.price).toFixed(2)}
+                                  {opt.title}
                                 </TextView>
-                              </SideBySide>
-                            </SeparatedView>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
+                                <SideBySide>
+                                  <TextView
+                                    color={
+                                      chosenOption.id !== opt.id
+                                        ? themedTextColor(theme)
+                                        : "white"
+                                    }
+                                    size={16}
+                                    theme={theme}
+                                  >
+                                    {opt.inventory_quantity} in stock
+                                  </TextView>
+                                  <TextView
+                                    color={
+                                      chosenOption.id !== opt.id
+                                        ? "#117DFA"
+                                        : "white"
+                                    }
+                                    size={18}
+                                    theme={theme}
+                                    bold={true}
+                                  >
+                                    ${parseFloat(opt.price).toFixed(2)}
+                                  </TextView>
+                                </SideBySide>
+                              </SeparatedView>
+                            </View>
+                          </TouchableOpacity>
+                        );
+                      })}
+                  </View>
                 </View>
-              </View>
-            )}
+              )}
           </View>
         </ScrollView>
         {/* ADD TO CART */}
         {!soldOut && (
           <View style={[layout.padding_horizontal]}>
+            <Spacer height={6} />
             <SideBySide gap={10}>
               <View style={[]}>
                 <SideBySide gap={10}>

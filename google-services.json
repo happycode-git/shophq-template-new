@@ -7,6 +7,44 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:724976916743:android:5414f0b04ac9321a00cda2",
+        "android_client_info": {
+          "package_name": "com.iicdev.AverysAvenue"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0kbxvX272xJ4loDGTfphePRy-7YoY2Fk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:724976916743:android:67389f975247da9700cda2",
+        "android_client_info": {
+          "package_name": "com.iicdev.EdMusicaPublishing"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0kbxvX272xJ4loDGTfphePRy-7YoY2Fk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:724976916743:android:7cd73313a8ef1afc00cda2",
         "android_client_info": {
           "package_name": "com.iicdev.ShopHQ"

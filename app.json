@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "ShopHQ Template",
-    "slug": "shophq-template",
-    "version": "1.0.0",
+    "name": "Ed Musica Publishing",
+    "slug": "ed-musica",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -11,12 +11,10 @@
       "resizeMode": "cover",
       "backgroundColor": "#ffffff"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true,
-      "bundleIdentifier": "com.iicdev.ShopHQTemplate"
+      "supportsTablet": false,
+      "bundleIdentifier": "com.iicdev.EdMusicaPublishing"
     },
     "notifications": {
       "color": "#ffffff",
@@ -33,7 +31,7 @@
           "sound": true,
           "vibrate": true,
           "firebaseSenderId": "724976916743",
-          "firebaseAppId": "1:724976916743:android:f99cf3d2f750c18000cda2",
+          "firebaseAppId": "1:724976916743:android:67389f975247da9700cda2",
           "firebaseApiKey": "AIzaSyD0kbxvX272xJ4loDGTfphePRy-7YoY2Fk"
         }
       }
@@ -54,7 +52,7 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.SCHEDULE_EXACT_ALARM"
       ],
-      "package": "com.iicdev.ShopHQTemplate"
+      "package": "com.iicdev.EdMusicaPublishing"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -89,7 +87,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "5a0ea88a-4dfe-40da-88d7-3a538989ae22"
+        "projectId": "ed579eef-807a-4841-9899-22f8eb30d535"
       }
     }
   }

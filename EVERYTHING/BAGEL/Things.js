@@ -94,14 +94,14 @@ export const searchClient = algoliasearch(
   "2DOEMGLWFB",
   "7cb8106771824a1a327f1e7cb9d81feb"
 );
-export const c_projectID = "5a0ea88a-4dfe-40da-88d7-3a538989ae22";
+export const c_projectID = "ed579eef-807a-4841-9899-22f8eb30d535";
 export const c_googleMapsAPI = "AIzaSyCOEbp9AblLGkiNDi_BMptPP8QayFMk6uM";
 export var me = {};
 export var myID = "test";
 export var myToken = "";
 export var stripePublishableKey =
   "pk_test_51NuJfZIDyFPNiK5CPKgovhg5fen3VM4SzxvBqdYAfwriYKzoqacsfIOiNAt5ErXss3eHYF45ak5PPFHeAD0AXit900imYxFTry";
-export const shopifyURL = `7cc83b-57.myshopify.com`;
+export const shopifyURL = `edmusica.com`;
 export const vendorID = "7cc83b-57";
 //
 export var serverURL = "https://garnet-private-hisser.glitch.me";

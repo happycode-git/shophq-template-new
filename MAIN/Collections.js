@@ -35,6 +35,7 @@ export function Collections({ navigation, route }) {
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("focus", () => {
+      setLoading(true)
       // Your code to run when the screen is focused
       getInDevice("theme", setTheme);
       getInDevice("user", (person) => {

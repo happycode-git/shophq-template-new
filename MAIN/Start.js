@@ -59,13 +59,15 @@ export function Start({ navigation, route }) {
   return (
     <SafeArea loading={loading} theme={theme}>
       <View style={[layout.separate_vertical]}>
+        <View style={[layout.padding_horizontal]}>
         <Image
           source={require("../assets/loading.png")}
           style={[
-            { width: "100%", height: height * 0.5, objectFit: "cover" },
+            { width: "100%", height: height * 0.4, objectFit: "cover" },
             // format.radius,
           ]}
         />
+        </View>
 
         <View>
           <View style={[]}>
